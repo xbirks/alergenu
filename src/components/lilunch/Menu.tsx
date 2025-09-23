@@ -11,7 +11,7 @@ import { allergenMap, ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
-import { Card, CardContent } from '../ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 type CategorizedItem = {
   item: MenuItem;
@@ -123,7 +123,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
       <Separator className="my-12" />
 
       <section className="space-y-6 pb-12">
-        <h3 className="text-2xl font-bold tracking-tight text-center">Leyenda de Alérgenos</h3>
+        <h3 className="text-2xl font-bold tracking-tight">Leyenda de Alérgenos</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5 max-w-3xl mx-auto">
           {ALLERGENS.map(allergen => (
             <div key={allergen.id} className="flex items-center gap-3">
