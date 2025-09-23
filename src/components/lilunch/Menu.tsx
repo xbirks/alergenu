@@ -98,7 +98,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
   }
 
   return (
-    <div className="container space-y-10 px-4 sm:px-6">
+    <div className="container space-y-8 px-4 sm:px-6">
       {categorizedMenu.map(category => {
         const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
         const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
@@ -108,14 +108,14 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
           
           {showAll ? (
-             <div className="grid gap-4">
+             <div className="grid gap-2 md:gap-3">
                 {allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)}
               </div>
           ) : (
             <>
             {category.compatible.length > 0 && (
-              <div className="space-y-4">
-                <div className="grid gap-4">
+              <div className="space-y-2">
+                <div className="grid gap-2 md:gap-3">
                   {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
                 </div>
               </div>
@@ -130,8 +130,8 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                         <AlertTitle>{getIncompatibleTriggerText(category.incompatible)}</AlertTitle>
                     </AccordionTrigger>
                   </Alert>
-                  <AccordionContent className="pt-4">
-                    <div className="grid gap-4">
+                  <AccordionContent className="pt-2">
+                    <div className="grid gap-2 md:gap-3">
                       {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
                     </div>
                   </AccordionContent>
