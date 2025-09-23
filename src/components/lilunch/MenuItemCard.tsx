@@ -1,6 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { MenuItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ShieldX } from 'lucide-react';
@@ -34,12 +33,6 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
 
         {(allPresentAllergens.length > 0) && (
           <div className="flex flex-wrap gap-2 items-center pt-2">
-            {showIncompatibleWarning && (
-              <Badge variant="destructive" className="flex items-center gap-1.5 pl-1.5 pr-2.5">
-                <ShieldX className="h-3.5 w-3.5" />
-                No apto
-              </Badge>
-            )}
             {allPresentAllergens.map(allergenId => {
               const isTrace = item.traces.includes(allergenId);
               const isSelected = isAllergenSelected(allergenId);
