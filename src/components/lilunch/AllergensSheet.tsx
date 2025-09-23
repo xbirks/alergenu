@@ -16,23 +16,8 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { AllergenIcon } from './AllergenIcon';
 import { useState } from 'react';
+import { allergenButtonColors } from './colors';
 
-const allergenButtonColors: Record<string, { selected: string; unselected: string }> = {
-    gluten: { selected: 'bg-orange-500 border-orange-500', unselected: 'hover:bg-orange-50' },
-    crustaceans: { selected: 'bg-rose-500 border-rose-500', unselected: 'hover:bg-rose-50' },
-    eggs: { selected: 'bg-yellow-500 border-yellow-500', unselected: 'hover:bg-yellow-50' },
-    fish: { selected: 'bg-blue-500 border-blue-500', unselected: 'hover:bg-blue-50' },
-    peanuts: { selected: 'bg-amber-600 border-amber-600', unselected: 'hover:bg-amber-50' },
-    soybeans: { selected: 'bg-lime-600 border-lime-600', unselected: 'hover:bg-lime-50' },
-    milk: { selected: 'bg-sky-500 border-sky-500', unselected: 'hover:bg-sky-50' },
-    'tree-nuts': { selected: 'bg-orange-600 border-orange-600', unselected: 'hover:bg-orange-50' },
-    celery: { selected: 'bg-green-600 border-green-600', unselected: 'hover:bg-green-50' },
-    mustard: { selected: 'bg-yellow-600 border-yellow-600', unselected: 'hover:bg-yellow-50' },
-    sesame: { selected: 'bg-zinc-600 border-zinc-600', unselected: 'hover:bg-zinc-50' },
-    sulphites: { selected: 'bg-purple-600 border-purple-600', unselected: 'hover:bg-purple-50' },
-    lupin: { selected: 'bg-violet-600 border-violet-600', unselected: 'hover:bg-violet-50' },
-    molluscs: { selected: 'bg-cyan-600 border-cyan-600', unselected: 'hover:bg-cyan-50' },
-  };
 
 export function AllergensSheet({ children }: { children: React.ReactNode }) {
   const { isLoaded, isAllergenSelected, toggleAllergen } = useAllergenProfile();

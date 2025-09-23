@@ -1,14 +1,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { allergenMap, ALLERGENS } from '@/lib/allergens';
+import { allergenMap } from '@/lib/allergens';
 import { MenuItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, AlertTriangle, ShieldX } from 'lucide-react';
+import { CheckCircle2, ShieldX } from 'lucide-react';
 import { AllergenIcon } from './AllergenIcon';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { allergenColors } from './colors';
 
 type ItemStatus = 'compatible' | 'incompatible';
 
@@ -16,24 +17,6 @@ const statusStyles: Record<ItemStatus, string> = {
   compatible: 'bg-card',
   incompatible: 'opacity-50 bg-card',
 };
-
-const allergenColors: Record<string, string> = {
-    gluten: 'bg-orange-100 text-orange-600',
-    crustaceans: 'bg-rose-100 text-rose-600',
-    eggs: 'bg-yellow-100 text-yellow-600',
-    fish: 'bg-blue-100 text-blue-600',
-    peanuts: 'bg-amber-100 text-amber-700',
-    soybeans: 'bg-lime-100 text-lime-700',
-    milk: 'bg-sky-100 text-sky-700',
-    'tree-nuts': 'bg-orange-100 text-orange-700',
-    celery: 'bg-green-100 text-green-700',
-    mustard: 'bg-yellow-100 text-yellow-700',
-    sesame: 'bg-zinc-100 text-zinc-700',
-    sulphites: 'bg-purple-100 text-purple-700',
-    lupin: 'bg-violet-100 text-violet-700',
-    molluscs: 'bg-cyan-100 text-cyan-700',
-};
-
 
 export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemStatus }) {
   const allPresentAllergens = [...item.allergens, ...item.traces];
@@ -79,7 +62,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                                 className={cn(
                                     allergenColors[allergenId] || 'bg-gray-100 text-gray-600',
                                     'p-0.5',
-                                    isTrace ? 'border-dashed border-2 border-current' : '',
+                                    isTrace ? 'border-dashed border border-current' : '',
                                     isSelected && 'ring-2 ring-destructive ring-offset-2 ring-offset-background'
                                 )}
                                 iconClassName='size-3.5'

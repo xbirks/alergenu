@@ -12,6 +12,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { allergenColors } from './colors';
+
 
 type CategorizedItem = {
   item: MenuItem;
@@ -127,7 +130,10 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5">
           {ALLERGENS.map(allergen => (
             <div key={allergen.id} className="flex items-center gap-3">
-              <AllergenIcon allergenId={allergen.id} />
+              <AllergenIcon 
+                allergenId={allergen.id}
+                className="bg-transparent"
+                iconClassName={cn(allergenColors[allergen.id]?.replace('bg-', 'text-').replace('-100', '-600'))} />
               <span className="font-medium text-sm">{allergen.name}</span>
             </div>
           ))}
