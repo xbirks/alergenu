@@ -126,7 +126,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
       <Separator className="my-12" />
 
       <section className="space-y-6 pb-12">
-        <h3 className="text-2xl font-bold tracking-tight">Leyenda de Alérgenos</h3>
+        <h3 className="text-2xl font-bold tracking-tight text-left">Leyenda de Alérgenos</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5">
           {ALLERGENS.map(allergen => (
             <div key={allergen.id} className="flex items-center gap-3">

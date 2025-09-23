@@ -62,10 +62,10 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                                 className={cn(
                                     allergenColors[allergenId] || 'bg-gray-100 text-gray-600',
                                     'p-0.5',
-                                    isTrace ? 'border-dashed border border-current' : '',
+                                    isTrace ? 'border-dashed border-2 border-current' : '',
                                     isSelected && 'ring-2 ring-destructive ring-offset-2 ring-offset-background'
                                 )}
-                                iconClassName='size-3.5'
+                                iconClassName='size-4'
                            />
                         </TooltipTrigger>
                         <TooltipContent>
