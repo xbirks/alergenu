@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Restaurant, MenuItem } from '@/lib/types';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
@@ -13,8 +13,6 @@ import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '../ui/card';
 import { allergenColors } from './colors';
-import { Switch } from '../ui/switch';
-import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 
 type CategorizedItem = {
@@ -24,7 +22,6 @@ type CategorizedItem = {
 
 export function Menu({ restaurant }: { restaurant: Restaurant }) {
   const { selectedAllergens, isLoaded } = useAllergenProfile();
-  const [showAll, setShowAll] = useState(false);
 
   const categorizedMenu = useMemo(() => {
     if (!isLoaded) return null;
@@ -33,24 +30,19 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
       const compatibleItems: MenuItem[] = [];
       const incompatibleItems: MenuItem[] = [];
       
-      const allItems: CategorizedItem[] = category.items.map(item => {
+      category.items.forEach(item => {
         const isIncompatible = item.allergens.some(a => selectedAllergens.has(a)) || item.traces.some(a => selectedAllergens.has(a));
-        const status = (isIncompatible && selectedAllergens.size > 0) ? 'incompatible' : 'compatible';
-        
-        if (status === 'compatible') {
-          compatibleItems.push(item);
-        } else {
+        if (isIncompatible && selectedAllergens.size > 0) {
           incompatibleItems.push(item);
+        } else {
+          compatibleItems.push(item);
         }
-        
-        return { item, status };
       });
 
       return {
         ...category,
         compatibleItems,
         incompatibleItems,
-        allItems,
         hasContent: category.items.length > 0,
       };
     });
@@ -82,15 +74,6 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
   return (
     <div className="container space-y-6 px-4 sm:px-6">
-       {selectedAllergens.size > 0 && (
-         <div className="flex items-center justify-center space-x-2 py-4">
-            <Switch id="show-all-switch" checked={showAll} onCheckedChange={setShowAll} />
-            <Label htmlFor="show-all-switch" className="font-medium">
-              {showAll ? "Ocultar platos no compatibles" : "Mostrar todos los platos"}
-            </Label>
-          </div>
-      )}
-
       {categorizedMenu.map(category => {
         if (!category.hasContent) return null;
 
@@ -99,51 +82,41 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
-          <div className='flex items-center gap-3'>
-            <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
-          </div>
+          <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
           
           <div className="flex flex-col">
-             { showAll ? (
-                <>
-                 {category.allItems.map(({item, status}) => <MenuItemCard key={item.id} item={item} status={status} />)}
-                </>
-             ) : (
-               <>
-                {compatibleCards.length > 0 ? compatibleCards : null}
-                
-                {incompatibleCards.length > 0 && selectedAllergens.size > 0 && (
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="incompatible" className="border-none">
+            {compatibleCards.length > 0 ? compatibleCards : null}
+            
+            {incompatibleCards.length > 0 && selectedAllergens.size > 0 && (
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="incompatible" className="border-none">
+                   <Separator />
+                  <Alert variant="destructive" className="p-0 border-none rounded-none bg-background hover:bg-muted/50 transition-colors">
+                    <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-semibold">
+                      <span>{`Mostrar ${incompatibleCards.length} plato(s) no compatibles`}</span>
+                    </AccordionTrigger>
+                  </Alert>
+                  <AccordionContent>
+                    <div className="flex flex-col">
                        <Separator />
-                      <Alert variant="destructive" className="p-0 border-none rounded-none bg-background hover:bg-muted/50 transition-colors">
-                        <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-semibold">
-                          <span>{`Mostrar ${incompatibleCards.length} plato(s) no compatibles`}</span>
-                        </AccordionTrigger>
-                      </Alert>
-                      <AccordionContent>
-                        <div className="flex flex-col">
-                           <Separator />
-                          {incompatibleCards}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                )}
+                      {incompatibleCards}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
 
-                {(compatibleCards.length > 0 || (incompatibleCards.length > 0 && selectedAllergens.size === 0)) && <Separator className="mt-0" />}
+            {(compatibleCards.length > 0) && <Separator className="mt-0" />}
 
-                {compatibleCards.length === 0 && selectedAllergens.size > 0 && incompatibleCards.length > 0 &&(
-                   <div className="border-dashed border-2 rounded-2xl text-center my-4">
-                     <div className="p-6">
-                       <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                       <p className="text-muted-foreground font-medium">No hay platos compatibles en esta categoría para tu selección de alérgenos.</p>
-                       <p className="text-muted-foreground text-sm mt-1">Consulta al personal para posibles adaptaciones.</p>
-                     </div>
-                   </div>
-                )}
-               </>
-             )}
+            {compatibleCards.length === 0 && selectedAllergens.size > 0 && incompatibleCards.length > 0 &&(
+               <div className="border-dashed border-2 rounded-2xl text-center my-4">
+                 <div className="p-6">
+                   <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                   <p className="text-muted-foreground font-medium">No hay platos compatibles en esta categoría para tu selección de alérgenos.</p>
+                   <p className="text-muted-foreground text-sm mt-1">Consulta al personal para posibles adaptaciones.</p>
+                 </div>
+               </div>
+            )}
           </div>
           {category.hasContent && <Separator />}
         </section>
