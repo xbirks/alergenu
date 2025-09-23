@@ -6,7 +6,7 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Info, ShieldX } from 'lucide-react';
 import { ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
@@ -95,12 +95,11 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           <div className="flex flex-col">
             {showAll ? (
                <>
-                {allItems}
-                <Separator className="mt-0" />
+                {allItems.length > 0 ? allItems : <Separator />}
                </>
             ) : (
               <>
-                {compatibleItems}
+                {compatibleItems.length > 0 && compatibleItems}
                 
                 {incompatibleItems.length > 0 && selectedAllergens.size > 0 && (
                   <Accordion type="single" collapsible className="w-full">
@@ -121,9 +120,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                     </AccordionItem>
                   </Accordion>
                 )}
-
-                {(compatibleItems.length > 0) && <Separator className="mt-0" />}
-
+                {compatibleItems.length === 0 && incompatibleItems.length === 0 ? null : (compatibleItems.length > 0 || selectedAllergens.size === 0) && <Separator className="mt-0" />}
               </>
             )}
             
