@@ -18,6 +18,10 @@ export default function MenuPage() {
 
   const [welcomeDismissed, setWelcomeDismissed] = useState(false);
 
+  const handleAllergensSet = () => {
+    setWelcomeDismissed(true);
+  };
+
   if (!restaurant || !restaurant.menu || restaurant.menu.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[50vh] p-4">
@@ -46,7 +50,7 @@ export default function MenuPage() {
             Para personalizar tu menú, por favor, indícanos si tienes alguna alergia alimentaria.
           </p>
           <div className="space-y-4">
-            <AllergensSheet>
+            <AllergensSheet onDone={handleAllergensSet}>
                <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full bg-primary text-primary-foreground">
                 Tengo alergias
               </Button>

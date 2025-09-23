@@ -16,7 +16,7 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 
-export function AllergensSheet({ children }: { children: React.ReactNode }) {
+export function AllergensSheet({ children, onDone }: { children: React.ReactNode, onDone: () => void }) {
   const { isLoaded, isAllergenSelected, toggleAllergen } = useAllergenProfile();
 
   return (
@@ -53,7 +53,7 @@ export function AllergensSheet({ children }: { children: React.ReactNode }) {
         </ScrollArea>
         <SheetFooter className="p-4 border-t">
            <SheetClose asChild>
-            <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full">Hecho</Button>
+            <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full" onClick={onDone}>Hecho</Button>
           </SheetClose>
         </SheetFooter>
       </SheetContent>
