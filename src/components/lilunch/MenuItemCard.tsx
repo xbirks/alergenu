@@ -65,7 +65,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                                                 isTrace ? 'border-dashed border-2' : 'border-2 border-transparent',
                                                 isSelected && status === 'incompatible' && 'ring-2 ring-destructive ring-offset-1 ring-offset-background'
                                             )}
-                                            iconClassName="size-6"
+                                            iconClassName="size-5"
                                         />
                                     </TooltipTrigger>
                                     <TooltipContent>

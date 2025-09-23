@@ -185,7 +185,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                 <AllergenIcon 
                   allergenId={allergen.id}
                   className={cn(allergenColors[allergen.id], 'rounded-lg')}
-                  iconClassName="size-6"
+                  iconClassName="size-5"
                 />
                 <span className="font-medium text-sm">{allergen.name}</span>
               </div>
