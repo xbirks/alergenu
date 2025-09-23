@@ -15,24 +15,36 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { AllergenIcon } from './AllergenIcon';
-import { useState } from 'react';
 import { allergenButtonColors } from './colors';
+import React from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 
 
-export function AllergensSheet({ children }: { children: React.ReactNode }) {
+interface AllergensSheetProps {
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function AllergensSheet({ children, open, onOpenChange }: AllergensSheetProps) {
   const { isLoaded, isAllergenSelected, toggleAllergen } = useAllergenProfile();
-  const [isOpen, setIsOpen] = useState(false);
-
+  const router = useRouter();
+  const pathname = usePathname();
 
   const handleDone = () => {
-    setIsOpen(false);
-    // Reload the page to apply allergen changes
-    window.location.reload();
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+    
+    // Clean up URL and reload
+    router.replace(pathname, { scroll: false });
+    // A small delay to allow the sheet to close before reloading.
+    setTimeout(() => {
+        window.location.reload();
+    }, 200);
   };
-
-  return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild onClick={() => setIsOpen(true)}>{children}</SheetTrigger>
+  
+  const content = (
       <SheetContent className="flex flex-col" side="bottom">
         <SheetHeader className="text-center">
           <SheetTitle className="text-2xl font-bold">Mis Alergias</SheetTitle>
@@ -67,9 +79,23 @@ export function AllergensSheet({ children }: { children: React.ReactNode }) {
           </div>
         </ScrollArea>
         <SheetFooter className="p-4 border-t">
-          <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full" onClick={handleDone}>Hecho</Button>
+          <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleDone}>Hecho</Button>
         </SheetFooter>
       </SheetContent>
-    </Sheet>
   );
+
+  if (children) {
+    return (
+        <Sheet open={open} onOpenChange={onOpenChange}>
+            <SheetTrigger asChild>{children}</SheetTrigger>
+            {content}
+        </Sheet>
+    )
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+        {content}
+    </Sheet>
+  )
 }
