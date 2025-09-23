@@ -30,9 +30,9 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
         <div className="flex-grow">
           <CardHeader className="p-4 pb-2">
             <div className="flex justify-between items-start gap-4">
-              <div className='flex items-center gap-2'>
-                {status === 'compatible' && <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />}
-                {status === 'incompatible' && <ShieldX className="h-5 w-5 text-destructive flex-shrink-0" />}
+              <div className='flex items-start gap-2'>
+                {status === 'compatible' && <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-1" />}
+                {status === 'incompatible' && <ShieldX className="h-4 w-4 text-destructive flex-shrink-0 mt-1" />}
                 <CardTitle className="text-lg font-semibold">{item.name}</CardTitle>
               </div>
               <div className="text-lg font-normal text-foreground whitespace-nowrap">
@@ -62,7 +62,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                                 className={cn(
                                     allergenColors[allergenId] || 'bg-gray-100 text-gray-600',
                                     'p-0.5',
-                                    isTrace ? 'border-dashed border-[1.5px] border-current' : '',
+                                    isTrace ? 'border-dashed border-2 border-current' : '',
                                     isSelected && 'ring-2 ring-destructive ring-offset-2 ring-offset-background'
                                 )}
                                 iconClassName='size-5'
