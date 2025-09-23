@@ -19,7 +19,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
     <div className={cn("py-4 border-b", status === 'incompatible' && selectedAllergens.size > 0 ? 'opacity-50' : '')}>
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
-          <p className="text-sm font-bold uppercase tracking-wider text-foreground">{item.name}</p>
+          <p className="text-base font-bold uppercase tracking-wide text-foreground">{item.name}</p>
           {item.description && (
             <p className="text-sm text-muted-foreground mt-1 ml-4">{item.description}</p>
           )}
@@ -50,7 +50,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                   <TooltipTrigger>
                     <Badge
                       className={cn(
-                        'font-medium border',
+                        'font-semibold border text-[0.65rem] h-5',
                         allergenColors[allergenId] || 'bg-gray-100 text-gray-800',
                         'hover:opacity-80',
                         isTrace ? 'border-dashed border-[1.5px] border-current' : 'border-transparent',
