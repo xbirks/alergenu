@@ -1,23 +1,38 @@
 import { Egg, Fish, Leaf, Milk, Nut, Wheat, Soup, Shell, Salad, Bot, Snowflake, Grape, Bean } from 'lucide-react';
 import type { Allergen } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 const iconMap: Record<string, React.ReactNode> = {
-  celery: <Leaf className="size-4" title="Apio" />,
-  gluten: <Wheat className="size-4" title="Gluten" />,
-  crustaceans: <Shell className="size-4" title="Crustáceos" />,
-  eggs: <Egg className="size-4" title="Huevos" />,
-  fish: <Fish className="size-4" title="Pescado" />,
-  lupin: <Salad className="size-4" title="Altramuces" />,
-  milk: <Milk className="size-4" title="Leche" />,
-  molluscs: <Soup className="size-4" title="Moluscos" />,
-  mustard: <Bot className="size-4" title="Mostaza" />,
-  peanuts: <Nut className="size-4" title="Cacahuetes" />,
-  sesame: <Snowflake className="size-4" title="Sésamo" />,
-  soybeans: <Bean className="size-4" title="Soja" />,
-  sulphites: <Grape className="size-4" title="Sulfitos" />,
-  'tree-nuts': <Nut className="size-4" title="Frutos de cáscara" />,
+  celery: <Leaf title="Apio" />,
+  gluten: <Wheat title="Gluten" />,
+  crustaceans: <Shell title="Crustáceos" />,
+  eggs: <Egg title="Huevos" />,
+  fish: <Fish title="Pescado" />,
+  lupin: <Salad title="Altramuces" />,
+  milk: <Milk title="Leche" />,
+  molluscs: <Soup title="Moluscos" />,
+  mustard: <Bot title="Mostaza" />,
+  peanuts: <Nut title="Cacahuetes" />,
+  sesame: <Snowflake title="Sésamo" />,
+  soybeans: <Bean title="Soja" />,
+  sulphites: <Grape title="Sulfitos" />,
+  'tree-nuts': <Nut title="Frutos de cáscara" />,
 };
 
-export function AllergenIcon({ allergenId }: { allergenId: Allergen['id'] }) {
-  return iconMap[allergenId] || null;
+interface AllergenIconProps {
+    allergenId: Allergen['id'];
+    className?: string;
+    iconClassName?: string;
+}
+
+export function AllergenIcon({ allergenId, className, iconClassName }: AllergenIconProps) {
+    const icon = iconMap[allergenId]
+
+    if (!icon) return null;
+
+    return (
+        <div className={cn("flex items-center justify-center rounded-md p-1", className)}>
+            {React.cloneElement(icon as React.ReactElement, { className: cn("size-4", iconClassName) })}
+        </div>
+    );
 }
