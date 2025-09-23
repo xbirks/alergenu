@@ -4,7 +4,7 @@ import { Header } from '@/components/lilunch/Header';
 import { LegalFooter } from '@/components/lilunch/LegalFooter';
 import { CategoryNav } from '@/components/lilunch/CategoryNav';
 import { getRestaurantById } from '@/lib/data';
-import { usePathname, useRouter, useSearchParams, useParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AllergensSheet } from '@/components/lilunch/AllergensSheet';
 import { useEffect, useState } from 'react';
 

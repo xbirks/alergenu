@@ -6,20 +6,25 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Info, FileQuestion } from 'lucide-react';
 import { ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
-import { Card, CardContent } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { allergenColors } from './colors';
 import { cn } from '@/lib/utils';
+import { getRestaurantById } from '@/lib/data';
+import { useParams } from 'next/navigation';
 
-export function Menu({ restaurant }: { restaurant: Restaurant }) {
+export function Menu() {
   const { selectedAllergens, isLoaded } = useAllergenProfile();
+  const params = useParams();
+  const restaurantId = Array.isArray(params.restaurantId) ? params.restaurantId[0] : params.restaurantId;
+  const restaurant = getRestaurantById(restaurantId);
 
   const categorizedMenu = useMemo(() => {
-    if (!isLoaded) return null;
+    if (!isLoaded || !restaurant) return null;
 
     return restaurant.menu.map(category => {
       const compatibleItems: MenuItem[] = [];
@@ -41,7 +46,25 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         hasContent: category.items.length > 0,
       };
     });
-  }, [restaurant.menu, selectedAllergens, isLoaded]);
+  }, [restaurant, selectedAllergens, isLoaded]);
+
+  if (!restaurant || !restaurant.menu || restaurant.menu.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] p-4">
+        <Card className="w-full max-w-md text-center shadow-lg rounded-2xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">Menú no disponible</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4">
+            <FileQuestion className="w-16 h-16 text-muted-foreground" />
+            <p className="text-muted-foreground">
+              No pudimos encontrar un menú publicado para este restaurante.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!isLoaded || !categorizedMenu) {
     return (
