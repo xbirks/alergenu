@@ -86,7 +86,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           )}
 
           {category.precaution.length > 0 && (
-             <Accordion type="single" collapsible className="w-full space-y-4" defaultValue="precaution">
+             <Accordion type="single" collapsible className="w-full space-y-4">
                <AccordionItem value="precaution" className="border-none">
                 <Alert variant="default" className="bg-warning/10 border-warning/50 rounded-lg">
                   <AccordionTrigger className="w-full p-0 hover:no-underline justify-start gap-2">
@@ -104,7 +104,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           )}
 
            {category.incompatible.length > 0 && (
-             <Accordion type="single" collapsible className="w-full" defaultValue="incompatible">
+             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="incompatible" className="border-none">
                 <Alert variant="destructive" className="rounded-lg">
                   <AccordionTrigger className="w-full p-0 hover:no-underline justify-start gap-2">
