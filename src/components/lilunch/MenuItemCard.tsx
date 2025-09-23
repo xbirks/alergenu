@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { CheckCircle2, Shield, AlertTriangle } from 'lucide-react';
 import { AllergenIcon } from './AllergenIcon';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
+import Image from 'next/image';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 type ItemStatus = 'compatible' | 'precaution' | 'incompatible';
 
@@ -38,6 +40,8 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
   const allPresentAllergens = [...item.allergens, ...item.traces];
   const { isAllergenSelected } = useAllergenProfile();
 
+  const placeholderImage = PlaceHolderImages.find(p => p.id === item.imageId);
+
   return (
     <Card className={cn("overflow-hidden shadow-none border rounded-2xl transition-all duration-300", statusStyles[status])}>
       <div className="flex">
@@ -49,7 +53,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                 {status === 'precaution' && <AlertTriangle className="h-5 w-5 text-warning" />}
                 <CardTitle className="text-lg font-semibold">{item.name}</CardTitle>
               </div>
-              <div className="text-lg font-bold text-primary whitespace-nowrap">
+              <div className="text-lg font-normal text-foreground whitespace-nowrap">
                 {item.price.toFixed(2)}€
               </div>
             </div>
