@@ -4,18 +4,18 @@ import { Header } from '@/components/lilunch/Header';
 import { LegalFooter } from '@/components/lilunch/LegalFooter';
 import { CategoryNav } from '@/components/lilunch/CategoryNav';
 import { getRestaurantById } from '@/lib/data';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams, useParams } from 'next/navigation';
 import { AllergensSheet } from '@/components/lilunch/AllergensSheet';
 import { useEffect, useState } from 'react';
 
 export default function MenuLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: { restaurantId: string };
 }) {
-  const restaurant = getRestaurantById(params.restaurantId);
+  const params = useParams();
+  const restaurantId = Array.isArray(params.restaurantId) ? params.restaurantId[0] : params.restaurantId;
+  const restaurant = getRestaurantById(restaurantId);
   const categories = restaurant?.menu.map(c => ({ id: c.id, name: c.name })) || [];
   
   const searchParams = useSearchParams();
