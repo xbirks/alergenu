@@ -6,7 +6,7 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import { ShieldX, Info, CheckCircle2 } from 'lucide-react';
+import { ShieldX, Info } from 'lucide-react';
 import { allergenMap, ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
@@ -61,9 +61,9 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="space-y-4">
             <Skeleton className="h-10 w-1/3 rounded-lg" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {[1, 2, 3, 4].map(j => (
-                 <Skeleton key={j} className="h-32 w-full rounded-2xl" />
+                 <Skeleton key={j} className="h-24 w-full rounded-none" />
               ))}
             </div>
           </div>
@@ -99,7 +99,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
   }
 
   return (
-    <div className="container space-y-4 px-4 sm:px-6">
+    <div className="container space-y-12 px-4 sm:px-6">
       {categorizedMenu.map(category => {
         if (!category.hasContent) return null;
 
@@ -108,25 +108,16 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
-            <div className="flex items-start gap-3 mb-2">
-                {selectedAllergens.size === 0 ? (
-                    <div className="w-6 h-6" />
-                ) : category.incompatible.length === 0 ? (
-                    <CheckCircle2 className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
-                ) : (
-                    <ShieldX className="h-6 w-6 text-red-500 mt-1 flex-shrink-0" />
-                )}
-                <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
-            </div>
+            <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
           
           {showAll ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="flex flex-col">
                 {allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)}
               </div>
           ) : (
             <>
             {category.compatible.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col">
                   {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
                 </div>
             )}
@@ -141,7 +132,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                     </AccordionTrigger>
                   </Alert>
                   <AccordionContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="flex flex-col mt-4">
                       {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
                     </div>
                   </AccordionContent>
@@ -150,13 +141,13 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
             )}
             
             {category.compatible.length === 0 && selectedAllergens.size > 0 && (
-              <Card className="border-dashed border-2 rounded-2xl text-center shadow-none my-4 md:col-span-2">
-                  <CardContent className="p-6">
+              <div className="border-dashed border-2 rounded-2xl text-center my-4">
+                  <div className="p-6">
                     <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground font-medium">No hay platos compatibles en esta categoría para tu selección de alérgenos.</p>
                     <p className="text-muted-foreground text-sm mt-1">Consulta al personal para posibles adaptaciones.</p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
             )}
             </>
           )}
@@ -185,7 +176,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                 <AllergenIcon 
                   allergenId={allergen.id}
                   className={cn(allergenColors[allergen.id], 'rounded-lg')}
-                  iconClassName="size-5"
+                  iconClassName="size-4"
                 />
                 <span className="font-medium text-sm">{allergen.name}</span>
               </div>
