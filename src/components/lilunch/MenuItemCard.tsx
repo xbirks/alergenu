@@ -19,7 +19,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
     <div className={cn("py-4 border-b", status === 'incompatible' && selectedAllergens.size > 0 ? 'opacity-50' : '')}>
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
-          <p className="text-base font-bold uppercase tracking-wide text-foreground">{item.name}</p>
+          <p className="text-base font-bold uppercase tracking-tight text-foreground">{item.name}</p>
           {item.description && (
             <p className="text-sm text-muted-foreground mt-1 ml-4">{item.description}</p>
           )}
