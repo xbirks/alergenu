@@ -4,14 +4,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { allergenMap } from '@/lib/allergens';
 import { MenuItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { Shield } from 'lucide-react';
+import { CheckCircle2, Shield, AlertTriangle } from 'lucide-react';
 
 type ItemStatus = 'compatible' | 'precaution' | 'incompatible';
 
 const statusStyles: Record<ItemStatus, string> = {
   compatible: 'bg-card',
-  precaution: 'bg-warning/10',
-  incompatible: 'opacity-60 bg-card',
+  precaution: 'bg-warning/10 border-warning/50',
+  incompatible: 'opacity-50 bg-card',
 };
 
 export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemStatus }) {
@@ -23,19 +23,22 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
         <div className="flex-grow">
           <CardHeader className="p-4 pb-2">
             <div className="flex justify-between items-start gap-4">
-              <CardTitle className="text-lg font-semibold">{item.name}</CardTitle>
+              <div className='flex items-center gap-2'>
+                {status === 'compatible' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+                {status === 'precaution' && <AlertTriangle className="h-5 w-5 text-warning" />}
+                <CardTitle className="text-lg font-semibold">{item.name}</CardTitle>
+              </div>
               <div className="text-lg font-bold text-primary whitespace-nowrap">
-                ${item.price.toFixed(2)}
+                {item.price.toFixed(2)}€
               </div>
             </div>
             {item.description && (
-              <CardDescription className="text-sm !mt-1">{item.description}</CardDescription>
+              <CardDescription className="text-sm !mt-1 pl-7">{item.description}</CardDescription>
             )}
           </CardHeader>
           <CardContent className="p-4 pt-2">
             {allPresentAllergens.length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center">
-                 {status === 'compatible' && <Shield className="h-4 w-4 text-green-600" />}
+              <div className="flex flex-wrap gap-2 items-center pl-7">
                 <TooltipProvider>
                   {allPresentAllergens.map(allergenId => {
                     const allergen = allergenMap.get(allergenId);
