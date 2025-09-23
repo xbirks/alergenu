@@ -7,12 +7,12 @@ export const restaurants: Restaurant[] = [
     menu: [
       {
         id: 'starters',
-        name: 'Starters',
+        name: 'Entrantes',
         items: [
           {
             id: '101',
-            name: 'Caesar Salad',
-            description: 'Crisp romaine lettuce with our homemade Caesar dressing, croutons, and parmesan cheese.',
+            name: 'Ensalada César',
+            description: 'Lechuga romana crujiente con nuestro aderezo César casero, picatostes y queso parmesano.',
             price: 9.50,
             allergens: ['gluten', 'fish', 'milk', 'eggs'],
             traces: ['mustard'],
@@ -21,8 +21,8 @@ export const restaurants: Restaurant[] = [
           },
           {
             id: '102',
-            name: 'Sushi Platter',
-            description: 'A selection of fresh nigiri and maki rolls.',
+            name: 'Tabla de Sushi',
+            description: 'Una selección de frescos nigiris y rollos maki.',
             price: 15.00,
             allergens: ['fish', 'gluten', 'soybeans', 'sesame'],
             traces: ['crustaceans'],
@@ -33,12 +33,12 @@ export const restaurants: Restaurant[] = [
       },
       {
         id: 'mains',
-        name: 'Main Courses',
+        name: 'Platos Principales',
         items: [
           {
             id: '201',
             name: 'Pizza Margherita',
-            description: 'Classic pizza with tomato sauce, mozzarella, and fresh basil.',
+            description: 'Pizza clásica con salsa de tomate, mozzarella y albahaca fresca.',
             price: 12.00,
             allergens: ['gluten', 'milk'],
             traces: [],
@@ -48,7 +48,7 @@ export const restaurants: Restaurant[] = [
           {
             id: '202',
             name: 'Spaghetti Carbonara',
-            description: 'A classic Roman pasta dish with egg, pecorino cheese, and pancetta.',
+            description: 'Un plato de pasta clásico romano con huevo, queso pecorino y panceta.',
             price: 14.50,
             allergens: ['gluten', 'eggs', 'milk'],
             traces: ['celery'],
@@ -57,8 +57,8 @@ export const restaurants: Restaurant[] = [
           },
           {
             id: '203',
-            name: 'Classic Cheeseburger',
-            description: 'Juicy beef patty with cheddar cheese, lettuce, tomato, and our special sauce on a sesame bun.',
+            name: 'Hamburguesa con Queso Clásica',
+            description: 'Jugosa carne de res con queso cheddar, lechuga, tomate y nuestra salsa especial en un pan de sésamo.',
             price: 13.00,
             allergens: ['gluten', 'milk', 'sesame', 'mustard'],
             traces: ['eggs'],
@@ -67,8 +67,8 @@ export const restaurants: Restaurant[] = [
           },
            {
             id: '204',
-            name: 'Seafood Paella',
-            description: 'Saffron-infused rice with a mix of prawns, mussels and calamari.',
+            name: 'Paella de Marisco',
+            description: 'Arroz con azafrán y una mezcla de gambas, mejillones y calamares.',
             price: 19.00,
             allergens: ['crustaceans', 'molluscs', 'fish'],
             traces: ['sulphites'],
@@ -79,12 +79,12 @@ export const restaurants: Restaurant[] = [
       },
       {
         id: 'desserts',
-        name: 'Desserts',
+        name: 'Postres',
         items: [
           {
             id: '301',
-            name: 'Tiramisu',
-            description: 'Coffee-soaked ladyfingers layered with a whipped mixture of eggs, sugar, and mascarpone cheese.',
+            name: 'Tiramisú',
+            description: 'Bizcochos de soletilla empapados en café y capas de una mezcla batida de huevos, azúcar y queso mascarpone.',
             price: 7.50,
             allergens: ['gluten', 'eggs', 'milk'],
             traces: ['soybeans', 'tree-nuts'],
@@ -93,8 +93,8 @@ export const restaurants: Restaurant[] = [
           },
           {
             id: '302',
-            name: 'Chocolate Lava Cake',
-            description: 'A decadent chocolate cake with a molten chocolate center, served with a scoop of vanilla ice cream.',
+            name: 'Pastel de Chocolate Volcán',
+            description: 'Un delicioso pastel de chocolate con un centro de chocolate fundido, servido con una bola de helado de vainilla.',
             price: 8.00,
             allergens: ['gluten', 'eggs', 'milk', 'soybeans'],
             traces: ['peanuts', 'tree-nuts'],

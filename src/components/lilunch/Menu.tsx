@@ -48,13 +48,13 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
   if (!isLoaded || !categorizedMenu) {
     return (
-      <div className="space-y-8">
+      <div className="container space-y-8 px-4 sm:px-6">
         {[1, 2].map(i => (
           <div key={i} className="space-y-4">
-            <Skeleton className="h-8 w-1/4" />
-            <div className="grid gap-6">
-              {[1, 2].map(j => (
-                 <Skeleton key={j} className="h-48 w-full rounded-2xl" />
+            <Skeleton className="h-10 w-1/3 rounded-lg" />
+            <div className="space-y-4">
+              {[1, 2, 3].map(j => (
+                 <Skeleton key={j} className="h-24 w-full rounded-2xl" />
               ))}
             </div>
           </div>
@@ -67,59 +67,53 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
     const allBlockingAllergens = new Set<string>();
     items.forEach(i => i.blockingAllergens?.forEach(a => allBlockingAllergens.add(a)));
     const allergenNames = Array.from(allBlockingAllergens).map(id => allergenMap.get(id)?.name);
-    if (allergenNames.length === 0) return "Contains your allergens";
-    return `Contains ${allergenNames.slice(0, 2).join(', ')}${allergenNames.length > 2 ? ' and more' : ''}`;
+    if (allergenNames.length === 0) return "Contiene tus alérgenos";
+    return `Contiene ${allergenNames.slice(0, 2).join(', ')}${allergenNames.length > 2 ? ' y más' : ''}`;
   }
 
   return (
-    <div className="space-y-12">
+    <div className="container space-y-10 px-4 sm:px-6">
       {categorizedMenu.map(category => (
-        <section key={category.id} className="space-y-6">
-          <h2 className="font-headline text-3xl font-semibold border-b pb-4">{category.name}</h2>
+        <section key={category.id} className="space-y-4">
+          <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
           
           {category.compatible.length > 0 && (
             <div className="space-y-4">
-              <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
-                <Shield className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <AlertTitle className="text-green-800 dark:text-green-300">Compatible</AlertTitle>
-                <AlertDescription className="text-green-700 dark:text-green-400">
-                  These items don't contain your selected allergens.
-                </AlertDescription>
-              </Alert>
-              <div className="grid gap-6">
+              <div className="grid gap-4">
                 {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
               </div>
             </div>
           )}
 
           {category.precaution.length > 0 && (
-             <div className="space-y-4">
-              <Alert variant="default" className="bg-warning/5 border-warning/50">
-                <ShieldAlert className="h-4 w-4 text-warning" />
-                <AlertTitle className="text-amber-800 dark:text-amber-300">Use Precaution</AlertTitle>
-                <AlertDescription className="text-amber-700 dark:text-amber-400">
-                  These items may contain traces of your selected allergens.
-                </AlertDescription>
-              </Alert>
-              <div className="grid gap-6">
-                {category.precaution.map(({ item }) => <MenuItemCard key={item.id} item={item} status="precaution" />)}
-              </div>
-            </div>
+             <Accordion type="single" collapsible className="w-full space-y-4" defaultValue="precaution">
+               <AccordionItem value="precaution" className="border-none">
+                <Alert variant="default" className="bg-warning/10 border-warning/50 rounded-lg">
+                  <AccordionTrigger className="w-full p-0 hover:no-underline justify-start gap-2">
+                    <ShieldAlert className="h-5 w-5 text-warning" />
+                    <AlertTitle className="text-amber-800 dark:text-amber-300 font-semibold">Usar con precaución</AlertTitle>
+                  </AccordionTrigger>
+                </Alert>
+                <AccordionContent className="pt-4">
+                   <div className="grid gap-4">
+                    {category.precaution.map(({ item }) => <MenuItemCard key={item.id} item={item} status="precaution" />)}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           )}
 
            {category.incompatible.length > 0 && (
-             <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="incompatible" className="border-b-0">
-                <Alert variant="destructive" className="rounded-b-none">
-                  <AccordionTrigger className="w-full p-0 hover:no-underline">
-                      <div className="flex items-center">
-                        <ShieldX className="h-4 w-4 mr-2" />
-                        <AlertTitle>{getIncompatibleTriggerText(category.incompatible)}</AlertTitle>
-                      </div>
+             <Accordion type="single" collapsible className="w-full" defaultValue="incompatible">
+              <AccordionItem value="incompatible" className="border-none">
+                <Alert variant="destructive" className="rounded-lg">
+                  <AccordionTrigger className="w-full p-0 hover:no-underline justify-start gap-2">
+                      <ShieldX className="h-5 w-5" />
+                      <AlertTitle>{getIncompatibleTriggerText(category.incompatible)}</AlertTitle>
                   </AccordionTrigger>
                 </Alert>
-                <AccordionContent>
-                   <div className="grid gap-6 pt-6">
+                <AccordionContent className="pt-4">
+                   <div className="grid gap-4">
                     {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
                   </div>
                 </AccordionContent>
@@ -127,8 +121,8 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
             </Accordion>
           )}
 
-          {category.compatible.length === 0 && category.precaution.length === 0 && category.incompatible.length === 0 && (
-             <p className="text-muted-foreground">No items in this category.</p>
+          {category.compatible.length === 0 && category.precaution.length === 0 && category.incompatible.length > 0 && selectedAllergens.size > 0 && (
+             <p className="text-muted-foreground text-center py-4">No hay platos compatibles en esta categoría según tu perfil.</p>
           )}
 
         </section>
