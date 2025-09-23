@@ -33,19 +33,18 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
       const compatibleItems: MenuItem[] = [];
       const incompatibleItems: MenuItem[] = [];
       
-      const allItems = category.items.map(item => {
-        const isCompatible = !item.allergens.some(a => selectedAllergens.has(a)) && !item.traces.some(a => selectedAllergens.has(a));
-        const status = (isCompatible || selectedAllergens.size === 0) ? 'compatible' : 'incompatible';
+      const allItems: CategorizedItem[] = category.items.map(item => {
+        const isIncompatible = item.allergens.some(a => selectedAllergens.has(a)) || item.traces.some(a => selectedAllergens.has(a));
+        const status = (isIncompatible && selectedAllergens.size > 0) ? 'incompatible' : 'compatible';
         
         if (status === 'compatible') {
           compatibleItems.push(item);
         } else {
-          incompatibleItems.push(item); // THE FIX IS HERE
+          incompatibleItems.push(item);
         }
         
-        return { item, status } as CategorizedItem;
+        return { item, status };
       });
-
 
       return {
         ...category,
@@ -60,12 +59,19 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
   if (!isLoaded || !categorizedMenu) {
     return (
       <div className="container space-y-8 px-4 sm:px-6">
-        {[1, 2, 3, 4].map(i => (
+        {[1, 2, 3].map(i => (
           <div key={i} className="space-y-4">
-            <Skeleton className="h-10 w-1/3 rounded-lg" />
-            <div className="grid grid-cols-1 gap-4">
-              {[1, 2, 3, 4].map(j => (
-                 <Skeleton key={j} className="h-24 w-full rounded-none" />
+            <Skeleton className="h-8 w-1/3 rounded-lg" />
+            <div className="flex flex-col">
+              {[1, 2, 3].map(j => (
+                 <div key={j} className="py-4">
+                  <div className="flex justify-between items-start gap-4">
+                    <Skeleton className="h-5 w-1/2" />
+                    <Skeleton className="h-5 w-12" />
+                  </div>
+                  <Skeleton className="h-4 w-3/4 mt-2" />
+                  <Separator className="mt-4" />
+                 </div>
               ))}
             </div>
           </div>
@@ -90,7 +96,6 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
         const compatibleCards = category.compatibleItems.map(item => <MenuItemCard key={item.id} item={item} status="compatible" />);
         const incompatibleCards = category.incompatibleItems.map(item => <MenuItemCard key={item.id} item={item} status="incompatible" />);
-        const allCards = category.allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />);
         
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
@@ -99,13 +104,13 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           </div>
           
           <div className="flex flex-col">
-             {showAll ? (
+             { showAll ? (
                 <>
-                 {allCards.length > 0 ? allCards : <Separator />}
+                 {category.allItems.map(({item, status}) => <MenuItemCard key={item.id} item={item} status={status} />)}
                 </>
              ) : (
                <>
-                {compatibleCards.length > 0 && compatibleCards}
+                {compatibleCards.length > 0 ? compatibleCards : null}
                 
                 {incompatibleCards.length > 0 && selectedAllergens.size > 0 && (
                   <Accordion type="single" collapsible className="w-full">
@@ -120,7 +125,6 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                         <div className="flex flex-col">
                            <Separator />
                           {incompatibleCards}
-                           <Separator className="mt-0" />
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -129,7 +133,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
                 {(compatibleCards.length > 0 || (incompatibleCards.length > 0 && selectedAllergens.size === 0)) && <Separator className="mt-0" />}
 
-                {compatibleCards.length === 0 && selectedAllergens.size > 0 && (
+                {compatibleCards.length === 0 && selectedAllergens.size > 0 && incompatibleCards.length > 0 &&(
                    <div className="border-dashed border-2 rounded-2xl text-center my-4">
                      <div className="p-6">
                        <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
@@ -141,11 +145,9 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                </>
              )}
           </div>
-
+          {category.hasContent && <Separator />}
         </section>
       )})}
-
-      <Separator className="my-8" />
 
       <Card className="bg-muted/50 rounded-2xl shadow-none border-none">
         <CardContent className="p-6">

@@ -2,7 +2,6 @@
 
 import { MenuItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { ShieldX } from 'lucide-react';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { Separator } from '../ui/separator';
 import { AllergenIcon } from './AllergenIcon';
@@ -28,7 +27,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
 
       <div className="pt-1 space-y-3">
         {item.description && (
-          <p className="text-sm text-muted-foreground ml-4">{item.description}</p>
+          <p className="text-sm text-muted-foreground">{item.description}</p>
         )}
 
         {(allPresentAllergens.length > 0) && (
@@ -45,7 +44,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                     'rounded-md',
                     allergenColors[allergenId] || 'bg-muted',
                      isSelected && status === 'incompatible' ? 'ring-2 ring-destructive' : '',
-                     isTrace ? 'border-dashed border-2 border-muted-foreground' : ''
+                     isTrace ? 'border-dashed border-2 !border-muted-foreground' : ''
                   )}
                   iconClassName="size-4"
                   />
