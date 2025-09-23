@@ -74,7 +74,7 @@
     },
     {
       "id": "merluza",
-      "imageUrl": "https://images.unsplash.com/photo-1699856901058-30b5e2b9b0cf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtZXJsdXphfGVufDB8fHx8MTc1ODYzMjg4N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1699856901058-30b5d92b9b0cf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtZXJsdXphfGVufDB8fHx8MTc1ODYzMjg4N3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "merluza",
       "description": "merluza"
     },
@@ -149,6 +149,48 @@
       "imageUrl": "https://images.unsplash.com/photo-1731010015631-776aa544afef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx0YXJ0YSUyMHNhbnRpYWdvfGVufDB8fHx8MTc1ODYzMjg4N3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "tarta santiago",
       "description": "tarta de santiago"
+    },
+    {
+      "id": "agua",
+      "imageUrl": "https://images.unsplash.com/photo-1530711654140-23ef9ad45094?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3YXRlciUyMGJvdHRsZXxlbnwwfHx8fDE3NTg1ODMwNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "water bottle",
+      "description": "Agua Mineral"
+    },
+    {
+      "id": "refresco",
+      "imageUrl": "https://images.unsplash.com/photo-1585498154575-3db0fda49f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzb2RhJTIwY2FufGVufDB8fHx8MTc1ODU4ODQ3OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soda can",
+      "description": "Refresco"
+    },
+    {
+      "id": "cerveza",
+      "imageUrl": "https://images.unsplash.com/photo-1618183479302-1e0aa382c36b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkcmFmdCUyMGJlZXJ8ZW58MHx8fHwxNzU4NjM0NjYzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "draft beer",
+      "description": "Cerveza de Barril"
+    },
+    {
+      "id": "zumo",
+      "imageUrl": "https://images.unsplash.com/photo-1577680716097-9a565ddc2007?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxvcmFuZ2UlMjBqdWljZXxlbnwwfHx8fDE3NTg1ODg0Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "orange juice",
+      "description": "Zumo de Naranja"
+    },
+    {
+      "id": "copa-vino-tinto",
+      "imageUrl": "https://images.unsplash.com/photo-1591095438120-d0147701080b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cmVkJTIwd2luZXxlbnwwfHx8fDE3NTg2MDM5NDB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "red wine",
+      "description": "Copa de Vino Tinto"
+    },
+    {
+      "id": "copa-vino-blanco",
+      "imageUrl": "https://images.unsplash.com/photo-1558346489-19413928158b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx3aGl0ZSUyMHdpbmV8ZW58MHx8fHwxNzU4NjM0NjYyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white wine",
+      "description": "Copa de Vino Blanco"
+    },
+    {
+      "id": "botella-protos",
+      "imageUrl": "https://images.unsplash.com/photo-1700893417207-99da24343476?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx3aW5lJTIwYm90dGxlfGVufDB8fHx8MTc1ODYxMzE2NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wine bottle",
+      "description": "Botella de Vino"
     }
   ]
 }

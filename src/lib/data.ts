@@ -203,6 +203,88 @@ export const restaurants: Restaurant[] = [
           }
         ],
       },
+      {
+        id: 'drinks',
+        name: 'Bebidas',
+        items: [
+          {
+            id: '401',
+            name: 'Agua Mineral',
+            description: 'Botella de 500ml, con o sin gas.',
+            price: 2.50,
+            allergens: [],
+            traces: [],
+            imageId: 'agua',
+            lastUpdated: '2024-05-20T10:00:00Z',
+          },
+          {
+            id: '402',
+            name: 'Refresco',
+            description: 'Coca-Cola, Fanta, etc.',
+            price: 3.00,
+            allergens: [],
+            traces: [],
+            imageId: 'refresco',
+            lastUpdated: '2024-05-20T10:00:00Z',
+          },
+          {
+            id: '403',
+            name: 'Cerveza de Barril',
+            description: 'Caña o doble de cerveza local.',
+            price: 3.50,
+            allergens: ['gluten'],
+            traces: [],
+            imageId: 'cerveza',
+            lastUpdated: '2024-05-20T10:00:00Z',
+          },
+          {
+            id: '404',
+            name: 'Zumo de Naranja Natural',
+            description: 'Recién exprimido.',
+            price: 4.00,
+            allergens: [],
+            traces: [],
+            imageId: 'zumo',
+            lastUpdated: '2024-05-20T10:00:00Z',
+          }
+        ]
+      },
+      {
+        id: 'wines',
+        name: 'Vinos',
+        items: [
+          {
+            id: '501',
+            name: 'Copa de Rioja Crianza',
+            description: 'Vino tinto D.O.Ca. Rioja.',
+            price: 4.50,
+            allergens: ['sulphites'],
+            traces: [],
+            imageId: 'copa-vino-tinto',
+            lastUpdated: '2024-05-20T10:00:00Z',
+          },
+          {
+            id: '502',
+            name: 'Copa de Verdejo',
+            description: 'Vino blanco D.O. Rueda.',
+            price: 4.00,
+            allergens: ['sulphites'],
+            traces: [],
+            imageId: 'copa-vino-blanco',
+            lastUpdated: '2024-05-20T10:00:00Z',
+          },
+          {
+            id: '503',
+            name: 'Botella Protos Crianza',
+            description: 'Vino tinto D.O. Ribera del Duero.',
+            price: 25.00,
+            allergens: ['sulphites'],
+            traces: [],
+            imageId: 'botella-protos',
+            lastUpdated: '2024-05-20T10:00:00Z',
+          }
+        ]
+      }
     ],
   },
 ];

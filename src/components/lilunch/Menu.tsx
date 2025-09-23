@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
-import { allergenColors, allergenButtonColors } from './colors';
+import { allergenColors } from './colors';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 
@@ -57,7 +57,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
   if (!isLoaded || !categorizedMenu) {
     return (
       <div className="container space-y-8 px-4 sm:px-6">
-        {[1, 2].map(i => (
+        {[1, 2, 3, 4].map(i => (
           <div key={i} className="space-y-4">
             <Skeleton className="h-10 w-1/3 rounded-lg" />
             <div className="space-y-4">
@@ -104,7 +104,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
         
         return (
-        <section key={category.id} className="space-y-4">
+        <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
           <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
           
           {showAll ? (
