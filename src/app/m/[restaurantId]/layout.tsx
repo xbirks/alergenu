@@ -3,7 +3,7 @@ import { LegalFooter } from '@/components/lilunch/LegalFooter';
 import { CategoryNav } from '@/components/lilunch/CategoryNav';
 import { getRestaurantById } from '@/lib/data';
 
-export default function MenuLayout({
+export default async function MenuLayout({
   children,
   params,
 }: {

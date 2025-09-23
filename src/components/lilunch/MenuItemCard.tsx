@@ -1,85 +1,74 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { allergenMap } from '@/lib/allergens';
 import { MenuItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, ShieldX } from 'lucide-react';
-import { AllergenIcon } from './AllergenIcon';
+import { ShieldX } from 'lucide-react';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { allergenColors } from './colors';
 
 type ItemStatus = 'compatible' | 'incompatible';
 
-const statusStyles: Record<ItemStatus, string> = {
-  compatible: 'bg-card',
-  incompatible: 'bg-card', // No longer dimming incompatible items
-};
-
 export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemStatus }) {
   const allPresentAllergens = [...item.allergens, ...item.traces];
-  const { isAllergenSelected } = useAllergenProfile();
+  const { isAllergenSelected, selectedAllergens } = useAllergenProfile();
 
-  const placeholderImage = PlaceHolderImages.find(p => p.id === item.imageId);
+  const showIncompatibleWarning = selectedAllergens.size > 0 && status === 'incompatible';
 
   return (
-    <Card className={cn("overflow-hidden shadow-none border-none rounded-2xl transition-all duration-300", statusStyles[status])}>
-      <div className="flex">
-        <div className="flex-grow">
-          <CardHeader className="p-4 pb-2">
-            <div className="flex justify-between items-start gap-4">
-              <div className='flex items-start gap-2'>
-                {status === 'compatible' && <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-1" />}
-                {status === 'incompatible' && <ShieldX className="h-4 w-4 text-destructive flex-shrink-0 mt-1" />}
-                <CardTitle className="text-lg font-semibold">{item.name}</CardTitle>
-              </div>
-              <div className="text-lg font-normal text-foreground whitespace-nowrap">
-                {item.price.toFixed(2)}€
-              </div>
-            </div>
-            {item.description && (
-              <CardDescription className="text-sm !mt-1 pl-6">{item.description}</CardDescription>
-            )}
-          </CardHeader>
-          {allPresentAllergens.length > 0 && (
-            <CardContent className="p-4 pt-0">
-                <div className="flex flex-wrap gap-2 items-center pl-6">
-                  <TooltipProvider>
-                    {allPresentAllergens.map(allergenId => {
-                      const allergen = allergenMap.get(allergenId);
-                      if (!allergen) return null;
-                      
-                      const isTrace = item.traces.includes(allergenId);
-                      const isSelected = isAllergenSelected(allergenId);
-
-                      return (
-                        <Tooltip key={allergenId} delayDuration={100}>
-                          <TooltipTrigger>
-                            <AllergenIcon 
-                                  allergenId={allergenId} 
-                                  className={cn(
-                                      allergenColors[allergenId] || 'bg-gray-100 text-gray-600',
-                                      'p-0.5',
-                                      isTrace ? 'border-dashed border-2 border-current' : '',
-                                      isSelected && status === 'incompatible' && 'ring-2 ring-destructive ring-offset-2 ring-offset-background'
-                                  )}
-                                  iconClassName='size-5'
-                            />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{allergen.name}{isTrace ? ' (puede contener trazas)' : ''}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    })}
-                  </TooltipProvider>
-                </div>
-            </CardContent>
+    <div className={cn("py-4 border-b", status === 'incompatible' && selectedAllergens.size > 0 ? 'opacity-50' : '')}>
+      <div className="flex justify-between items-start gap-4">
+        <div className="flex-1">
+          <p className="text-sm font-bold uppercase tracking-wider text-foreground">{item.name}</p>
+          {item.description && (
+            <p className="text-sm text-muted-foreground mt-1 ml-4">{item.description}</p>
           )}
         </div>
+        <p className="text-sm font-semibold text-foreground whitespace-nowrap">
+          {item.price.toFixed(2)}€
+        </p>
       </div>
-    </Card>
+
+      {(allPresentAllergens.length > 0 || showIncompatibleWarning) && (
+        <div className="flex flex-wrap gap-2 items-center mt-3 ml-4">
+          {showIncompatibleWarning && (
+             <Badge variant="destructive" className="flex items-center gap-1.5 pl-2 pr-2.5">
+                <ShieldX className="h-3.5 w-3.5" />
+                No apto
+              </Badge>
+          )}
+          <TooltipProvider>
+            {allPresentAllergens.map(allergenId => {
+              const allergen = allergenMap.get(allergenId);
+              if (!allergen) return null;
+
+              const isTrace = item.traces.includes(allergenId);
+              const isSelected = isAllergenSelected(allergenId);
+
+              return (
+                <Tooltip key={allergenId} delayDuration={100}>
+                  <TooltipTrigger>
+                    <Badge
+                      className={cn(
+                        'font-medium border',
+                        allergenColors[allergenId] || 'bg-gray-100 text-gray-800',
+                        'hover:opacity-80',
+                        isTrace ? 'border-dashed border-[1.5px] border-current' : 'border-transparent',
+                        isSelected && status === 'incompatible' && 'ring-2 ring-destructive ring-offset-1 ring-offset-background'
+                      )}
+                    >
+                      {allergen.name}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{allergen.name}{isTrace ? ' (puede contener trazas)' : ''}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </TooltipProvider>
+        </div>
+      )}
+    </div>
   );
 }

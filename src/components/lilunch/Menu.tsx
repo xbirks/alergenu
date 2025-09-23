@@ -7,11 +7,11 @@ import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import { ShieldX, Info } from 'lucide-react';
-import { allergenMap, ALLERGENS } from '@/lib/allergens';
+import { allergenMap } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '../ui/card';
 import { allergenColors } from './colors';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
@@ -103,22 +103,22 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
         const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
         
+        if (!category.hasContent) return null;
+
         return (
         <section key={category.id} id={category.id} className="space-y-2 pt-4 -mt-4">
-          <h2 className="text-3xl font-bold tracking-tight mb-4">{category.name}</h2>
+          <h2 className="text-2xl font-bold tracking-tight mb-2 uppercase">{category.name}</h2>
           
           {showAll ? (
-             <div className="grid gap-2 md:gap-3">
+             <div className="flex flex-col">
                 {allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)}
               </div>
           ) : (
             <>
             {category.compatible.length > 0 && (
-              <div className="space-y-2">
-                <div className="grid gap-2 md:gap-3">
+              <div className="flex flex-col">
                   {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
                 </div>
-              </div>
             )}
 
             {category.incompatible.length > 0 && (
@@ -130,8 +130,8 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                         <AlertTitle>{getIncompatibleTriggerText(category.incompatible)}</AlertTitle>
                     </AccordionTrigger>
                   </Alert>
-                  <AccordionContent className="pt-2">
-                    <div className="grid gap-2 md:gap-3">
+                  <AccordionContent>
+                    <div className="flex flex-col">
                       {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
                     </div>
                   </AccordionContent>
@@ -140,7 +140,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
             )}
             
             {category.compatible.length === 0 && selectedAllergens.size > 0 && (
-              <Card className="border-dashed border-2 rounded-2xl text-center shadow-none">
+              <Card className="border-dashed border-2 rounded-lg text-center shadow-none my-4">
                   <CardContent className="p-6">
                     <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground font-medium">No hay platos compatibles en esta categoría para tu selección de alérgenos.</p>
@@ -158,7 +158,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
          <div className="flex items-center justify-center space-x-2 py-4">
             <Switch id="show-all-switch" checked={showAll} onCheckedChange={setShowAll} />
             <Label htmlFor="show-all-switch" className="font-medium">
-              {showAll ? "Mostrando todos los platos" : "Mostrar todos los platos"}
+              {showAll ? "Mostrando todos los platos" : "Mostrar solo platos compatibles"}
             </Label>
           </div>
       )}
@@ -168,7 +168,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
       <Card className="bg-muted/50 rounded-2xl">
         <CardContent className="p-6">
-          <h3 className="text-2xl font-bold tracking-tight text-left mb-6">Leyenda de Alérgenos</h3>
+          <h3 className="text-lg font-bold tracking-tight text-left mb-6 uppercase">Leyenda de Alérgenos</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5">
             {ALLERGENS.map(allergen => (
               <div key={allergen.id} className="flex items-center gap-3">
