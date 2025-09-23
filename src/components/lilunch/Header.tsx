@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { AllergensSheet } from './AllergensSheet';
-import { ShieldAlert, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
