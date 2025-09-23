@@ -40,44 +40,44 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
               </div>
             </div>
             {item.description && (
-              <CardDescription className="text-sm !mt-1 pl-7">{item.description}</CardDescription>
+              <CardDescription className="text-sm !mt-1 pl-6">{item.description}</CardDescription>
             )}
           </CardHeader>
-          <CardContent className="p-4 pt-2">
-            {allPresentAllergens.length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center pl-7">
-                <TooltipProvider>
-                  {allPresentAllergens.map(allergenId => {
-                    const allergen = allergenMap.get(allergenId);
-                    if (!allergen) return null;
-                    
-                    const isTrace = item.traces.includes(allergenId);
-                    const isSelected = isAllergenSelected(allergenId);
+          {allPresentAllergens.length > 0 && (
+            <CardContent className="p-4 pt-0">
+                <div className="flex flex-wrap gap-2 items-center pl-6">
+                  <TooltipProvider>
+                    {allPresentAllergens.map(allergenId => {
+                      const allergen = allergenMap.get(allergenId);
+                      if (!allergen) return null;
+                      
+                      const isTrace = item.traces.includes(allergenId);
+                      const isSelected = isAllergenSelected(allergenId);
 
-                    return (
-                      <Tooltip key={allergenId} delayDuration={100}>
-                        <TooltipTrigger>
-                           <AllergenIcon 
-                                allergenId={allergenId} 
-                                className={cn(
-                                    allergenColors[allergenId] || 'bg-gray-100 text-gray-600',
-                                    'p-0.5',
-                                    isTrace ? 'border-dashed border-[1.5px] border-current' : '',
-                                    isSelected && status === 'incompatible' && 'ring-2 ring-destructive ring-offset-2 ring-offset-background'
-                                )}
-                                iconClassName='size-5'
-                           />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{allergen.name}{isTrace ? ' (puede contener trazas)' : ''}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
-                </TooltipProvider>
-              </div>
-            )}
-          </CardContent>
+                      return (
+                        <Tooltip key={allergenId} delayDuration={100}>
+                          <TooltipTrigger>
+                            <AllergenIcon 
+                                  allergenId={allergenId} 
+                                  className={cn(
+                                      allergenColors[allergenId] || 'bg-gray-100 text-gray-600',
+                                      'p-0.5',
+                                      isTrace ? 'border-dashed border-2 border-current' : '',
+                                      isSelected && status === 'incompatible' && 'ring-2 ring-destructive ring-offset-2 ring-offset-background'
+                                  )}
+                                  iconClassName='size-5'
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{allergen.name}{isTrace ? ' (puede contener trazas)' : ''}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </TooltipProvider>
+                </div>
+            </CardContent>
+          )}
         </div>
       </div>
     </Card>

@@ -98,14 +98,14 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
   }
 
   return (
-    <div className="container space-y-8 px-4 sm:px-6">
+    <div className="container space-y-6 px-4 sm:px-6">
       {categorizedMenu.map(category => {
         const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
         const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
         
         return (
-        <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
-          <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
+        <section key={category.id} id={category.id} className="space-y-2 pt-4 -mt-4">
+          <h2 className="text-3xl font-bold tracking-tight mb-4">{category.name}</h2>
           
           {showAll ? (
              <div className="grid gap-2 md:gap-3">
