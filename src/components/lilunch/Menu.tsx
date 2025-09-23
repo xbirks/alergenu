@@ -6,13 +6,15 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Shield, ShieldAlert, ShieldX } from 'lucide-react';
-import { allergenMap } from '@/lib/allergens';
+import { Shield, ShieldX, Info } from 'lucide-react';
+import { allergenMap, ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AllergenIcon } from './AllergenIcon';
+import { Separator } from '../ui/separator';
 
 type CategorizedItem = {
   item: MenuItem;
-  status: 'compatible' | 'precaution' | 'incompatible';
+  status: 'compatible' | 'incompatible';
   blockingAllergens?: string[];
 };
 
@@ -24,29 +26,25 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
     return restaurant.menu.map(category => {
       const items = category.items.map(item => {
-        const incompatibleAllergens = item.allergens.filter(a => selectedAllergens.has(a));
-        if (incompatibleAllergens.length > 0) {
-          return { item, status: 'incompatible', blockingAllergens: incompatibleAllergens } as CategorizedItem;
-        }
+        const incompatibleDirect = item.allergens.filter(a => selectedAllergens.has(a));
+        const incompatibleTraces = item.traces.filter(a => selectedAllergens.has(a));
+        const blockingAllergens = [...new Set([...incompatibleDirect, ...incompatibleTraces])];
 
-        const precautionAllergens = item.traces.filter(a => selectedAllergens.has(a));
-        if (precautionAllergens.length > 0) {
-          return { item, status: 'precaution' } as CategorizedItem;
+        if (blockingAllergens.length > 0) {
+          return { item, status: 'incompatible', blockingAllergens } as CategorizedItem;
         }
 
         return { item, status: 'compatible' } as CategorizedItem;
       });
 
       const compatible = items.filter(i => i.status === 'compatible');
-      const precaution = items.filter(i => i.status === 'precaution');
       const incompatible = items.filter(i => i.status === 'incompatible');
 
       return {
         ...category,
         compatible,
-        precaution,
         incompatible,
-        hasContent: compatible.length > 0 || precaution.length > 0 || incompatible.length > 0,
+        hasContent: compatible.length > 0 || incompatible.length > 0,
       };
     });
   }, [restaurant.menu, selectedAllergens, isLoaded]);
@@ -73,7 +71,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
     items.forEach(i => i.blockingAllergens?.forEach(a => allBlockingAllergens.add(a)));
     const allergenNames = Array.from(allBlockingAllergens).map(id => allergenMap.get(id)?.name);
     if (allergenNames.length === 0) return "Contiene tus alérgenos";
-    return `Contiene ${allergenNames.slice(0, 2).join(', ')}${allergenNames.length > 2 ? ' y más' : ''}`;
+    return `Contiene ${allergenNames.slice(0, 1).join(', ')}${allergenNames.length > 1 ? ' y más' : ''}`;
   }
 
   return (
@@ -88,24 +86,6 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                 {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
               </div>
             </div>
-          )}
-
-          {category.precaution.length > 0 && (
-             <Accordion type="single" collapsible className="w-full space-y-4" disabled={selectedAllergens.size === 0}>
-               <AccordionItem value="precaution" className="border-none">
-                <Alert variant="default" className="bg-warning/10 border-none p-0">
-                  <AccordionTrigger className="px-4 py-2 text-xs hover:no-underline justify-start gap-2">
-                    <ShieldAlert className="h-4 w-4 text-warning" />
-                    <AlertTitle className="text-amber-800 dark:text-amber-300 font-semibold">Usar con precaución</AlertTitle>
-                  </AccordionTrigger>
-                </Alert>
-                <AccordionContent className="pt-4">
-                   <div className="grid gap-4">
-                    {category.precaution.map(({ item }) => <MenuItemCard key={item.id} item={item} status="precaution" />)}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
           )}
 
            {category.incompatible.length > 0 && (
@@ -125,13 +105,37 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
               </AccordionItem>
             </Accordion>
           )}
-
-          {category.compatible.length === 0 && category.precaution.length === 0 && category.incompatible.length > 0 && selectedAllergens.size > 0 && (
-             <p className="text-muted-foreground text-center py-4">No hay platos compatibles en esta categoría según tu perfil.</p>
+          
+          {category.compatible.length === 0 && selectedAllergens.size > 0 && (
+             <Card className="border-dashed border-2 rounded-2xl text-center shadow-none">
+                <CardContent className="p-6">
+                  <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground font-medium">No hay platos compatibles en esta categoría para tu selección de alérgenos.</p>
+                  <p className="text-muted-foreground text-sm mt-1">Consulta al personal para posibles adaptaciones.</p>
+                </CardContent>
+              </Card>
           )}
 
         </section>
       ))}
+
+      <Separator className="my-12" />
+
+      <section className="space-y-6 pb-12">
+        <h3 className="text-2xl font-bold tracking-tight text-center">Leyenda de Alérgenos</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5 max-w-3xl mx-auto">
+          {ALLERGENS.map(allergen => (
+            <div key={allergen.id} className="flex items-center gap-3">
+              <AllergenIcon allergenId={allergen.id} />
+              <span className="font-medium text-sm">{allergen.name}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-center gap-3 text-muted-foreground text-sm pt-4">
+          <div className="w-6 h-6 border-2 border-dashed border-muted-foreground rounded-md flex-shrink-0" />
+          <span>Indica que un plato puede contener trazas.</span>
+        </div>
+      </section>
     </div>
   );
 }

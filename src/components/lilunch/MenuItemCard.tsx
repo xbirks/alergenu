@@ -4,17 +4,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { allergenMap, ALLERGENS } from '@/lib/allergens';
 import { MenuItem } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Shield, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, ShieldX } from 'lucide-react';
 import { AllergenIcon } from './AllergenIcon';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-type ItemStatus = 'compatible' | 'precaution' | 'incompatible';
+type ItemStatus = 'compatible' | 'incompatible';
 
 const statusStyles: Record<ItemStatus, string> = {
   compatible: 'bg-card',
-  precaution: 'bg-warning/10',
   incompatible: 'opacity-50 bg-card',
 };
 
@@ -49,11 +48,11 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
           <CardHeader className="p-4 pb-2">
             <div className="flex justify-between items-start gap-4">
               <div className='flex items-center gap-2'>
-                {status === 'compatible' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
-                {status === 'precaution' && <AlertTriangle className="h-5 w-5 text-warning" />}
+                {status === 'compatible' && <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />}
+                {status === 'incompatible' && <ShieldX className="h-5 w-5 text-destructive flex-shrink-0" />}
                 <CardTitle className="text-lg font-semibold">{item.name}</CardTitle>
               </div>
-              <div className="text-lg font-normal text-muted-foreground whitespace-nowrap">
+              <div className="text-lg font-normal text-foreground whitespace-nowrap">
                 {item.price.toFixed(2)}€
               </div>
             </div>
@@ -80,7 +79,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                                 className={cn(
                                     allergenColors[allergenId] || 'bg-gray-100 text-gray-600',
                                     isTrace ? 'border-dashed border-2 border-current' : '',
-                                    isSelected && !isTrace && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                                    isSelected && 'ring-2 ring-destructive ring-offset-2 ring-offset-background'
                                 )}
                            />
                         </TooltipTrigger>
