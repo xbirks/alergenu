@@ -86,10 +86,10 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           )}
 
           {category.precaution.length > 0 && (
-             <Accordion type="single" collapsible className="w-full space-y-4">
+             <Accordion type="single" collapsible className="w-full space-y-4" disabled={selectedAllergens.size === 0}>
                <AccordionItem value="precaution" className="border-none">
-                <Alert variant="default" className="bg-warning/10 border-warning/50 rounded-lg">
-                  <AccordionTrigger className="w-full p-0 hover:no-underline justify-start gap-2">
+                <Alert variant="default" className="bg-warning/10 border-warning/50 rounded-lg p-0">
+                  <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline justify-start gap-2">
                     <ShieldAlert className="h-5 w-5 text-warning" />
                     <AlertTitle className="text-amber-800 dark:text-amber-300 font-semibold">Usar con precaución</AlertTitle>
                   </AccordionTrigger>
@@ -104,10 +104,10 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           )}
 
            {category.incompatible.length > 0 && (
-             <Accordion type="single" collapsible className="w-full">
+             <Accordion type="single" collapsible className="w-full" disabled={selectedAllergens.size === 0}>
               <AccordionItem value="incompatible" className="border-none">
-                <Alert variant="destructive" className="rounded-lg">
-                  <AccordionTrigger className="w-full p-0 hover:no-underline justify-start gap-2">
+                <Alert variant="destructive" className="rounded-lg p-0">
+                  <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline justify-start gap-2">
                       <ShieldX className="h-5 w-5" />
                       <AlertTitle>{getIncompatibleTriggerText(category.incompatible)}</AlertTitle>
                   </AccordionTrigger>
