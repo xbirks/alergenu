@@ -1,16 +1,17 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Restaurant, MenuItem, MenuCategory } from '@/lib/types';
+import { Restaurant, MenuItem } from '@/lib/types';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Shield, ShieldX, Info } from 'lucide-react';
+import { Alert, AlertTitle } from '@/components/ui/alert';
+import { ShieldX, Info } from 'lucide-react';
 import { allergenMap, ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
+import { Card, CardContent } from '../ui/card';
 
 type CategorizedItem = {
   item: MenuItem;
