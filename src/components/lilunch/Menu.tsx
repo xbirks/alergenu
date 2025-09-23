@@ -16,6 +16,8 @@ import { allergenColors } from './colors';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
+import { CheckCircle2, ShieldX } from 'lucide-react';
+
 
 type CategorizedItem = {
   item: MenuItem;
@@ -108,11 +110,16 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
-          <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
+          <div className='flex items-center gap-3'>
+            <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
+          </div>
           
           <div className="flex flex-col">
             {showAll ? (
-              allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)
+               <>
+                {allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)}
+                <Separator className="mt-0" />
+               </>
             ) : (
               <>
                 {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
@@ -120,19 +127,24 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                 {category.incompatible.length > 0 && selectedAllergens.size > 0 && (
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="incompatible" className="border-none">
+                       <Separator />
                       <Alert variant="destructive" className="p-0 border-none rounded-none bg-background hover:bg-muted/50 transition-colors">
                         <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-semibold">
                           <span>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
                         </AccordionTrigger>
                       </Alert>
                       <AccordionContent>
-                        <div className="flex flex-col mt-4">
+                        <div className="flex flex-col">
+                           <Separator />
                           {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
                 )}
+
+                {(category.compatible.length > 0 || (category.incompatible.length > 0 && selectedAllergens.size > 0)) && <Separator className="mt-0" />}
+
               </>
             )}
             
