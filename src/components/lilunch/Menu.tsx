@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
+import { allergenColors } from './colors';
 
 type CategorizedItem = {
   item: MenuItem;
