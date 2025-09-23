@@ -3,8 +3,7 @@
 import { Header } from '@/components/lilunch/Header';
 import { LegalFooter } from '@/components/lilunch/LegalFooter';
 import { CategoryNav } from '@/components/lilunch/CategoryNav';
-import { getRestaurantById } from '@/lib/data';
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { AllergensSheet } from '@/components/lilunch/AllergensSheet';
 import { useEffect, useState } from 'react';
 
@@ -13,11 +12,6 @@ export default function MenuLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const params = useParams();
-  const restaurantId = Array.isArray(params.restaurantId) ? params.restaurantId[0] : params.restaurantId;
-  const restaurant = getRestaurantById(restaurantId);
-  const categories = restaurant?.menu.map(c => ({ id: c.id, name: c.name })) || [];
-  
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -37,7 +31,7 @@ export default function MenuLayout({
       <AllergensSheet open={isAllergensSheetOpen} onOpenChange={setIsAllergensSheetOpen}>
         <Header />
       </AllergensSheet>
-      <CategoryNav categories={categories} />
+      {/* CategoryNav will be rendered by the page */}
       <main className="pb-24 pt-4">{children}</main>
       <LegalFooter />
     </div>
