@@ -60,9 +60,9 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="space-y-4">
             <Skeleton className="h-10 w-1/3 rounded-lg" />
-            <div className="space-y-4">
-              {[1, 2, 3].map(j => (
-                 <Skeleton key={j} className="h-24 w-full rounded-2xl" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map(j => (
+                 <Skeleton key={j} className="h-32 w-full rounded-2xl" />
               ))}
             </div>
           </div>
@@ -98,34 +98,34 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
   }
 
   return (
-    <div className="container space-y-6 px-4 sm:px-6">
+    <div className="container space-y-8 px-4 sm:px-6">
       {categorizedMenu.map(category => {
-        const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
-        const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
-        
         if (!category.hasContent) return null;
 
+        const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
+        const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
+
         return (
-        <section key={category.id} id={category.id} className="space-y-2 pt-4 -mt-4">
-          <div className="flex items-start gap-3 mb-4">
-            {selectedAllergens.size === 0 ? (
-                <div className="w-5" />
-            ) : category.incompatible.length === 0 ? (
-                <CheckCircle2 className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
-            ) : (
-                <ShieldX className="h-5 w-5 text-red-500 mt-1 flex-shrink-0" />
-            )}
-            <h2 className="text-2xl font-bold tracking-tight uppercase">{category.name}</h2>
-          </div>
+        <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
+            <div className="flex items-start gap-3 mb-2">
+                {selectedAllergens.size === 0 ? (
+                    <div className="w-6 h-6" />
+                ) : category.incompatible.length === 0 ? (
+                    <CheckCircle2 className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+                ) : (
+                    <ShieldX className="h-6 w-6 text-red-500 mt-1 flex-shrink-0" />
+                )}
+                <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
+            </div>
           
           {showAll ? (
-             <div className="flex flex-col">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)}
               </div>
           ) : (
             <>
             {category.compatible.length > 0 && (
-              <div className="flex flex-col">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
                 </div>
             )}
@@ -133,14 +133,14 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
             {category.incompatible.length > 0 && (
               <Accordion type="single" collapsible className="w-full" disabled={selectedAllergens.size === 0}>
                 <AccordionItem value="incompatible" className="border-none">
-                  <Alert variant="destructive" className="p-0 border-none">
-                    <AccordionTrigger className="px-4 py-2 text-xs hover:no-underline justify-start gap-2">
+                  <Alert variant="destructive" className="p-0 border-none rounded-2xl">
+                    <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2">
                         <ShieldX className="h-4 w-4" />
                         <AlertTitle>{getIncompatibleTriggerText(category.incompatible)}</AlertTitle>
                     </AccordionTrigger>
                   </Alert>
                   <AccordionContent>
-                    <div className="flex flex-col">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                       {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
                     </div>
                   </AccordionContent>
@@ -149,7 +149,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
             )}
             
             {category.compatible.length === 0 && selectedAllergens.size > 0 && (
-              <Card className="border-dashed border-2 rounded-lg text-center shadow-none my-4">
+              <Card className="border-dashed border-2 rounded-2xl text-center shadow-none my-4 md:col-span-2">
                   <CardContent className="p-6">
                     <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground font-medium">No hay platos compatibles en esta categoría para tu selección de alérgenos.</p>
@@ -167,7 +167,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
          <div className="flex items-center justify-center space-x-2 py-4">
             <Switch id="show-all-switch" checked={showAll} onCheckedChange={setShowAll} />
             <Label htmlFor="show-all-switch" className="font-medium">
-              {showAll ? "Mostrando todos los platos" : "Mostrar solo platos compatibles"}
+              {showAll ? "Mostrando todos los platos" : "Ocultar platos no compatibles"}
             </Label>
           </div>
       )}
@@ -177,19 +177,21 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
       <Card className="bg-muted/50 rounded-2xl">
         <CardContent className="p-6">
-          <h3 className="text-lg font-bold tracking-tight text-left mb-6 uppercase">Leyenda de Alérgenos</h3>
+          <h3 className="text-lg font-bold tracking-tight text-left mb-6">Leyenda de Alérgenos</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5">
             {ALLERGENS.map(allergen => (
               <div key={allergen.id} className="flex items-center gap-3">
                 <AllergenIcon 
                   allergenId={allergen.id}
-                  className={allergenColors[allergen.id]} />
+                  className={cn(allergenColors[allergen.id], 'rounded-lg')}
+                  iconClassName="size-6"
+                />
                 <span className="font-medium text-sm">{allergen.name}</span>
               </div>
             ))}
           </div>
           <div className="flex items-center gap-3 text-muted-foreground text-sm pt-8">
-            <div className="w-6 h-6 border-dashed border-[1.5px] border-muted-foreground rounded-md flex-shrink-0" />
+            <div className="w-6 h-6 border-dashed border-2 border-muted-foreground rounded-lg flex-shrink-0" />
             <span>Indica que un plato puede contener trazas.</span>
           </div>
         </CardContent>
