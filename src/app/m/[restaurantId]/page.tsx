@@ -1,13 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { Menu } from '@/components/lilunch/Menu';
 import { getRestaurantById } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileQuestion, Shield, Smile } from 'lucide-react';
+import { FileQuestion } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { AllergensSheet } from '@/components/lilunch/AllergensSheet';
 
 export default function MenuPage() {
   const params = useParams();
@@ -15,12 +12,6 @@ export default function MenuPage() {
     ? params.restaurantId[0]
     : params.restaurantId;
   const restaurant = getRestaurantById(restaurantId);
-
-  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
-
-  const handleAllergensSet = () => {
-    setWelcomeDismissed(true);
-  };
 
   if (!restaurant || !restaurant.menu || restaurant.menu.length === 0) {
     return (
@@ -36,35 +27,6 @@ export default function MenuPage() {
             </p>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
-
-  if (!welcomeDismissed) {
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-8 text-center">
-        <div className="max-w-md">
-           <Shield size={64} className="mx-auto text-primary mb-6" />
-          <h1 className="text-4xl font-bold mb-4">Tu seguridad es nuestra prioridad</h1>
-          <p className="text-lg text-muted-foreground mb-12">
-            Para personalizar tu menú, por favor, indícanos si tienes alguna alergia alimentaria.
-          </p>
-          <div className="space-y-4">
-            <AllergensSheet onDone={handleAllergensSet}>
-               <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full bg-primary text-primary-foreground">
-                Tengo alergias
-              </Button>
-            </AllergensSheet>
-            <Button
-              size="lg"
-              variant="ghost"
-              className="w-full h-14 text-lg font-semibold rounded-full flex items-center gap-2"
-              onClick={() => setWelcomeDismissed(true)}
-            >
-              <Smile /> No soy alérgico
-            </Button>
-          </div>
-        </div>
       </div>
     );
   }

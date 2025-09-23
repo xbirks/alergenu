@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { AllergenIcon } from './AllergenIcon';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 const allergenButtonColors: Record<string, { selected: string; unselected: string }> = {
     gluten: { selected: 'bg-orange-500 border-orange-500', unselected: 'hover:bg-orange-50' },
@@ -35,20 +34,15 @@ const allergenButtonColors: Record<string, { selected: string; unselected: strin
     molluscs: { selected: 'bg-cyan-600 border-cyan-600', unselected: 'hover:bg-cyan-50' },
   };
 
-export function AllergensSheet({ children, onDone }: { children: React.ReactNode, onDone?: () => void }) {
+export function AllergensSheet({ children }: { children: React.ReactNode }) {
   const { isLoaded, isAllergenSelected, toggleAllergen } = useAllergenProfile();
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
 
 
   const handleDone = () => {
     setIsOpen(false);
-    if (onDone) {
-      onDone();
-    } else {
-        // Reload the page to apply allergen changes
-        window.location.reload();
-    }
+    // Reload the page to apply allergen changes
+    window.location.reload();
   };
 
   return (
