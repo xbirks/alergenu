@@ -1,3 +1,4 @@
+import React from 'react';
 import { Egg, Fish, Leaf, Milk, Nut, Wheat, Soup, Shell, Salad, Bot, Snowflake, Grape, Bean } from 'lucide-react';
 import type { Allergen } from '@/lib/types';
 import { cn } from '@/lib/utils';
