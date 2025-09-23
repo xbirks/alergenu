@@ -22,7 +22,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
   const hasContent = item.description || allPresentAllergens.length > 0 || showIncompatibleWarning;
 
   return (
-    <Card className={cn("w-full shadow-md rounded-2xl", status === 'incompatible' && selectedAllergens.size > 0 ? 'bg-muted/60 opacity-70' : 'bg-card')}>
+    <Card className={cn("w-full shadow-sm rounded-2xl", status === 'incompatible' && selectedAllergens.size > 0 ? 'bg-muted/60 opacity-70' : 'bg-card')}>
         <CardHeader className="flex flex-row justify-between items-start gap-4 p-4">
             <div className="flex-1">
                 <h3 className="text-lg font-semibold leading-tight">{item.name}</h3>
