@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "pizza-margherita",
+      "description": "Classic Pizza Margherita",
+      "imageUrl": "https://images.unsplash.com/photo-1600028068383-ea11a7a101f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwaXp6YSUyMG1hcmdoZXJpdGF8ZW58MHx8fHwxNzU4NTkxODc2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pizza margherita"
+    },
+    {
+      "id": "spaghetti-carbonara",
+      "description": "Spaghetti Carbonara",
+      "imageUrl": "https://images.unsplash.com/photo-1719250498103-bddaf077410a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c3BhZ2hldHRpJTIwY2FyYm9uYXJhfGVufDB8fHx8MTc1ODU5MzY1M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "spaghetti carbonara"
+    },
+    {
+      "id": "caesar-salad",
+      "description": "Caesar Salad with Chicken",
+      "imageUrl": "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjYWVzYXIlMjBzYWxhZHxlbnwwfHx8fDE3NTg2MDY5Njh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "caesar salad"
+    },
+    {
+      "id": "cheeseburger",
+      "description": "Classic Cheeseburger",
+      "imageUrl": "https://images.unsplash.com/photo-1619901282828-7cbde1c89884?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjaGVlc2VidXJnZXJ8ZW58MHx8fHwxNzU4NTg5NzEwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "cheeseburger"
+    },
+    {
+      "id": "tiramisu",
+      "description": "Homemade Tiramisu",
+      "imageUrl": "https://images.unsplash.com/photo-1622814651041-b9a3c54d60ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8dGlyYW1pc3UlMjBkZXNzZXJ0fGVufDB8fHx8MTc1ODYyMDc5OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tiramisu dessert"
+    },
+    {
+      "id": "seafood-paella",
+      "description": "Traditional Seafood Paella",
+      "imageUrl": "https://images.unsplash.com/photo-1739268515254-631fda640a1c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzZWFmb29kJTIwcGFlbGxhfGVufDB8fHx8MTc1ODYxMTA1NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "seafood paella"
+    },
+    {
+      "id": "chocolate-cake",
+      "description": "Decadent Chocolate Cake",
+      "imageUrl": "https://images.unsplash.com/photo-1602351447937-745cb720612f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxjaG9jb2xhdGUlMjBjYWtlfGVufDB8fHx8MTc1ODU4NTg5NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chocolate cake"
+    },
+    {
+      "id": "sushi-platter",
+      "description": "Assorted Sushi Platter",
+      "imageUrl": "https://images.unsplash.com/photo-1582581720432-de83a98176ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzdXNoaSUyMHBsYXR0ZXJ8ZW58MHx8fHwxNzU4NTg3NDgyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sushi platter"
+    }
+  ]
 }
