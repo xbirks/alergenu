@@ -2,6 +2,7 @@ import { Header } from '@/components/lilunch/Header';
 import { LegalFooter } from '@/components/lilunch/LegalFooter';
 import { CategoryNav } from '@/components/lilunch/CategoryNav';
 import { getRestaurantById } from '@/lib/data';
+import { AllergensSheetAuto } from '@/components/lilunch/AllergensSheetAuto';
 
 export default async function MenuLayout({
   children,
@@ -19,6 +20,7 @@ export default async function MenuLayout({
       <CategoryNav categories={categories} />
       <main className="pb-24 pt-4">{children}</main>
       <LegalFooter />
+      <AllergensSheetAuto />
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { Badge } from '../ui/badge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import Link from 'next/link';
+import { AllergensSheet } from './AllergensSheet';
+import { useState } from 'react';
 
 export function Header() {
   const { selectedAllergens } = useAllergenProfile();
