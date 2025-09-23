@@ -15,6 +15,7 @@ import { Card, CardContent } from '../ui/card';
 import { allergenColors } from './colors';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
+import { cn } from '@/lib/utils';
 
 type CategorizedItem = {
   item: MenuItem;
@@ -98,7 +99,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
   }
 
   return (
-    <div className="container space-y-8 px-4 sm:px-6">
+    <div className="container space-y-4 px-4 sm:px-6">
       {categorizedMenu.map(category => {
         if (!category.hasContent) return null;
 
