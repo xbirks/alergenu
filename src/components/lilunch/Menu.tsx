@@ -13,7 +13,8 @@ import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { allergenColors } from './colors';
-import { Button } from '../ui/button';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
 
 type CategorizedItem = {
   item: MenuItem;
@@ -99,7 +100,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
   return (
     <div className="container space-y-10 px-4 sm:px-6">
       {categorizedMenu.map(category => {
-        const allItems = [...category.compatible, ...category.incompatible];
+        const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => allItems.indexOf(a) - allItems.indexOf(b));
         return (
         <section key={category.id} className="space-y-4">
           <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
@@ -152,15 +153,16 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
       )})}
 
       {selectedAllergens.size > 0 && (
-         <div className="text-center pt-4">
-            <Button variant="outline" onClick={() => setShowAll(!showAll)}>
-              {showAll ? "Ver solo platos compatibles" : "Ver todos los platos"}
-            </Button>
+         <div className="flex items-center justify-center space-x-2 py-4">
+            <Switch id="show-all-switch" checked={showAll} onCheckedChange={setShowAll} />
+            <Label htmlFor="show-all-switch" className="font-medium">
+              {showAll ? "Mostrando todos los platos" : "Mostrar todos los platos"}
+            </Label>
           </div>
       )}
 
 
-      <Separator className="my-12" />
+      <Separator className="my-8" />
 
       <Card className="bg-muted/50 rounded-2xl">
         <CardContent className="p-6">
@@ -176,7 +178,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
             ))}
           </div>
           <div className="flex items-center gap-3 text-muted-foreground text-sm pt-8">
-            <div className="w-6 h-6 border-dashed border-[1.5px] border-muted-foreground rounded-md flex-shrink-0" />
+            <div className="w-6 h-6 border-dashed border-2 border-muted-foreground rounded-md flex-shrink-0" />
             <span>Indica que un plato puede contener trazas.</span>
           </div>
         </CardContent>
