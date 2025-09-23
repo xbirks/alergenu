@@ -16,6 +16,7 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { AllergenIcon } from './AllergenIcon';
+import { useState } from 'react';
 
 const allergenButtonColors: Record<string, { selected: string; unselected: string }> = {
     gluten: { selected: 'bg-orange-500 border-orange-500', unselected: 'hover:bg-orange-50' },
@@ -36,16 +37,19 @@ const allergenButtonColors: Record<string, { selected: string; unselected: strin
 
 export function AllergensSheet({ children, onDone }: { children: React.ReactNode, onDone?: () => void }) {
   const { isLoaded, isAllergenSelected, toggleAllergen } = useAllergenProfile();
+  const [isOpen, setIsOpen] = useState(false);
+
 
   const handleDone = () => {
+    setIsOpen(false);
     if (onDone) {
       onDone();
     }
   };
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild onClick={() => setIsOpen(true)}>{children}</SheetTrigger>
       <SheetContent className="flex flex-col" side="bottom">
         <SheetHeader className="text-center">
           <SheetTitle className="text-2xl font-bold">Mis Alergias</SheetTitle>
@@ -80,9 +84,7 @@ export function AllergensSheet({ children, onDone }: { children: React.ReactNode
           </div>
         </ScrollArea>
         <SheetFooter className="p-4 border-t">
-           <SheetClose asChild>
-            <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full" onClick={handleDone}>Hecho</Button>
-          </SheetClose>
+          <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full" onClick={handleDone}>Hecho</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

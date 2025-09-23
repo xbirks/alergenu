@@ -14,7 +14,7 @@ type ItemStatus = 'compatible' | 'precaution' | 'incompatible';
 
 const statusStyles: Record<ItemStatus, string> = {
   compatible: 'bg-card',
-  precaution: 'bg-warning/10 border-warning/50',
+  precaution: 'bg-warning/10',
   incompatible: 'opacity-50 bg-card',
 };
 
@@ -43,7 +43,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
   const placeholderImage = PlaceHolderImages.find(p => p.id === item.imageId);
 
   return (
-    <Card className={cn("overflow-hidden shadow-none border rounded-2xl transition-all duration-300", statusStyles[status])}>
+    <Card className={cn("overflow-hidden shadow-none border-none rounded-2xl transition-all duration-300", statusStyles[status])}>
       <div className="flex">
         <div className="flex-grow">
           <CardHeader className="p-4 pb-2">
@@ -53,7 +53,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                 {status === 'precaution' && <AlertTriangle className="h-5 w-5 text-warning" />}
                 <CardTitle className="text-lg font-semibold">{item.name}</CardTitle>
               </div>
-              <div className="text-lg font-normal text-foreground whitespace-nowrap">
+              <div className="text-lg font-normal text-muted-foreground whitespace-nowrap">
                 {item.price.toFixed(2)}€
               </div>
             </div>

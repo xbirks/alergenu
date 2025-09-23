@@ -37,11 +37,16 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         return { item, status: 'compatible' } as CategorizedItem;
       });
 
+      const compatible = items.filter(i => i.status === 'compatible');
+      const precaution = items.filter(i => i.status === 'precaution');
+      const incompatible = items.filter(i => i.status === 'incompatible');
+
       return {
         ...category,
-        compatible: items.filter(i => i.status === 'compatible'),
-        precaution: items.filter(i => i.status === 'precaution'),
-        incompatible: items.filter(i => i.status === 'incompatible'),
+        compatible,
+        precaution,
+        incompatible,
+        hasContent: compatible.length > 0 || precaution.length > 0 || incompatible.length > 0,
       };
     });
   }, [restaurant.menu, selectedAllergens, isLoaded]);
@@ -88,9 +93,9 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           {category.precaution.length > 0 && (
              <Accordion type="single" collapsible className="w-full space-y-4" disabled={selectedAllergens.size === 0}>
                <AccordionItem value="precaution" className="border-none">
-                <Alert variant="default" className="bg-warning/10 border-warning/50 rounded-lg p-0">
-                  <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline justify-start gap-2">
-                    <ShieldAlert className="h-5 w-5 text-warning" />
+                <Alert variant="default" className="bg-warning/10 border-none p-0">
+                  <AccordionTrigger className="px-4 py-2 text-xs hover:no-underline justify-start gap-2">
+                    <ShieldAlert className="h-4 w-4 text-warning" />
                     <AlertTitle className="text-amber-800 dark:text-amber-300 font-semibold">Usar con precaución</AlertTitle>
                   </AccordionTrigger>
                 </Alert>
@@ -106,9 +111,9 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
            {category.incompatible.length > 0 && (
              <Accordion type="single" collapsible className="w-full" disabled={selectedAllergens.size === 0}>
               <AccordionItem value="incompatible" className="border-none">
-                <Alert variant="destructive" className="rounded-lg p-0">
-                  <AccordionTrigger className="px-4 py-2 text-sm hover:no-underline justify-start gap-2">
-                      <ShieldX className="h-5 w-5" />
+                <Alert variant="destructive" className="p-0 border-none">
+                  <AccordionTrigger className="px-4 py-2 text-xs hover:no-underline justify-start gap-2">
+                      <ShieldX className="h-4 w-4" />
                       <AlertTitle>{getIncompatibleTriggerText(category.incompatible)}</AlertTitle>
                   </AccordionTrigger>
                 </Alert>

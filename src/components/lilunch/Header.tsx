@@ -15,23 +15,25 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="container flex h-20 items-center justify-between px-4 sm:px-6">
         <h1 className="text-2xl font-bold tracking-tight">Menú</h1>
-        <AllergensSheet>
-          <Button variant="ghost" className="relative rounded-full h-12 w-auto px-3 flex items-center gap-3">
-             <div className="relative">
-              <Avatar className="h-9 w-9">
-                <AvatarFallback className="bg-primary/20 text-primary">
-                  <User className="h-5 w-5" />
-                </AvatarFallback>
-              </Avatar>
-              {selectedCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full p-0">
-                  {selectedCount}
-                </Badge>
-              )}
-            </div>
-            <span className="text-base hidden sm:block">Mis Alergias</span>
-          </Button>
-        </AllergensSheet>
+        <div className="absolute left-1/2 -translate-x-1/2">
+            <AllergensSheet>
+              <Button variant="outline" className="rounded-full h-10 shadow-sm">
+                Mis Alergias
+                {selectedCount > 0 && (
+                  <Badge variant="destructive" className="ml-2 flex h-5 w-5 items-center justify-center rounded-full p-0">
+                    {selectedCount}
+                  </Badge>
+                )}
+              </Button>
+            </AllergensSheet>
+        </div>
+        <Button variant="ghost" size="icon" className="relative rounded-full h-12 w-12 flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+            <AvatarFallback className="bg-muted text-muted-foreground">
+                <User className="h-5 w-5" />
+            </AvatarFallback>
+            </Avatar>
+        </Button>
       </div>
     </header>
   );
