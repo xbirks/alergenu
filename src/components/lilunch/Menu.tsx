@@ -6,7 +6,7 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { CheckCircle2, Info, ShieldX } from 'lucide-react';
 import { allergenMap, ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
@@ -45,7 +45,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
       const compatible = items.filter(i => i.status === 'compatible');
       const incompatible = items.filter(i => i.status === 'incompatible');
-       const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
+      const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
       const allItems = [...compatible, ...incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
 
 
@@ -54,7 +54,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         compatible,
         incompatible,
         allItems,
-        hasContent: compatible.length > 0 || incompatible.length > 0,
+        hasContent: compatible.length > 0 || (incompatible.length > 0 && selectedAllergens.size > 0),
       };
     });
   }, [restaurant.menu, selectedAllergens, isLoaded]);
@@ -81,6 +81,10 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
       {categorizedMenu.map(category => {
         if (!category.hasContent) return null;
 
+        const compatibleItems = category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />);
+        const incompatibleItems = category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />);
+        const allItems = category.allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />);
+        
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
           <div className='flex items-center gap-3'>
@@ -90,38 +94,38 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           <div className="flex flex-col">
             {showAll ? (
                <>
-                {category.allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)}
+                {allItems}
                 <Separator className="mt-0" />
                </>
             ) : (
               <>
-                {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
+                {compatibleItems}
                 
-                {category.incompatible.length > 0 && selectedAllergens.size > 0 && (
+                {incompatibleItems.length > 0 && selectedAllergens.size > 0 && (
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="incompatible" className="border-none">
                        <Separator />
                       <Alert variant="destructive" className="p-0 border-none rounded-none bg-background hover:bg-muted/50 transition-colors">
                         <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-semibold">
-                          <span>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
+                          <span>{`Mostrar ${incompatibleItems.length} plato(s) no compatibles`}</span>
                         </AccordionTrigger>
                       </Alert>
                       <AccordionContent>
                         <div className="flex flex-col">
                            <Separator />
-                          {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
+                          {incompatibleItems}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
                 )}
 
-                {(category.compatible.length > 0 || (category.incompatible.length > 0 && selectedAllergens.size > 0)) && <Separator className="mt-0" />}
+                {(compatibleItems.length > 0 || (incompatibleItems.length > 0 && selectedAllergens.size > 0)) && <Separator className="mt-0" />}
 
               </>
             )}
             
-            {category.compatible.length === 0 && selectedAllergens.size > 0 && !showAll &&(
+            {compatibleItems.length === 0 && selectedAllergens.size > 0 && !showAll &&(
               <div className="border-dashed border-2 rounded-2xl text-center my-4">
                   <div className="p-6">
                     <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
