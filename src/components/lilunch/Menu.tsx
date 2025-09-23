@@ -5,7 +5,7 @@ import { Restaurant, MenuItem } from '@/lib/types';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Alert } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
 import { allergenMap, ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,8 +16,6 @@ import { allergenColors } from './colors';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, ShieldX } from 'lucide-react';
-
 
 type CategorizedItem = {
   item: MenuItem;
@@ -47,11 +45,15 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
       const compatible = items.filter(i => i.status === 'compatible');
       const incompatible = items.filter(i => i.status === 'incompatible');
+       const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
+      const allItems = [...compatible, ...incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
+
 
       return {
         ...category,
         compatible,
         incompatible,
+        allItems,
         hasContent: compatible.length > 0 || incompatible.length > 0,
       };
     });
@@ -74,39 +76,10 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
     );
   }
 
-  const getIncompatibleTriggerText = (items: CategorizedItem[]): string => {
-    const allBlockingAllergens = new Set<string>();
-    items.forEach(i => i.blockingAllergens?.forEach(a => allBlockingAllergens.add(a)));
-    const allergenNames = Array.from(allBlockingAllergens).map(id => allergenMap.get(id)?.name);
-    if (allergenNames.length === 0) return "Contiene tus alérgenos";
-    
-    const allergensWithTraces = Array.from(allBlockingAllergens).map(allergenId => {
-        const hasDirect = items.some(i => i.item.allergens.includes(allergenId));
-        const hasTraces = items.some(i => i.item.traces.includes(allergenId) && !i.item.allergens.includes(allergenId));
-        
-        let text = allergenMap.get(allergenId)?.name;
-        if (hasDirect && hasTraces) {
-            text += ' y trazas';
-        } else if (hasTraces && !hasDirect) {
-            text += ' (trazas)';
-        }
-        return text;
-    });
-
-    if (allergensWithTraces.length > 2) {
-        return `Contiene ${allergensWithTraces.slice(0, 2).join(', ')} y más`;
-    }
-    
-    return `Contiene ${allergensWithTraces.join(', ')}`;
-  }
-
   return (
     <div className="container space-y-6 px-4 sm:px-6">
       {categorizedMenu.map(category => {
         if (!category.hasContent) return null;
-
-        const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
-        const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
 
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
@@ -117,7 +90,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           <div className="flex flex-col">
             {showAll ? (
                <>
-                {allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)}
+                {category.allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)}
                 <Separator className="mt-0" />
                </>
             ) : (

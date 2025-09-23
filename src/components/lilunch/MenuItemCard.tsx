@@ -8,6 +8,7 @@ import { ShieldX } from 'lucide-react';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { Separator } from '../ui/separator';
 import { AllergenIcon } from './AllergenIcon';
+import { allergenColors } from './colors';
 
 type ItemStatus = 'compatible' | 'incompatible';
 
@@ -56,7 +57,11 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                     isSelected && status === 'incompatible' ? 'ring-1 ring-destructive text-destructive' : 'text-muted-foreground',
                   )}
                 >
-                  <AllergenIcon allergenId={allergenId} className="p-0" iconClassName="size-4" />
+                  <AllergenIcon 
+                    allergenId={allergenId}
+                    className={cn('p-0', allergenColors[allergenId] || '')}
+                    iconClassName="size-4"
+                  />
                   <span>{allergen.name}{isTrace ? ' (trazas)' : ''}</span>
                 </Badge>
               );
