@@ -15,7 +15,7 @@ type ItemStatus = 'compatible' | 'incompatible';
 
 const statusStyles: Record<ItemStatus, string> = {
   compatible: 'bg-card',
-  incompatible: 'opacity-50 bg-card',
+  incompatible: 'bg-card', // No longer dimming incompatible items
 };
 
 export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemStatus }) {
@@ -62,8 +62,8 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
                                 className={cn(
                                     allergenColors[allergenId] || 'bg-gray-100 text-gray-600',
                                     'p-0.5',
-                                    isTrace ? 'border-dashed border-2 border-current' : '',
-                                    isSelected && 'ring-2 ring-destructive ring-offset-2 ring-offset-background'
+                                    isTrace ? 'border-dashed border-[1.5px] border-current' : '',
+                                    isSelected && status === 'incompatible' && 'ring-2 ring-destructive ring-offset-2 ring-offset-background'
                                 )}
                                 iconClassName='size-5'
                            />

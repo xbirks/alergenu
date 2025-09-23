@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Restaurant, MenuItem } from '@/lib/types';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
@@ -13,6 +13,7 @@ import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { allergenColors } from './colors';
+import { Button } from '../ui/button';
 
 type CategorizedItem = {
   item: MenuItem;
@@ -22,6 +23,7 @@ type CategorizedItem = {
 
 export function Menu({ restaurant }: { restaurant: Restaurant }) {
   const { selectedAllergens, isLoaded } = useAllergenProfile();
+  const [showAll, setShowAll] = useState(false);
 
   const categorizedMenu = useMemo(() => {
     if (!isLoaded) return null;
@@ -96,48 +98,67 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
   return (
     <div className="container space-y-10 px-4 sm:px-6">
-      {categorizedMenu.map(category => (
+      {categorizedMenu.map(category => {
+        const allItems = [...category.compatible, ...category.incompatible];
+        return (
         <section key={category.id} className="space-y-4">
           <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
           
-          {category.compatible.length > 0 && (
-            <div className="space-y-4">
-              <div className="grid gap-4">
-                {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
+          {showAll ? (
+             <div className="grid gap-4">
+                {allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)}
               </div>
-            </div>
-          )}
+          ) : (
+            <>
+            {category.compatible.length > 0 && (
+              <div className="space-y-4">
+                <div className="grid gap-4">
+                  {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
+                </div>
+              </div>
+            )}
 
-           {category.incompatible.length > 0 && (
-             <Accordion type="single" collapsible className="w-full" disabled={selectedAllergens.size === 0}>
-              <AccordionItem value="incompatible" className="border-none">
-                <Alert variant="destructive" className="p-0 border-none">
-                  <AccordionTrigger className="px-4 py-2 text-xs hover:no-underline justify-start gap-2">
-                      <ShieldX className="h-4 w-4" />
-                      <AlertTitle>{getIncompatibleTriggerText(category.incompatible)}</AlertTitle>
-                  </AccordionTrigger>
-                </Alert>
-                <AccordionContent className="pt-4">
-                   <div className="grid gap-4">
-                    {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          )}
-          
-          {category.compatible.length === 0 && selectedAllergens.size > 0 && (
-             <Card className="border-dashed border-2 rounded-2xl text-center shadow-none">
-                <CardContent className="p-6">
-                  <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                  <p className="text-muted-foreground font-medium">No hay platos compatibles en esta categoría para tu selección de alérgenos.</p>
-                  <p className="text-muted-foreground text-sm mt-1">Consulta al personal para posibles adaptaciones.</p>
-                </CardContent>
-              </Card>
+            {category.incompatible.length > 0 && (
+              <Accordion type="single" collapsible className="w-full" disabled={selectedAllergens.size === 0}>
+                <AccordionItem value="incompatible" className="border-none">
+                  <Alert variant="destructive" className="p-0 border-none">
+                    <AccordionTrigger className="px-4 py-2 text-xs hover:no-underline justify-start gap-2">
+                        <ShieldX className="h-4 w-4" />
+                        <AlertTitle>{getIncompatibleTriggerText(category.incompatible)}</AlertTitle>
+                    </AccordionTrigger>
+                  </Alert>
+                  <AccordionContent className="pt-4">
+                    <div className="grid gap-4">
+                      {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
+            
+            {category.compatible.length === 0 && selectedAllergens.size > 0 && (
+              <Card className="border-dashed border-2 rounded-2xl text-center shadow-none">
+                  <CardContent className="p-6">
+                    <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground font-medium">No hay platos compatibles en esta categoría para tu selección de alérgenos.</p>
+                    <p className="text-muted-foreground text-sm mt-1">Consulta al personal para posibles adaptaciones.</p>
+                  </CardContent>
+                </Card>
+            )}
+            </>
           )}
 
         </section>
-      ))}
+      )})}
+
+      {selectedAllergens.size > 0 && (
+         <div className="text-center pt-4">
+            <Button variant="outline" onClick={() => setShowAll(!showAll)}>
+              {showAll ? "Ver solo platos compatibles" : "Ver todos los platos"}
+            </Button>
+          </div>
+      )}
+
 
       <Separator className="my-12" />
 
