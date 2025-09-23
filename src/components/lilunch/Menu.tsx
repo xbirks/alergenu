@@ -6,8 +6,8 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert } from '@/components/ui/alert';
-import { CheckCircle2, Info, ShieldX } from 'lucide-react';
-import { allergenMap, ALLERGENS } from '@/lib/allergens';
+import { Info } from 'lucide-react';
+import { ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
@@ -45,6 +45,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
       const compatible = items.filter(i => i.status === 'compatible');
       const incompatible = items.filter(i => i.status === 'incompatible');
+      
       const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
       const allItems = [...compatible, ...incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
 
@@ -54,7 +55,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         compatible,
         incompatible,
         allItems,
-        hasContent: compatible.length > 0 || (incompatible.length > 0 && selectedAllergens.size > 0),
+        hasContent: items.length > 0,
       };
     });
   }, [restaurant.menu, selectedAllergens, isLoaded]);
@@ -114,13 +115,14 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                         <div className="flex flex-col">
                            <Separator />
                           {incompatibleItems}
+                           <Separator className="mt-0" />
                         </div>
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
                 )}
 
-                {(compatibleItems.length > 0 || (incompatibleItems.length > 0 && selectedAllergens.size > 0)) && <Separator className="mt-0" />}
+                {(compatibleItems.length > 0) && <Separator className="mt-0" />}
 
               </>
             )}
