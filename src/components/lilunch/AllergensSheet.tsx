@@ -6,7 +6,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -16,16 +15,16 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { AllergenIcon } from './AllergenIcon';
 import { allergenButtonColors } from './colors';
-import React, { useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import React from 'react';
 
 interface AllergensSheetProps {
   children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AllergensSheet({ children }: AllergensSheetProps) {
+export function AllergensSheet({ children, open, onOpenChange }: AllergensSheetProps) {
   const { isLoaded, isAllergenSelected, toggleAllergen } = useAllergenProfile();
-  const [isOpen, setIsOpen] = useState(false);
 
   const content = (
     <SheetContent className="flex flex-col" side="bottom">
@@ -62,14 +61,14 @@ export function AllergensSheet({ children }: AllergensSheetProps) {
         </div>
       </ScrollArea>
       <SheetFooter className="p-4 border-t">
-        <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setIsOpen(false)}>Hecho</Button>
+        <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => onOpenChange?.(false)}>Hecho</Button>
       </SheetFooter>
     </SheetContent>
   );
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      {children}
       {content}
     </Sheet>
   );

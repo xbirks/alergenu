@@ -71,39 +71,36 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
     <div className="container space-y-6 px-4 sm:px-6">
       {categorizedMenu.map(category => {
         if (!category.hasContent) return null;
-
-        const compatibleCards = category.compatibleItems.map(item => <MenuItemCard key={item.id} item={item} status="compatible" />);
-        const incompatibleCards = category.incompatibleItems.map(item => <MenuItemCard key={item.id} item={item} status="incompatible" />);
         
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
           <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
           
           <div className="flex flex-col">
-            {compatibleCards.length > 0 ? compatibleCards : null}
+            {category.compatibleItems.map(item => <MenuItemCard key={item.id} item={item} status="compatible" />)}
             
-            {incompatibleCards.length > 0 && selectedAllergens.size > 0 && (
+            {category.incompatibleItems.length > 0 && selectedAllergens.size > 0 && (
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="incompatible" className="border-none">
                    <Separator />
                   <Alert variant="destructive" className="p-0 border-none rounded-none bg-background hover:bg-muted/50 transition-colors">
                     <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-semibold">
-                      <span>{`Mostrar ${incompatibleCards.length} plato(s) no compatibles`}</span>
+                      <span>{`Mostrar ${category.incompatibleItems.length} plato(s) no compatibles`}</span>
                     </AccordionTrigger>
                   </Alert>
                   <AccordionContent>
                     <div className="flex flex-col">
                        <Separator />
-                      {incompatibleCards}
+                      {category.incompatibleItems.map(item => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
             )}
 
-            {(compatibleCards.length > 0) && <Separator className="mt-0" />}
+            {(category.compatibleItems.length > 0) && <Separator className="mt-0" />}
 
-            {compatibleCards.length === 0 && selectedAllergens.size > 0 && incompatibleCards.length > 0 &&(
+            {category.compatibleItems.length === 0 && selectedAllergens.size > 0 && category.incompatibleItems.length > 0 &&(
                <div className="border-dashed border-2 rounded-2xl text-center my-4">
                  <div className="p-6">
                    <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
