@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
-import { allergenColors } from './colors';
+import { allergenColors, allergenButtonColors } from './colors';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 
@@ -100,7 +100,9 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
   return (
     <div className="container space-y-10 px-4 sm:px-6">
       {categorizedMenu.map(category => {
-        const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => allItems.indexOf(a) - allItems.indexOf(b));
+        const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
+        const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
+        
         return (
         <section key={category.id} className="space-y-4">
           <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
@@ -178,7 +180,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
             ))}
           </div>
           <div className="flex items-center gap-3 text-muted-foreground text-sm pt-8">
-            <div className="w-6 h-6 border-dashed border-2 border-muted-foreground rounded-md flex-shrink-0" />
+            <div className="w-6 h-6 border-dashed border-[1.5px] border-muted-foreground rounded-md flex-shrink-0" />
             <span>Indica que un plato puede contener trazas.</span>
           </div>
         </CardContent>
