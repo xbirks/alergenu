@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
+import { AllergensSheet } from './AllergensSheet';
 
 export function Header() {
   const { selectedAllergens } = useAllergenProfile();
@@ -17,7 +18,7 @@ export function Header() {
         </Link>
         
         <div className="absolute left-1/2 -translate-x-1/2">
-            <Link href="/welcome">
+            <AllergensSheet>
               <Button variant="outline" className="rounded-full h-10 shadow-sm border-foreground/20 hover:bg-accent">
                 Mis Alergias
                 {selectedCount > 0 && (
@@ -26,7 +27,7 @@ export function Header() {
                   </Badge>
                 )}
               </Button>
-            </Link>
+            </AllergensSheet>
         </div>
         
         <div className="w-24"></div>

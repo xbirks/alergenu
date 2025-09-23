@@ -15,11 +15,6 @@ import { Card, CardContent } from '../ui/card';
 import { allergenColors } from './colors';
 import { cn } from '@/lib/utils';
 
-type CategorizedItem = {
-  item: MenuItem;
-  status: 'compatible' | 'incompatible';
-};
-
 export function Menu({ restaurant }: { restaurant: Restaurant }) {
   const { selectedAllergens, isLoaded } = useAllergenProfile();
 
