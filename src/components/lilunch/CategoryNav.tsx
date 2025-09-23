@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface Category {
   id: string;
@@ -13,6 +13,7 @@ interface Category {
 export function CategoryNav({ categories }: { categories: Category[] }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(categories[0]?.id || null);
   const [isSticky, setIsSticky] = useState(false);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,12 +36,20 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
           currentCategory = category.id;
         }
       }
-      setActiveCategory(currentCategory);
+
+      if (currentCategory && activeCategory !== currentCategory) {
+        setActiveCategory(currentCategory);
+        const button = buttonRefs.current[currentCategory];
+        button?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      } else if (!currentCategory && activeCategory) {
+        // Fallback to first if nothing is active (e.g. at the top)
+        setActiveCategory(categories[0]?.id || null);
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [categories]);
+  }, [categories, activeCategory]);
 
   const scrollToCategory = (id: string) => {
     const element = document.getElementById(id);
@@ -60,9 +69,10 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
             {categories.map(category => (
               <Button
                 key={category.id}
+                ref={(el) => buttonRefs.current[category.id] = el}
                 variant="ghost"
                 className={cn(
-                    "rounded-full h-9 px-4 font-semibold transition-colors",
+                    "rounded-full h-9 px-4 font-semibold transition-colors uppercase",
                     activeCategory === category.id ? 'bg-primary text-primary-foreground' : 'bg-transparent hover:bg-accent'
                 )}
                 onClick={() => scrollToCategory(category.id)}
