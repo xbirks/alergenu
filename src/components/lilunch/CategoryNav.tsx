@@ -62,10 +62,8 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
                 key={category.id}
                 variant="ghost"
                 className={cn(
-                    "rounded-full h-9 px-4 font-semibold transition-all duration-200 uppercase text-xs tracking-wider border",
-                    activeCategory === category.id 
-                        ? 'bg-primary text-primary-foreground border-transparent' 
-                        : 'bg-transparent border-border hover:bg-accent'
+                    "rounded-full h-9 px-4 font-semibold transition-colors",
+                    activeCategory === category.id ? 'bg-primary text-primary-foreground' : 'bg-transparent hover:bg-accent'
                 )}
                 onClick={() => scrollToCategory(category.id)}
               >
