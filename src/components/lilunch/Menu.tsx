@@ -32,19 +32,18 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
     return restaurant.menu.map(category => {
       const compatibleItems: MenuItem[] = [];
       const incompatibleItems: MenuItem[] = [];
-
-      category.items.forEach(item => {
-        const isCompatible = !item.allergens.some(a => selectedAllergens.has(a)) && !item.traces.some(a => selectedAllergens.has(a));
-        if (isCompatible || selectedAllergens.size === 0) {
-          compatibleItems.push(item);
-        } else {
-          incompatibleItems.push(item);
-        }
-      });
       
       const allItems = category.items.map(item => {
         const isCompatible = !item.allergens.some(a => selectedAllergens.has(a)) && !item.traces.some(a => selectedAllergens.has(a));
-        return { item, status: (isCompatible || selectedAllergens.size === 0) ? 'compatible' : 'incompatible' } as CategorizedItem;
+        const status = (isCompatible || selectedAllergens.size === 0) ? 'compatible' : 'incompatible';
+        
+        if (status === 'compatible') {
+          compatibleItems.push(item);
+        } else {
+          incompatibleItems.push(item); // THE FIX IS HERE
+        }
+        
+        return { item, status } as CategorizedItem;
       });
 
 
