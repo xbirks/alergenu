@@ -6,8 +6,8 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertTitle } from '@/components/ui/alert';
-import { ShieldX, Info } from 'lucide-react';
-import { allergenMap } from '@/lib/allergens';
+import { ShieldX, Info, CheckCircle2 } from 'lucide-react';
+import { allergenMap, ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
@@ -107,7 +107,16 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
         return (
         <section key={category.id} id={category.id} className="space-y-2 pt-4 -mt-4">
-          <h2 className="text-2xl font-bold tracking-tight mb-2 uppercase">{category.name}</h2>
+          <div className="flex items-start gap-3 mb-4">
+            {selectedAllergens.size === 0 ? (
+                <div className="w-5" />
+            ) : category.incompatible.length === 0 ? (
+                <CheckCircle2 className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
+            ) : (
+                <ShieldX className="h-5 w-5 text-red-500 mt-1 flex-shrink-0" />
+            )}
+            <h2 className="text-2xl font-bold tracking-tight uppercase">{category.name}</h2>
+          </div>
           
           {showAll ? (
              <div className="flex flex-col">
