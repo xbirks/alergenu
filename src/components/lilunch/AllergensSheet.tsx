@@ -35,13 +35,8 @@ export function AllergensSheet({ children, open, onOpenChange }: AllergensSheetP
     if (onOpenChange) {
       onOpenChange(false);
     }
-    
-    // Clean up URL and reload
+    // Clean up URL parameter to prevent sheet from re-opening
     router.replace(pathname, { scroll: false });
-    // A small delay to allow the sheet to close before reloading.
-    setTimeout(() => {
-        window.location.reload();
-    }, 200);
   };
   
   const content = (

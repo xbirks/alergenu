@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { ShieldX } from 'lucide-react';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { Separator } from '../ui/separator';
+import { AllergenIcon } from './AllergenIcon';
 
 type ItemStatus = 'compatible' | 'incompatible';
 
@@ -19,9 +20,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
   return (
     <div className={cn("w-full py-4", showIncompatibleWarning ? 'opacity-50' : '')}>
       <div className="flex justify-between items-start gap-4">
-        <div className="flex-1">
-          <h3 className="text-base font-bold uppercase tracking-tight text-foreground">{item.name}</h3>
-        </div>
+        <h3 className="flex-1 text-base font-bold uppercase tracking-wide text-foreground">{item.name}</h3>
         <p className="text-base font-bold whitespace-nowrap text-foreground">
           {item.price.toFixed(2)}€
         </p>
@@ -29,11 +28,11 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
 
       <div className="pt-1 space-y-3">
         {item.description && (
-          <p className="text-sm text-muted-foreground">{item.description}</p>
+          <p className="text-sm text-muted-foreground ml-4">{item.description}</p>
         )}
 
-        {(allPresentAllergens.length > 0 || showIncompatibleWarning) && (
-          <div className="flex flex-wrap gap-2 items-center">
+        {(allPresentAllergens.length > 0) && (
+          <div className="flex flex-wrap gap-x-3 gap-y-2 items-center pt-2">
             {showIncompatibleWarning && (
               <Badge variant="destructive" className="flex items-center gap-1.5 pl-1.5 pr-2.5">
                 <ShieldX className="h-3.5 w-3.5" />
@@ -48,23 +47,24 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
               const isSelected = isAllergenSelected(allergenId);
 
               return (
-                <Badge 
+                <Badge
                   key={allergenId}
                   variant="outline"
                   className={cn(
-                    "font-normal text-xs border-dashed text-muted-foreground",
+                    "flex items-center gap-1.5 font-normal text-[0.65rem] leading-none h-6 px-2 border",
                     isTrace ? "border-dashed" : "border-solid",
-                    isSelected && status === 'incompatible' && 'ring-2 ring-destructive text-destructive-foreground bg-destructive border-destructive'
+                    isSelected && status === 'incompatible' ? 'ring-1 ring-destructive text-destructive' : 'text-muted-foreground',
                   )}
                 >
-                  {allergen.name}{isTrace ? ' (trazas)' : ''}
+                  <AllergenIcon allergenId={allergenId} className="p-0" iconClassName="size-4" />
+                  <span>{allergen.name}{isTrace ? ' (trazas)' : ''}</span>
                 </Badge>
               );
             })}
           </div>
         )}
       </div>
-      <Separator className="mt-4" />
+       <Separator className="mt-4" />
     </div>
   );
 }
