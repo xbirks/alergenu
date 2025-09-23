@@ -12,9 +12,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { allergenColors } from './colors';
-
 
 type CategorizedItem = {
   item: MenuItem;
@@ -75,7 +72,25 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
     items.forEach(i => i.blockingAllergens?.forEach(a => allBlockingAllergens.add(a)));
     const allergenNames = Array.from(allBlockingAllergens).map(id => allergenMap.get(id)?.name);
     if (allergenNames.length === 0) return "Contiene tus alérgenos";
-    return `Contiene ${allergenNames.slice(0, 1).join(', ')}${allergenNames.length > 1 ? ' y más' : ''}`;
+    
+    const allergensWithTraces = Array.from(allBlockingAllergens).map(allergenId => {
+        const hasDirect = items.some(i => i.item.allergens.includes(allergenId));
+        const hasTraces = items.some(i => i.item.traces.includes(allergenId) && !i.item.allergens.includes(allergenId));
+        
+        let text = allergenMap.get(allergenId)?.name;
+        if (hasDirect && hasTraces) {
+            text += ' y trazas';
+        } else if (hasTraces && !hasDirect) {
+            text += ' (trazas)';
+        }
+        return text;
+    });
+
+    if (allergensWithTraces.length > 2) {
+        return `Contiene ${allergensWithTraces.slice(0, 2).join(', ')} y más`;
+    }
+    
+    return `Contiene ${allergensWithTraces.join(', ')}`;
   }
 
   return (
@@ -125,24 +140,25 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
       <Separator className="my-12" />
 
-      <section className="space-y-6 pb-12">
-        <h3 className="text-2xl font-bold tracking-tight text-left">Leyenda de Alérgenos</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5">
-          {ALLERGENS.map(allergen => (
-            <div key={allergen.id} className="flex items-center gap-3">
-              <AllergenIcon 
-                allergenId={allergen.id}
-                className="bg-transparent"
-                iconClassName={cn(allergenColors[allergen.id]?.replace('bg-', 'text-').replace('-100', '-600'))} />
-              <span className="font-medium text-sm">{allergen.name}</span>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-center gap-3 text-muted-foreground text-sm pt-4">
-          <div className="w-6 h-6 border-2 border-dashed border-muted-foreground rounded-md flex-shrink-0" />
-          <span>Indica que un plato puede contener trazas.</span>
-        </div>
-      </section>
+      <Card className="bg-muted/50 rounded-2xl">
+        <CardContent className="p-6">
+          <h3 className="text-2xl font-bold tracking-tight text-left mb-6">Leyenda de Alérgenos</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5">
+            {ALLERGENS.map(allergen => (
+              <div key={allergen.id} className="flex items-center gap-3">
+                <AllergenIcon 
+                  allergenId={allergen.id}
+                  className={allergenColors[allergen.id]} />
+                <span className="font-medium text-sm">{allergen.name}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-3 text-muted-foreground text-sm pt-8">
+            <div className="w-6 h-6 border-dashed border-[1.5px] border-muted-foreground rounded-md flex-shrink-0" />
+            <span>Indica que un plato puede contener trazas.</span>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

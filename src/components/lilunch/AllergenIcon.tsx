@@ -33,7 +33,7 @@ export function AllergenIcon({ allergenId, className, iconClassName }: AllergenI
 
     return (
         <div className={cn("flex items-center justify-center rounded-md p-1", className)}>
-            {React.cloneElement(icon as React.ReactElement, { className: cn("size-4", iconClassName) })}
+            {React.cloneElement(icon as React.ReactElement, { className: cn("size-5", iconClassName) })}
         </div>
     );
 }
