@@ -72,7 +72,7 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
                 ref={(el) => buttonRefs.current[category.id] = el}
                 variant="ghost"
                 className={cn(
-                    "rounded-full h-9 px-4 font-semibold transition-colors uppercase",
+                    "rounded-full h-9 px-4 font-medium transition-colors uppercase",
                     activeCategory === category.id ? 'bg-primary text-primary-foreground' : 'bg-transparent hover:bg-accent'
                 )}
                 onClick={() => scrollToCategory(category.id)}

@@ -25,9 +25,9 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
     <div className={cn("w-full py-4", status === 'incompatible' && selectedAllergens.size > 0 ? 'opacity-50' : '')}>
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
-          <h3 className="text-base font-bold uppercase tracking-tight">{item.name}</h3>
+          <h3 className="text-base font-semibold uppercase tracking-tight">{item.name}</h3>
         </div>
-        <p className="text-base font-bold whitespace-nowrap">
+        <p className="text-base font-medium whitespace-nowrap">
           {item.price.toFixed(2)}€
         </p>
       </div>

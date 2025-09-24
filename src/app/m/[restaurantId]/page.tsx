@@ -19,7 +19,7 @@ export default function MenuPage() {
       <div className="flex items-center justify-center min-h-[50vh] p-4">
         <Card className="w-full max-w-md text-center shadow-lg rounded-2xl">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold">Restaurante no encontrado</CardTitle>
+            <CardTitle className="text-2xl font-semibold">Restaurante no encontrado</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4">
             <FileQuestion className="w-16 h-16 text-muted-foreground" />
@@ -37,7 +37,7 @@ export default function MenuPage() {
   return (
     <>
       <div className="container py-6 px-4 sm:px-6">
-        <h1 className="text-3xl font-bold tracking-tight">{restaurant.name}</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{restaurant.name}</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           Aquí tienes la carta de nuestro restaurante. Esperamos que disfrutes de tu elección.
         </p>

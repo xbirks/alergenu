@@ -80,7 +80,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-8 -mt-4">
-          <h2 className="text-2xl font-bold tracking-tight">{category.name}</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{category.name}</h2>
           
           <div className="flex flex-col">
             {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
@@ -89,7 +89,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="incompatible" className="border-none">
                   <Alert variant="destructive" className="p-0 border-none rounded-none bg-background hover:bg-muted/50 transition-colors">
-                    <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-semibold">
+                    <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-medium">
                       <span>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
                     </AccordionTrigger>
                   </Alert>
@@ -121,7 +121,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
       <Card className="bg-muted/50 rounded-2xl shadow-none border-none">
         <CardContent className="p-6">
-          <h3 className="text-lg font-bold tracking-tight text-left mb-6 uppercase">Leyenda de Alérgenos</h3>
+          <h3 className="text-lg font-semibold tracking-tight text-left mb-6 uppercase">Leyenda de Alérgenos</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-5">
             {ALLERGENS.map(allergen => (
               <div key={allergen.id} className="flex items-center gap-3">

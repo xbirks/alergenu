@@ -61,7 +61,7 @@ export function AllergensSheet() {
       </SheetTrigger>
       <SheetContent className="flex flex-col h-full" side="bottom">
         <SheetHeader className="text-center">
-          <SheetTitle className="text-2xl font-bold">Mis Alergias</SheetTitle>
+          <SheetTitle className="text-2xl font-semibold">Mis Alergias</SheetTitle>
           <SheetDescription>
             Selecciona los alérgenos a evitar. Resaltaremos lo que es seguro para ti.
           </SheetDescription>
@@ -79,7 +79,7 @@ export function AllergensSheet() {
                     onClick={() => toggleAllergen(allergen.id)}
                     aria-pressed={isSelected}
                     className={cn(
-                      'flex items-center gap-2 rounded-full border-2 px-4 py-2 text-base font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+                      'flex items-center gap-2 rounded-full border-2 px-4 py-2 text-base font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                       isSelected
                         ? `${colors.selected} text-primary-foreground`
                         : `${colors.unselected} bg-card border-border`
@@ -93,7 +93,7 @@ export function AllergensSheet() {
           </div>
         </ScrollArea>
         <SheetFooter className="p-4 border-t">
-          <Button size="lg" className="w-full h-14 text-lg font-semibold rounded-full" onClick={handleDone}>Hecho</Button>
+          <Button size="lg" className="w-full h-14 text-lg font-medium rounded-full" onClick={handleDone}>Hecho</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
