@@ -15,7 +15,9 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
   const [isSticky, setIsSticky] = useState(false);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const navRef = useRef<HTMLElement>(null);
-  
+  const isScrolling = useRef(false);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     const handleScroll = () => {
       const navElement = navRef.current;
@@ -26,8 +28,10 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
           setIsSticky(false);
         }
       }
+      
+      if (isScrolling.current) return;
 
-      const headerHeight = 80; 
+      const headerHeight = 80;
       const stickyNavHeight = 60;
       const offset = headerHeight + stickyNavHeight + 20;
 
@@ -38,7 +42,7 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
           currentCategory = category.id;
         }
       }
-
+      
       if (currentCategory && activeCategory !== currentCategory) {
         setActiveCategory(currentCategory);
         const button = buttonRefs.current[currentCategory];
@@ -53,10 +57,22 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
   const scrollToCategory = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      const headerHeight = 80; 
+      isScrolling.current = true;
+      setActiveCategory(id);
+
+      const headerHeight = 80;
       const stickyNavHeight = 60;
       const y = element.getBoundingClientRect().top + window.scrollY - headerHeight - stickyNavHeight;
+      
       window.scrollTo({ top: y, behavior: 'smooth' });
+
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+
+      scrollTimeout.current = setTimeout(() => {
+        isScrolling.current = false;
+      }, 1000); // Reset after 1 second
     }
   };
 
