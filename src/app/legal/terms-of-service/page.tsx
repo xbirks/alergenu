@@ -42,7 +42,7 @@ export default function TermsOfServicePage() {
         <p>Nos reservamos el derecho de modificar estos Términos en cualquier momento. Te notificaremos de los cambios importantes. El uso continuado del Servicio después de la notificación constituirá tu aceptación de los nuevos Términos.</p>
         
         <h2>9. Ley Aplicable y Jurisdicción</h2>
-        <p>Estos Términos se regirán e interpretarán de acuerdo con las leyes de España. Cualquier disputa que surja en relación con estos Términos estará sujeta a la jurisdicción exclusiva de los tribunales de [Tu Ciudad], España.</p>
+        <p>Estos Términos se regirán e interpretarán de acuerdo con las leyes de España. Cualquier disputa que surja en relación con estos Términos estará sujeta a la jurisdicción exclusiva de los tribunales de Valencia, España.</p>
       </div>
     </main>
   );
