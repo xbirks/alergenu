@@ -40,12 +40,11 @@ export default function MenuPage() {
       <div className="container pt-6 pb-2 px-4 sm:px-6 text-center">
         <div className="w-full aspect-video overflow-hidden rounded-2xl mb-6">
             <Image
-                src="https://picsum.photos/seed/foodie/1600/900"
+                src="https://www.ermo.es/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FDelibreads-1.70184391.jpg&w=2048&q=75"
                 alt="High-end cuisine"
                 width={1600}
                 height={900}
                 className="w-full h-full object-cover"
-                data-ai-hint="minimalist cooking"
             />
         </div>
         <h1 className="text-3xl font-bold tracking-tight">{restaurant.name}</h1>
