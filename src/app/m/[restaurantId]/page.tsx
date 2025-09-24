@@ -3,7 +3,7 @@
 import { Menu } from '@/components/lilunch/Menu';
 import { getRestaurantById } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileQuestion } from 'lucide-react';
+import { FileQuestion, Utensils } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { CategoryNav } from '@/components/lilunch/CategoryNav';
 
@@ -36,9 +36,10 @@ export default function MenuPage() {
 
   return (
     <>
-      <div className="container py-6 px-4 sm:px-6">
+      <div className="container py-6 px-4 sm:px-6 text-center">
+        <Utensils className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
         <h1 className="text-3xl font-semibold tracking-tight">{restaurant.name}</h1>
-        <p className="text-muted-foreground mt-2 text-sm">
+        <p className="text-muted-foreground mt-2 text-sm max-w-lg mx-auto">
           Aquí tienes la carta de nuestro restaurante. Esperamos que disfrutes de tu elección.
         </p>
       </div>
