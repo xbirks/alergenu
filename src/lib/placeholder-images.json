@@ -191,6 +191,42 @@
       "imageUrl": "https://images.unsplash.com/photo-1700893417207-99da24343476?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx3aW5lJTIwYm90dGxlfGVufDB8fHx8MTc1ODYxMzE2NXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "wine bottle",
       "description": "Botella de Vino"
+    },
+    {
+      "id": "gambas-ajillo",
+      "imageUrl": "https://images.unsplash.com/photo-1596041359742-12ac98356134?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxnYW1iYXMlMjBhbCUyMGFqaWxsb3xlbnwwfHx8fDE3NTg2OTI2MDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "garlic shrimp",
+      "description": "Gambas al Ajillo"
+    },
+    {
+      "id": "celery-salad",
+      "imageUrl": "https://images.unsplash.com/photo-1635338402241-163f9a7a92b2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjZWxlcnklMjBzYWxhZHxlbnwwfHx8fDE3NTg2OTI2MDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "celery salad",
+      "description": "Ensalada de Apio y Manzana"
+    },
+    {
+      "id": "chicken-satay",
+      "imageUrl": "https://images.unsplash.com/photo-1549487498-c6ceb096a6f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaGlja2VuJTIwc2F0YXl8ZW58MHx8fHwxNzU4NjkyNjA3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chicken satay",
+      "description": "Pollo Satay con Salsa de Cacahuete"
+    },
+    {
+      "id": "lupin-stew",
+      "imageUrl": "https://images.unsplash.com/photo-1688940738506-acfe9334bf5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxsdXBpbiUyMHN0ZXd8ZW58MHx8fHwxNzU4NzEwNDE1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "lupin stew",
+      "description": "Guiso de Altramuces"
+    },
+    {
+      "id": "hummus-pita",
+      "imageUrl": "https://images.unsplash.com/photo-1598514982901-ae62764ae753?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxodW1tdXMlMjBwaXRhfGVufDB8fHx8MTc1ODY5MjYwN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hummus pita",
+      "description": "Hummus con Pan de Pita"
+    },
+    {
+      "id": "mosto",
+      "imageUrl": "https://images.unsplash.com/photo-1619550917729-3b68b40a3c9e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxncmFwZSUyMGp1aWNlfGVufDB8fHx8MTc1ODY5MjYwN3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "grape juice",
+      "description": "Mosto"
     }
   ]
 }
