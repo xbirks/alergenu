@@ -5,6 +5,7 @@ import { getRestaurantById } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileQuestion } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { CategoryNav } from '@/components/lilunch/CategoryNav';
 
 export default function MenuPage() {
   const params = useParams();
@@ -13,17 +14,17 @@ export default function MenuPage() {
     : params.restaurantId;
   const restaurant = getRestaurantById(restaurantId);
 
-  if (!restaurant || !restaurant.menu || restaurant.menu.length === 0) {
+  if (!restaurant) {
     return (
       <div className="flex items-center justify-center min-h-[50vh] p-4">
         <Card className="w-full max-w-md text-center shadow-lg rounded-2xl">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold">Menú no disponible</CardTitle>
+            <CardTitle className="text-2xl font-bold">Restaurante no encontrado</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-4">
             <FileQuestion className="w-16 h-16 text-muted-foreground" />
             <p className="text-muted-foreground">
-              No pudimos encontrar un menú publicado para este restaurante.
+              No pudimos encontrar la información de este restaurante.
             </p>
           </CardContent>
         </Card>
@@ -31,5 +32,18 @@ export default function MenuPage() {
     );
   }
 
-  return <Menu restaurant={restaurant} />;
+  const categories = restaurant.menu.map(c => ({ id: c.id, name: c.name }));
+
+  return (
+    <>
+      <div className="container py-6 px-4 sm:px-6">
+        <h1 className="text-3xl font-bold tracking-tight">{restaurant.name}</h1>
+        <p className="text-muted-foreground mt-2">
+          Aquí tienes la carta de nuestro restaurante. Esperamos que disfrutes de tu elección.
+        </p>
+      </div>
+      <CategoryNav categories={categories} />
+      <Menu restaurant={restaurant} />
+    </>
+  );
 }
