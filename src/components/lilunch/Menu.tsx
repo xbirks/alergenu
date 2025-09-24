@@ -76,6 +76,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
         const isDrinks = category.id === 'drinks';
         const isWines = category.id === 'wines';
+        const isDarkSection = isDrinks || isWines;
         
         return (
         <section 
@@ -83,9 +84,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           id={category.id} 
           className={cn(
             "space-y-4 scroll-mt-24 pt-8",
-            (isDrinks || isWines) && "px-6 py-8 -mx-4 sm:-mx-6 rounded-3xl",
-            isDrinks && "bg-gray-900 text-white",
-            isWines && "bg-rose-50"
+            isDarkSection && "px-6 py-8 -mx-4 sm:-mx-6 rounded-3xl bg-gray-900 text-white"
           )}
         >
           <h2 className="text-2xl font-bold tracking-tight">{category.name}</h2>
@@ -96,7 +95,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                 key={item.id} 
                 item={item} 
                 status="compatible" 
-                isDark={isDrinks}
+                isDark={isDarkSection}
               />
             ))}
             
@@ -105,12 +104,12 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                 <AccordionItem value="incompatible" className="border-none">
                   <Alert variant="destructive" className={cn(
                     "p-0 border-none rounded-none transition-colors",
-                     isDrinks ? "bg-gray-900 hover:bg-gray-800" : "bg-background hover:bg-muted/50"
+                     isDarkSection ? "bg-gray-900 hover:bg-gray-800" : "bg-background hover:bg-muted/50"
                   )}>
                     <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-medium">
                       <span className={cn(
                           "text-destructive underline underline-offset-2 decoration-destructive/50", 
-                          isDrinks && "text-red-400 decoration-red-400/50"
+                          isDarkSection && "text-red-400 decoration-red-400/50"
                         )}
                       >
                         {`Mostrar ${category.incompatible.length} plato(s) no compatibles`}
@@ -124,7 +123,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                           key={item.id} 
                           item={item} 
                           status="incompatible"
-                          isDark={isDrinks}
+                          isDark={isDarkSection}
                         />
                       ))}
                     </div>
