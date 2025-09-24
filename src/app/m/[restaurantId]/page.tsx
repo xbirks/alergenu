@@ -3,9 +3,10 @@
 import { Menu } from '@/components/lilunch/Menu';
 import { getRestaurantById } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileQuestion, Utensils } from 'lucide-react';
+import { FileQuestion } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { CategoryNav } from '@/components/lilunch/CategoryNav';
+import Image from 'next/image';
 
 export default function MenuPage() {
   const params = useParams();
@@ -36,10 +37,19 @@ export default function MenuPage() {
 
   return (
     <>
-      <div className="container py-6 px-4 sm:px-6 text-center">
-        <Utensils className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
-        <h1 className="text-3xl font-semibold tracking-tight">{restaurant.name}</h1>
-        <p className="text-muted-foreground mt-2 text-sm max-w-lg mx-auto">
+      <div className="container pt-6 pb-2 px-4 sm:px-6 text-center">
+        <div className="w-full aspect-video overflow-hidden rounded-2xl mb-6">
+            <Image
+                src="https://picsum.photos/seed/cuisine/1600/900"
+                alt="High-end cuisine"
+                width={1600}
+                height={900}
+                className="w-full h-full object-cover"
+                data-ai-hint="minimalist cooking"
+            />
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight">{restaurant.name}</h1>
+        <p className="text-muted-foreground mt-2 mb-6 text-base max-w-lg mx-auto">
           Aquí tienes la carta de nuestro restaurante. Esperamos que disfrutes de tu elección.
         </p>
       </div>
