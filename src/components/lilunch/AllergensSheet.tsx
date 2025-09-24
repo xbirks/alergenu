@@ -6,7 +6,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetFooter,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -37,6 +36,7 @@ export function AllergensSheet() {
 
   const handleDone = () => {
     setIsOpen(false);
+    window.location.reload();
   };
   
   const openSheet = () => setIsOpen(true);
