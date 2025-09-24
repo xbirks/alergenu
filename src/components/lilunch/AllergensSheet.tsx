@@ -15,18 +15,23 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { AllergenIcon } from './AllergenIcon';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { allergenButtonColors } from './colors';
-
 
 export function AllergensSheet({ children }: { children: React.ReactNode }) {
   const { isLoaded, isAllergenSelected, toggleAllergen } = useAllergenProfile();
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    const shouldShow = localStorage.getItem('lilunch-show-allergens');
+    if (shouldShow === 'true') {
+      setIsOpen(true);
+      localStorage.removeItem('lilunch-show-allergens');
+    }
+  }, []);
 
   const handleDone = () => {
     setIsOpen(false);
-    // Reload the page to apply allergen changes
     window.location.reload();
   };
 
@@ -53,7 +58,7 @@ export function AllergensSheet({ children }: { children: React.ReactNode }) {
                     onClick={() => toggleAllergen(allergen.id)}
                     aria-pressed={isSelected}
                     className={cn(
-                      "flex items-center gap-2 rounded-full border-2 px-4 py-2 text-base font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                      'flex items-center gap-2 rounded-full border-2 px-4 py-2 text-base font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                       isSelected
                         ? `${colors.selected} text-primary-foreground`
                         : `${colors.unselected} bg-card border-border`
