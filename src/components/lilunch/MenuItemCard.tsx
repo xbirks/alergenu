@@ -37,7 +37,7 @@ export function MenuItemCard({ item, status, isDark = false }: { item: MenuItem;
       {hasContent && (
         <div className="pt-1">
           {item.description && (
-            <p className={cn("text-sm", isDark ? "text-white/70" : "text-muted-foreground")}>
+            <p className={cn("text-sm max-w-prose", isDark ? "text-white/70" : "text-muted-foreground")}>
               {item.description}
             </p>
           )}

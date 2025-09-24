@@ -83,7 +83,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           id={category.id} 
           className={cn(
             "space-y-4 scroll-mt-24 pt-8",
-            (isDrinks || isWines) && "p-6 -mx-6 rounded-3xl",
+            (isDrinks || isWines) && "px-6 py-8 -mx-4 sm:-mx-6 rounded-3xl",
             isDrinks && "bg-gray-900 text-white",
             isWines && "bg-rose-50"
           )}
