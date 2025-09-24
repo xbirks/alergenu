@@ -108,7 +108,13 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                      isDrinks ? "bg-gray-900 hover:bg-gray-800" : "bg-background hover:bg-muted/50"
                   )}>
                     <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-medium">
-                      <span className={cn("text-muted-foreground", isDrinks && "text-white/80")}>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
+                      <span className={cn(
+                          "text-destructive underline underline-offset-2 decoration-destructive/50", 
+                          isDrinks && "text-red-400 decoration-red-400/50"
+                        )}
+                      >
+                        {`Mostrar ${category.incompatible.length} plato(s) no compatibles`}
+                      </span>
                     </AccordionTrigger>
                   </Alert>
                   <AccordionContent>
