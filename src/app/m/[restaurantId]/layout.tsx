@@ -9,7 +9,7 @@ export default async function MenuLayout({
   return (
     <div className="relative min-h-screen bg-background">
       <Header />
-      <main className="pb-24 pt-4">{children}</main>
+      <main className="pt-4">{children}</main>
       <LegalFooter />
     </div>
   );
