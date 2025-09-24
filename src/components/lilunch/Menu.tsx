@@ -1,23 +1,19 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Restaurant, MenuItem } from '@/lib/types';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { MenuItemCard } from './MenuItemCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Alert } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
-import { allergenMap, ALLERGENS } from '@/lib/allergens';
+import { ALLERGENS } from '@/lib/allergens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AllergenIcon } from './AllergenIcon';
 import { Separator } from '../ui/separator';
 import { Card, CardContent } from '../ui/card';
 import { allergenColors } from './colors';
-import { Switch } from '../ui/switch';
-import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
-import { useParams } from 'next/navigation';
-import { getRestaurantById } from '@/lib/data';
 
 type CategorizedItem = {
   item: MenuItem;
@@ -60,7 +56,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
     return (
       <div className="container space-y-8 px-4 sm:px-6">
         {[1, 2, 3, 4].map(i => (
-          <div key={i} className="space-y-4">
+          <div key={i} className="space-y-4 pt-8">
             <Skeleton className="h-10 w-1/3 rounded-lg" />
             <div className="grid grid-cols-1 gap-4">
               {[1, 2, 3, 4].map(j => (
@@ -86,13 +82,13 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
           key={category.id} 
           id={category.id} 
           className={cn(
-            "space-y-4 pt-8 -mt-4 scroll-mt-24",
+            "space-y-4 scroll-mt-24 pt-8",
             (isDrinks || isWines) && "p-6 -mx-6 rounded-3xl",
             isDrinks && "bg-gray-900 text-white",
             isWines && "bg-amber-50"
           )}
         >
-          <h2 className="text-2xl font-semibold tracking-tight">{category.name}</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{category.name}</h2>
           
           <div className="flex flex-col">
             {category.compatible.map(({ item }) => (
@@ -112,7 +108,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
                      isDrinks ? "bg-gray-900 hover:bg-gray-800" : "bg-background hover:bg-muted/50"
                   )}>
                     <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-medium">
-                      <span className={cn(isDrinks && "text-white/80")}>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
+                      <span className={cn("text-muted-foreground", isDrinks && "text-white/80")}>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
                     </AccordionTrigger>
                   </Alert>
                   <AccordionContent>

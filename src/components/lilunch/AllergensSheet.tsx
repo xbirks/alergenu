@@ -46,12 +46,12 @@ export function AllergensSheet() {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="secondary" className="rounded-full h-10 shadow-sm bg-muted hover:bg-muted/80 text-muted-foreground relative">
-            <SlidersHorizontal className="h-4 w-4" />
-            Mis alergias
+        <Button variant="secondary" className="rounded-full h-12 w-12 flex-shrink-0 p-0 text-muted-foreground relative shadow-sm bg-muted hover:bg-muted/80">
+            <SlidersHorizontal className="h-5 w-5" />
+            <span className="sr-only">Mis alergias</span>
             {allergen_count > 0 && (
                 <Badge variant="destructive" className={cn(
-                    "absolute -top-1 -right-1 h-5 w-5 justify-center p-0",
+                    "absolute -top-1 -right-1 h-5 w-5 justify-center p-0 text-xs",
                     allergen_count > 9 && "px-1 w-auto"
                 )}>
                     {allergen_count}
@@ -60,7 +60,7 @@ export function AllergensSheet() {
         </Button>
       </SheetTrigger>
       <SheetContent className="flex flex-col h-full" side="bottom">
-        <SheetHeader className="text-center">
+        <SheetHeader className="text-center px-6">
           <SheetTitle className="text-2xl font-semibold">Mis Alergias</SheetTitle>
           <SheetDescription>
             Selecciona los alérgenos a evitar. Resaltaremos lo que es seguro para ti.
@@ -86,7 +86,7 @@ export function AllergensSheet() {
                     )}
                   >
                     <AllergenIcon allergenId={allergen.id} iconClassName={cn(isSelected ? 'text-primary-foreground' : 'text-current')} />
-                    <span>{allergen.name}</span>
+                    <span className="font-medium">{allergen.name}</span>
                   </button>
                 )
               })}

@@ -14,6 +14,7 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(categories[0]?.id || null);
   const [isSticky, setIsSticky] = useState(false);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,10 +23,13 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
       const offset = headerHeight + stickyNavHeight + 20;
 
       // Stickiness
-      if (window.scrollY > headerHeight) {
-        setIsSticky(true);
-      } else {
-        setIsSticky(false);
+      const navElement = scrollAreaRef.current;
+      if (navElement && navElement.parentElement) {
+        if (window.scrollY > navElement.parentElement.offsetTop) {
+          setIsSticky(true);
+        } else {
+          setIsSticky(false);
+        }
       }
 
       // Active category
@@ -36,18 +40,19 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
           currentCategory = category.id;
         }
       }
-
+      
       if (currentCategory && activeCategory !== currentCategory) {
         setActiveCategory(currentCategory);
         const button = buttonRefs.current[currentCategory];
         button?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      } else if (!currentCategory && activeCategory) {
-        // Fallback to first if nothing is active (e.g. at the top)
-        setActiveCategory(categories[0]?.id || null);
+      } else if (!currentCategory && categories.length > 0 && activeCategory !== categories[0].id) {
+        setActiveCategory(categories[0].id);
+        const button = buttonRefs.current[categories[0].id];
+        button?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [categories, activeCategory]);
 
@@ -62,9 +67,9 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
   };
 
   return (
-    <nav className={cn("z-30 w-full bg-background/80 backdrop-blur-sm border-b", isSticky ? 'sticky top-20' : 'relative')}>
+    <nav className={cn("z-30 w-full bg-background/80 backdrop-blur-sm border-b", isSticky ? 'sticky top-[80px]' : 'relative')}>
       <div className="container px-4 sm:px-6">
-        <ScrollArea className="whitespace-nowrap">
+        <ScrollArea className="whitespace-nowrap" ref={scrollAreaRef}>
           <div className="flex h-[60px] items-center gap-2">
             {categories.map(category => (
               <Button
@@ -72,8 +77,8 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
                 ref={(el) => buttonRefs.current[category.id] = el}
                 variant="ghost"
                 className={cn(
-                    "rounded-full h-9 px-4 font-medium transition-colors uppercase",
-                    activeCategory === category.id ? 'bg-primary text-primary-foreground' : 'bg-transparent hover:bg-accent'
+                    "rounded-full h-9 px-4 font-medium transition-colors uppercase text-sm",
+                    activeCategory === category.id ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-transparent hover:bg-accent'
                 )}
                 onClick={() => scrollToCategory(category.id)}
               >
