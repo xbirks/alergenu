@@ -85,7 +85,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
             "space-y-4 scroll-mt-24 pt-8",
             (isDrinks || isWines) && "p-6 -mx-6 rounded-3xl",
             isDrinks && "bg-gray-900 text-white",
-            isWines && "bg-amber-50"
+            isWines && "bg-rose-50"
           )}
         >
           <h2 className="text-2xl font-bold tracking-tight">{category.name}</h2>

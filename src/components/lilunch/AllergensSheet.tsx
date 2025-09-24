@@ -46,7 +46,7 @@ export function AllergensSheet() {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="secondary" className="rounded-full h-12 flex-shrink-0 p-3 relative shadow-sm bg-muted hover:bg-muted/80 text-muted-foreground font-medium">
+        <Button variant="secondary" className="rounded-full h-10 px-4 relative shadow-sm bg-muted hover:bg-muted/80 text-muted-foreground font-medium">
             <SlidersHorizontal className="h-5 w-5 mr-2" />
             <span>Mis alergias</span>
             {allergen_count > 0 && (

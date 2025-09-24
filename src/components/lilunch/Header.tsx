@@ -36,7 +36,7 @@ export function Header() {
         </Link>
         <div className="flex items-center gap-2">
           <AllergensSheet />
-          <Button variant="ghost" size="icon" className="relative rounded-full h-12 w-12 flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="relative rounded-full h-10 w-10">
               <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-muted text-muted-foreground">
                   <User className="h-5 w-5" />
