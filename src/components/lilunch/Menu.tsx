@@ -25,32 +25,31 @@ type CategorizedItem = {
 
 export function Menu({ restaurant }: { restaurant: Restaurant }) {
   const { selectedAllergens, isLoaded } = useAllergenProfile();
-  const [showAll, setShowAll] = useState(false);
 
   const categorizedMenu = useMemo(() => {
     if (!isLoaded) return null;
 
     return restaurant.menu.map(category => {
-      const items = category.items.map(item => {
+      const compatibleItems: CategorizedItem[] = [];
+      const incompatibleItems: CategorizedItem[] = [];
+
+      category.items.forEach(item => {
         const incompatibleDirect = item.allergens.filter(a => selectedAllergens.has(a));
         const incompatibleTraces = item.traces.filter(a => selectedAllergens.has(a));
         const blockingAllergens = [...new Set([...incompatibleDirect, ...incompatibleTraces])];
 
         if (blockingAllergens.length > 0) {
-          return { item, status: 'incompatible', blockingAllergens } as CategorizedItem;
+          incompatibleItems.push({ item, status: 'incompatible', blockingAllergens });
+        } else {
+          compatibleItems.push({ item, status: 'compatible' });
         }
-
-        return { item, status: 'compatible' } as CategorizedItem;
       });
-
-      const compatible = items.filter(i => i.status === 'compatible');
-      const incompatible = items.filter(i => i.status === 'incompatible');
-
+      
       return {
         ...category,
-        compatible,
-        incompatible,
-        hasContent: compatible.length > 0 || incompatible.length > 0,
+        compatible: compatibleItems,
+        incompatible: incompatibleItems,
+        hasContent: compatibleItems.length > 0 || incompatibleItems.length > 0,
       };
     });
   }, [restaurant.menu, selectedAllergens, isLoaded]);
@@ -72,71 +71,36 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
     );
   }
 
-  const getIncompatibleTriggerText = (items: CategorizedItem[]): string => {
-    const allBlockingAllergens = new Set<string>();
-    items.forEach(i => i.blockingAllergens?.forEach(a => allBlockingAllergens.add(a)));
-    const allergenNames = Array.from(allBlockingAllergens).map(id => allergenMap.get(id)?.name);
-    if (allergenNames.length === 0) return "Contiene tus alérgenos";
-    
-    const allergensWithTraces = Array.from(allBlockingAllergens).map(allergenId => {
-        const hasDirect = items.some(i => i.item.allergens.includes(allergenId));
-        const hasTraces = items.some(i => i.item.traces.includes(allergenId) && !i.item.allergens.includes(allergenId));
-        
-        let text = allergenMap.get(allergenId)?.name;
-        if (hasDirect && hasTraces) {
-            text += ' y trazas';
-        } else if (hasTraces && !hasDirect) {
-            text += ' (trazas)';
-        }
-        return text;
-    });
-
-    if (allergensWithTraces.length > 2) {
-        return `Contiene ${allergensWithTraces.slice(0, 2).join(', ')} y más`;
-    }
-    
-    return `Contiene ${allergensWithTraces.join(', ')}`;
-  }
-
   return (
     <div className="container space-y-6 px-4 sm:px-6">
       {categorizedMenu.map(category => {
         if (!category.hasContent) return null;
-
-        const originalItems = restaurant.menu.find(c => c.id === category.id)?.items || [];
-        const allItems = [...category.compatible, ...category.incompatible].sort((a,b) => originalItems.indexOf(a.item) - originalItems.indexOf(b.item));
-
+        
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
           <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
           
           <div className="flex flex-col">
-            {showAll ? (
-              allItems.map(({ item, status }) => <MenuItemCard key={item.id} item={item} status={status} />)
-            ) : (
-              <>
-                {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
-                
-                {category.incompatible.length > 0 && selectedAllergens.size > 0 && (
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="incompatible" className="border-none">
-                      <Alert variant="destructive" className="p-0 border-none rounded-none bg-background hover:bg-muted/50 transition-colors">
-                        <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-semibold">
-                          <span>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
-                        </AccordionTrigger>
-                      </Alert>
-                      <AccordionContent>
-                        <div className="flex flex-col mt-4">
-                          {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                )}
-              </>
+            {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
+            
+            {category.incompatible.length > 0 && selectedAllergens.size > 0 && (
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="incompatible" className="border-none">
+                  <Alert variant="destructive" className="p-0 border-none rounded-none bg-background hover:bg-muted/50 transition-colors">
+                    <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-semibold">
+                      <span>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
+                    </AccordionTrigger>
+                  </Alert>
+                  <AccordionContent>
+                    <div className="flex flex-col mt-4">
+                      {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             )}
             
-            {category.compatible.length === 0 && selectedAllergens.size > 0 && !showAll &&(
+            {category.compatible.length === 0 && selectedAllergens.size > 0 && (
               <div className="border-dashed border-2 rounded-2xl text-center my-4">
                   <div className="p-6">
                     <Info className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
@@ -149,15 +113,6 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
 
         </section>
       )})}
-
-      {selectedAllergens.size > 0 && (
-         <div className="flex items-center justify-center space-x-2 py-4">
-            <Switch id="show-all-switch" checked={showAll} onCheckedChange={setShowAll} />
-            <Label htmlFor="show-all-switch" className="font-medium">
-              {showAll ? "Ocultar platos no compatibles" : "Mostrar todos los platos"}
-            </Label>
-          </div>
-      )}
 
 
       <Separator className="my-8" />
