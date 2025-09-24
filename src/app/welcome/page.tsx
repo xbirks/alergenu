@@ -26,7 +26,7 @@ export default function WelcomePage() {
       <main className="flex-1 flex flex-col justify-center text-center">
         <div className="space-y-2">
           <h1 className="text-4xl font-semibold tracking-tight">
-            Cuidamos tu salud en cualquier restaurante
+            Cuidamos tu <span className="font-bold">salud</span> en cualquier restaurante
           </h1>
           <p className="text-base text-muted-foreground max-w-sm mx-auto">
             ¿Tienes alguna alergia o intolerancia alimentaria?
