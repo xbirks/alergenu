@@ -1,18 +1,12 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { SlidersHorizontal, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import Link from 'next/link';
-import { useAllergenProfile } from '@/hooks/use-allergen-profile';
-import { Badge } from '../ui/badge';
-import { cn } from '@/lib/utils';
 import { AllergensSheet } from './AllergensSheet';
 
 export function Header() {
-  const { selectedAllergens } = useAllergenProfile();
-  const allergen_count = selectedAllergens.size;
-
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur-sm">
       <div className="container flex h-20 items-center justify-between px-4 sm:px-6">
@@ -42,7 +36,6 @@ export function Header() {
         </Link>
         <div className="flex items-center gap-2">
           <AllergensSheet />
-
           <Button variant="ghost" size="icon" className="relative rounded-full h-12 w-12 flex items-center gap-3">
               <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-muted text-muted-foreground">

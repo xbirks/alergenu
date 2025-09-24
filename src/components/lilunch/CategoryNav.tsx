@@ -22,7 +22,8 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
     const handleScroll = () => {
       const navElement = navRef.current;
       if (navElement) {
-        if (window.scrollY > navElement.offsetTop) {
+        const navTop = navElement.getBoundingClientRect().top;
+        if (navTop <= 80) { // Height of the sticky header
           setIsSticky(true);
         } else {
           setIsSticky(false);
@@ -38,7 +39,7 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
       let currentCategory = '';
       for (const category of categories) {
         const element = document.getElementById(category.id);
-        if (element && element.offsetTop <= window.scrollY + offset) {
+        if (element && element.getBoundingClientRect().top <= offset) {
           currentCategory = category.id;
         }
       }
@@ -72,7 +73,7 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
 
       scrollTimeout.current = setTimeout(() => {
         isScrolling.current = false;
-      }, 1000); // Reset after 1 second
+      }, 1000); 
     }
   };
 
