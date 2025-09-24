@@ -77,25 +77,54 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
     <div className="container space-y-6 px-4 sm:px-6">
       {categorizedMenu.map(category => {
         if (!category.hasContent) return null;
+
+        const isDrinks = category.id === 'drinks';
+        const isWines = category.id === 'wines';
         
         return (
-        <section key={category.id} id={category.id} className="space-y-4 pt-8 -mt-4">
+        <section 
+          key={category.id} 
+          id={category.id} 
+          className={cn(
+            "space-y-4 pt-8 -mt-4 scroll-mt-24",
+            (isDrinks || isWines) && "p-6 -mx-6 rounded-3xl",
+            isDrinks && "bg-gray-900 text-white",
+            isWines && "bg-amber-50"
+          )}
+        >
           <h2 className="text-2xl font-semibold tracking-tight">{category.name}</h2>
           
           <div className="flex flex-col">
-            {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
+            {category.compatible.map(({ item }) => (
+              <MenuItemCard 
+                key={item.id} 
+                item={item} 
+                status="compatible" 
+                isDark={isDrinks}
+              />
+            ))}
             
             {category.incompatible.length > 0 && selectedAllergens.size > 0 && (
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="incompatible" className="border-none">
-                  <Alert variant="destructive" className="p-0 border-none rounded-none bg-background hover:bg-muted/50 transition-colors">
+                  <Alert variant="destructive" className={cn(
+                    "p-0 border-none rounded-none transition-colors",
+                     isDrinks ? "bg-gray-900 hover:bg-gray-800" : "bg-background hover:bg-muted/50"
+                  )}>
                     <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline justify-start gap-2 font-medium">
-                      <span>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
+                      <span className={cn(isDrinks && "text-white/80")}>{`Mostrar ${category.incompatible.length} plato(s) no compatibles`}</span>
                     </AccordionTrigger>
                   </Alert>
                   <AccordionContent>
                     <div className="flex flex-col mt-4">
-                      {category.incompatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="incompatible" />)}
+                      {category.incompatible.map(({ item }) => (
+                        <MenuItemCard 
+                          key={item.id} 
+                          item={item} 
+                          status="incompatible"
+                          isDark={isDrinks}
+                        />
+                      ))}
                     </div>
                   </AccordionContent>
                 </AccordionItem>

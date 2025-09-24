@@ -13,7 +13,7 @@ import { Separator } from '../ui/separator';
 
 type ItemStatus = 'compatible' | 'incompatible';
 
-export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemStatus }) {
+export function MenuItemCard({ item, status, isDark = false }: { item: MenuItem; status: ItemStatus, isDark?: boolean }) {
   const allPresentAllergens = [...item.allergens, ...item.traces];
   const { isAllergenSelected, selectedAllergens } = useAllergenProfile();
 
@@ -25,9 +25,11 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
     <div className={cn("w-full py-4", status === 'incompatible' && selectedAllergens.size > 0 ? 'opacity-50' : '')}>
       <div className="flex justify-between items-start gap-4">
         <div className="flex-1">
-          <h3 className="text-base font-semibold uppercase tracking-tight">{item.name}</h3>
+          <h3 className={cn("text-base font-semibold uppercase tracking-tight", isDark && "text-white")}>
+            {item.name}
+          </h3>
         </div>
-        <p className="text-base font-medium whitespace-nowrap">
+        <p className={cn("text-base font-medium whitespace-nowrap", isDark && "text-white/90")}>
           {item.price.toFixed(2)}€
         </p>
       </div>
@@ -35,7 +37,9 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
       {hasContent && (
         <div className="pt-1">
           {item.description && (
-            <p className="text-sm text-muted-foreground">{item.description}</p>
+            <p className={cn("text-sm", isDark ? "text-white/70" : "text-muted-foreground")}>
+              {item.description}
+            </p>
           )}
 
           {(allPresentAllergens.length > 0 || showIncompatibleWarning) && (
@@ -79,7 +83,7 @@ export function MenuItemCard({ item, status }: { item: MenuItem; status: ItemSta
           )}
         </div>
       )}
-       <Separator className="mt-4" />
+       <Separator className={cn("mt-4", isDark && "bg-white/20")} />
     </div>
   );
 }
