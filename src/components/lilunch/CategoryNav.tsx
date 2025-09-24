@@ -14,25 +14,23 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(categories[0]?.id || null);
   const [isSticky, setIsSticky] = useState(false);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-
+  const navRef = useRef<HTMLElement>(null);
+  
   useEffect(() => {
     const handleScroll = () => {
-      const headerHeight = 80;
-      const stickyNavHeight = 60;
-      const offset = headerHeight + stickyNavHeight + 20;
-
-      // Stickiness
-      const navElement = scrollAreaRef.current;
-      if (navElement && navElement.parentElement) {
-        if (window.scrollY > navElement.parentElement.offsetTop) {
+      const navElement = navRef.current;
+      if (navElement) {
+        if (window.scrollY > navElement.offsetTop) {
           setIsSticky(true);
         } else {
           setIsSticky(false);
         }
       }
 
-      // Active category
+      const headerHeight = 80; 
+      const stickyNavHeight = 60;
+      const offset = headerHeight + stickyNavHeight + 20;
+
       let currentCategory = '';
       for (const category of categories) {
         const element = document.getElementById(category.id);
@@ -40,18 +38,14 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
           currentCategory = category.id;
         }
       }
-      
+
       if (currentCategory && activeCategory !== currentCategory) {
         setActiveCategory(currentCategory);
         const button = buttonRefs.current[currentCategory];
         button?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      } else if (!currentCategory && categories.length > 0 && activeCategory !== categories[0].id) {
-        setActiveCategory(categories[0].id);
-        const button = buttonRefs.current[categories[0].id];
-        button?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
       }
     };
-
+    
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [categories, activeCategory]);
@@ -59,17 +53,17 @@ export function CategoryNav({ categories }: { categories: Category[] }) {
   const scrollToCategory = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      const headerHeight = 80; // height of Header
-      const stickyNavHeight = 60; // height of this nav
+      const headerHeight = 80; 
+      const stickyNavHeight = 60;
       const y = element.getBoundingClientRect().top + window.scrollY - headerHeight - stickyNavHeight;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
 
   return (
-    <nav className={cn("z-30 w-full bg-background/80 backdrop-blur-sm border-b", isSticky ? 'sticky top-[80px]' : 'relative')}>
+    <nav ref={navRef} className={cn("z-30 w-full bg-background/80 backdrop-blur-sm border-b", isSticky ? 'sticky top-[80px]' : 'relative')}>
       <div className="container px-4 sm:px-6">
-        <ScrollArea className="whitespace-nowrap" ref={scrollAreaRef}>
+        <ScrollArea className="whitespace-nowrap">
           <div className="flex h-[60px] items-center gap-2">
             {categories.map(category => (
               <Button
