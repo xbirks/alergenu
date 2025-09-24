@@ -12,6 +12,8 @@ export default function WelcomePage() {
   };
 
   const handleNotAllergicClick = () => {
+    // Clear allergens from local storage before navigating
+    localStorage.removeItem('lilunch-allergens');
     router.push('/m/1');
   };
 
