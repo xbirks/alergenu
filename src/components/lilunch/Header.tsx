@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
+import { AllergensSheet } from './AllergensSheet';
 
 export function Header() {
   const { selectedAllergens } = useAllergenProfile();
@@ -40,20 +41,7 @@ export function Header() {
           </svg>
         </Link>
         <div className="flex items-center gap-2">
-          <Button asChild variant="secondary" className="rounded-full h-10 shadow-sm bg-muted hover:bg-muted/80 text-muted-foreground relative">
-              <Link href="/welcome">
-                  <SlidersHorizontal className="h-4 w-4" />
-                  Mis alergias
-                  {allergen_count > 0 && (
-                      <Badge variant="destructive" className={cn(
-                          "absolute -top-1 -right-1 h-5 w-5 justify-center p-0",
-                          allergen_count > 9 && "px-1 w-auto"
-                      )}>
-                          {allergen_count}
-                      </Badge>
-                  )}
-              </Link>
-          </Button>
+          <AllergensSheet />
 
           <Button variant="ghost" size="icon" className="relative rounded-full h-12 w-12 flex items-center gap-3">
               <Avatar className="h-10 w-10">
