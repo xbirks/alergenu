@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function WelcomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-background p-6">
       <header className="flex justify-center items-center py-4">
-        <span className="text-lg font-medium">Lilunch</span>
+        <Image src="/alergenu.png" alt="Alergenu Logo" width={150} height={50} />
       </header>
 
       <main className="flex-1 flex flex-col justify-center text-center">
