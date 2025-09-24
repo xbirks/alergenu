@@ -16,6 +16,8 @@ import { allergenColors } from './colors';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
+import { useParams } from 'next/navigation';
+import { getRestaurantById } from '@/lib/data';
 
 type CategorizedItem = {
   item: MenuItem;
@@ -23,11 +25,17 @@ type CategorizedItem = {
   blockingAllergens?: string[];
 };
 
-export function Menu({ restaurant }: { restaurant: Restaurant }) {
+export function Menu() {
+  const params = useParams();
+  const restaurantId = Array.isArray(params.restaurantId)
+    ? params.restaurantId[0]
+    : params.restaurantId;
+  const restaurant = getRestaurantById(restaurantId);
+
   const { selectedAllergens, isLoaded } = useAllergenProfile();
 
   const categorizedMenu = useMemo(() => {
-    if (!isLoaded) return null;
+    if (!isLoaded || !restaurant) return null;
 
     return restaurant.menu.map(category => {
       const compatibleItems: CategorizedItem[] = [];
@@ -52,7 +60,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         hasContent: compatibleItems.length > 0 || incompatibleItems.length > 0,
       };
     });
-  }, [restaurant.menu, selectedAllergens, isLoaded]);
+  }, [restaurant, selectedAllergens, isLoaded]);
 
   if (!isLoaded || !categorizedMenu) {
     return (
@@ -78,7 +86,7 @@ export function Menu({ restaurant }: { restaurant: Restaurant }) {
         
         return (
         <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
-          <h2 className="text-3xl font-bold tracking-tight">{category.name}</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{category.name}</h2>
           
           <div className="flex flex-col">
             {category.compatible.map(({ item }) => <MenuItemCard key={item.id} item={item} status="compatible" />)}
