@@ -15,30 +15,34 @@ import { useAllergenProfile } from '@/hooks/use-allergen-profile';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import { AllergenIcon } from './AllergenIcon';
-import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { allergenButtonColors } from './colors';
 
-export function AllergensSheet({ children }: { children: React.ReactNode }) {
+export function AllergensSheet() {
   const { isLoaded, isAllergenSelected, toggleAllergen } = useAllergenProfile();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const shouldShow = localStorage.getItem('lilunch-show-allergens');
-    if (shouldShow === 'true') {
+    if (searchParams.get('alergias') === 'true') {
       setIsOpen(true);
-      localStorage.removeItem('lilunch-show-allergens');
+      // Clean the URL to avoid re-triggering on reload
+      router.replace('/m/1', { scroll: false });
     }
-  }, []);
+  }, [searchParams, router]);
 
   const handleDone = () => {
     setIsOpen(false);
-    window.location.reload();
   };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild onClick={() => setIsOpen(true)}>{children}</SheetTrigger>
-      <SheetContent className="flex flex-col" side="bottom">
+      <SheetTrigger asChild>
+        {/* The trigger is now handled programmatically, so this can be empty or removed if not needed elsewhere */}
+      </SheetTrigger>
+      <SheetContent className="flex flex-col h-full" side="bottom">
         <SheetHeader className="text-center">
           <SheetTitle className="text-2xl font-bold">Mis Alergias</SheetTitle>
           <SheetDescription>
