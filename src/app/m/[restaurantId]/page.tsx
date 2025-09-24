@@ -38,7 +38,7 @@ export default function MenuPage() {
     <>
       <div className="container py-6 px-4 sm:px-6">
         <h1 className="text-3xl font-bold tracking-tight">{restaurant.name}</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 text-sm">
           Aquí tienes la carta de nuestro restaurante. Esperamos que disfrutes de tu elección.
         </p>
       </div>

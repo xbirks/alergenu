@@ -25,13 +25,7 @@ type CategorizedItem = {
   blockingAllergens?: string[];
 };
 
-export function Menu() {
-  const params = useParams();
-  const restaurantId = Array.isArray(params.restaurantId)
-    ? params.restaurantId[0]
-    : params.restaurantId;
-  const restaurant = getRestaurantById(restaurantId);
-
+export function Menu({ restaurant }: { restaurant: Restaurant }) {
   const { selectedAllergens, isLoaded } = useAllergenProfile();
 
   const categorizedMenu = useMemo(() => {
@@ -85,7 +79,7 @@ export function Menu() {
         if (!category.hasContent) return null;
         
         return (
-        <section key={category.id} id={category.id} className="space-y-4 pt-4 -mt-4">
+        <section key={category.id} id={category.id} className="space-y-4 pt-8 -mt-4">
           <h2 className="text-2xl font-bold tracking-tight">{category.name}</h2>
           
           <div className="flex flex-col">

@@ -3,7 +3,7 @@ import type { Restaurant } from './types';
 export const restaurants: Restaurant[] = [
   {
     id: '1',
-    name: 'El Rincón del Sabor',
+    name: 'Restaurante Vicent',
     menu: [
       {
         id: 'starters',
@@ -280,7 +280,7 @@ export const restaurants: Restaurant[] = [
             price: 25.00,
             allergens: ['sulphites'],
             traces: [],
-            imageId: 'botella-protos',
+            imageId: 'botella- protos',
             lastUpdated: '2024-05-20T10:00:00Z',
           }
         ]
