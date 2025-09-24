@@ -40,7 +40,7 @@ export default function MenuPage() {
       <div className="container pt-6 pb-2 px-4 sm:px-6 text-center">
         <div className="w-full aspect-video overflow-hidden rounded-2xl mb-6">
             <Image
-                src="https://picsum.photos/seed/cuisine/1600/900"
+                src="https://picsum.photos/seed/foodie/1600/900"
                 alt="High-end cuisine"
                 width={1600}
                 height={900}
