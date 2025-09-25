@@ -1,0 +1,60 @@
+**MANUAL DE ESTILO Y REGLAS DE ORO PARA EL ASISTENTE DE IA**
+
+Este documento es la única fuente de verdad sobre el diseño y la funcionalidad de la aplicación Alergenu. El incumplimiento de estas reglas es inaceptable y resultará en una mala experiencia de usuario.
+
+---
+**REGLA Nº 0: NO TRABAJAR DE MANERA DESTRUCTIVA (LA MÁS IMPORTANTE)**
+---
+- **PROHIBIDO** sobreescribir o eliminar contenido existente sin confirmación explícita.
+- Si una herramienta indica que un archivo está vacío, pero el usuario indica lo contrario, la palabra del usuario prevalece. Debes **preguntar siempre** antes de asumir que un archivo se puede sobreescribir.
+- El objetivo es añadir y construir, no destruir y rehacer. Evita el trabajo doble al usuario.
+
+---
+**REGLA Nº 1: NO TOCAR LO QUE FUNCIONA.**
+---
+- **PROHIBIDO** modificar código o funcionalidades existentes que no estén directamente relacionadas con la petición actual.
+- Si una página, componente o función ya existe y funciona, **NO SE TOCA** a menos que el usuario pida explícitamente un cambio sobre ese elemento.
+- La iniciativa para "mejorar" o "refactorizar" código no solicitado está estrictamente prohibida. Céntrate únicamente en la tarea asignada.
+
+---
+**REGLA Nº 2: LA ESTÉTICA DE LA APP (EL DISEÑO ES ASÍ)**
+---
+El diseño de la aplicación es minimalista, limpio y se basa en los siguientes principios visuales, observables en `/dashboard` y `/restest`.
+
+1.  **TIPOGRAFÍA (Fuente: Manrope):**
+    -   **Títulos Principales (H1):** Grandes (`text-5xl`), en negrita máxima (`font-extrabold`) y con las letras juntas (`tracking-tight`). Ejemplo: "¡Hola, Sab...", "Cuidamos tu salud...".
+    -   **Párrafos y Descripciones:** Texto normal (`font-regular`) en un color gris suave (`text-muted-foreground`).
+    -   **Texto de Botones:** En negrita (`font-bold`).
+
+2.  **COMPONENTES (Basados en Shadcn UI):**
+    -   **BOTONES (`Button`):** La seña de identidad visual. **SIEMPRE** deben ser 100% redondeados, con forma de píldora. Se consigue aplicando la clase `rounded-full`.
+        -   **Botón Primario (Oscuro):** Fondo oscuro (`bg-primary`), texto claro.
+        -   **Botón Secundario (Blanco):** Fondo blanco, texto oscuro y **SIEMPRE** con un borde de 1px del color primario. Se consigue usando `variant="outline"`.
+        -   **Botón Fantasma (Sin borde):** Transparente y sin borde. Se usa para acciones menos importantes (`variant="ghost"`).
+    -   **TARJETAS (`Card`):** Usadas en el dashboard. Tienen bordes muy redondeados (`rounded-2xl`). Son limpias, con una sombra muy sutil (`shadow-sm`) o sin ella. **NO LLEVAN ICONOS**, a menos que se pidan expresamente.
+    -   **AVATAR (Icono de Usuario):** Un círculo con un borde sutil y las iniciales del usuario.
+
+3.  **LOGOTIPO:**
+    -   **Panel de Control (`/dashboard`):** Se usa la versión compacta, solo el icono sin texto: `icon_alergenu.png`.
+    -   **Páginas Públicas (`/restest`, login, etc.):** Se usa la versión completa con texto: `alergenu.png`.
+
+4.  **COLORES:**
+    -   **Primario:** Un azul/negro muy oscuro para los elementos principales (botones, títulos, bordes).
+    -   **Secundario:** Grises claros para fondos de elementos y textos secundarios.
+    -   **Acento:** Un azul brillante (`text-blue-600`) se usa de forma puntual para resaltar palabras clave en los títulos, como la palabra "salud" en `/restest`.
+
+---
+**REGLA Nº 3: COPIAR, NO INTERPRETAR.**
+---
+- Tu función es replicar los ejemplos y las capturas de pantalla que te proporciona el usuario con la máxima fidelidad posible.
+- No "interpretes" el diseño. No "mejores" la estética. No añadas elementos que no se han pedido.
+- Si tienes dudas, pregunta. Pero la norma es: si no está en la captura, no se añade.
+
+---
+**REGLA Nº 4: DECISIONES DE ARQUITECTURA Y LAYOUT.**
+---
+- **Footer Unificado:** El pie de página es un componente único (`/src/components/layout/Footer.tsx`) y se implementa una sola vez en el layout principal (`/src/app/layout.tsx`). No debe añadirse manualmente a otras páginas.
+- **Header Separado:** El header principal de la aplicación (`/src/components/layout/header.tsx`) es solo para usuarios autenticados. El logo en este header siempre debe enlazar al panel de control (`/dashboard`), no a la página de inicio pública.
+- **Espacio y Aire:** La interfaz debe "respirar". Se usarán clases de espaciado generosas (`gap`, `padding`) para separar los elementos principales, como se ha definido en el dashboard (`gap-8`, `p-6`, `md:p-10`).
+
+**Cualquier chat nuevo debe empezar leyendo y confirmando la comprensión de este documento.**

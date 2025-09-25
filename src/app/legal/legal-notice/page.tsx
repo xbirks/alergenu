@@ -33,7 +33,7 @@ export default function LegalNoticePage() {
         <p>En el caso de que en el sitio web se dispusiesen enlaces o hipervínculos hacía otros sitios de Internet, el titular no ejercerá ningún tipo de control sobre dichos sitios y contenidos. En ningún caso el titular asumirá responsabilidad alguna por los contenidos de algún enlace perteneciente a un sitio web ajeno.</p>
 
         <h2>6. Ley Aplicable y Jurisdicción</h2>
-        <p>La relación entre el titular y el usuario se regirá por la normativa española vigente y cualquier controversia se someterá a los Juzgados y tribunales de la ciudad de [Tu Ciudad], España.</p>
+        <p>La relación entre el titular y el usuario se regirá por la normativa española vigente y cualquier controversia se someterá a los Juzgados y tribunales de la ciudad de Valencia, España.</p>
 
       </div>
     </main>

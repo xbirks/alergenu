@@ -1,13 +1,18 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
 
-const inter = Inter({ subsets: ['latin'] });
+import type { Metadata } from "next";
+import { Manrope } from "next/font/google";
+import "./globals.css";
+import { LegalFooter } from '@/components/layout/Footer';
+
+const manrope = Manrope({ 
+  subsets: ["latin"], 
+  variable: "--font-sans",
+  weight: ['400', '500', '700', '800']
+});
 
 export const metadata: Metadata = {
-  title: 'Lilunch',
-  description: 'Manage your allergens, enjoy your meal.',
+  title: "Alergenu - Panel de control para restaurantes",
+  description: "Gestiona tu carta digital y alérgenos de forma sencilla e intuitiva.",
 };
 
 export default function RootLayout({
@@ -16,12 +21,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
-      </head>
-      <body className={`${inter.className} antialiased`}>
-        {children}
-        <Toaster />
+    <html lang="es" suppressHydrationWarning>
+      <body className={`flex flex-col min-h-screen ${manrope.className}`}>
+        <main className="flex-grow">{children}</main>
+        <LegalFooter />
       </body>
     </html>
   );

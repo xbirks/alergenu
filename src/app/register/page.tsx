@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,8 +16,28 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
+import { auth, db } from '@/lib/firebase/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+
+// Helper function to create a URL-friendly slug from a string
+const slugify = (text: string) => {
+  const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;';
+  const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------';
+  const p = new RegExp(a.split('').join('|'), 'g');
+
+  return text.toString().toLowerCase()
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(p, c => b.charAt(a.indexOf(c))) // Replace special characters
+    .replace(/&/g, '-and-') // Replace & with 'and'
+    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+    .replace(/\-\-+/g, '-') // Replace multiple - with single -
+    .replace(/^-+/, '') // Trim - from start of text
+    .replace(/-+$/, ''); // Trim - from end of text
+}
 
 export default function RegisterPage() {
+  const router = useRouter();
   // Input values
   const [restaurantName, setRestaurantName] = useState('');
   const [ownerName, setOwnerName] = useState('');
@@ -28,28 +49,70 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // Validate that passwords match
+    setError('');
+
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden.');
       return;
     }
-    // Clear error if validation passes
-    setError('');
-    // TODO: Implement actual user registration logic
-    console.log('Submitting form:', { restaurantName, ownerName, email });
-    alert('¡Cuenta lista para ser creada! (Lógica de backend pendiente)');
+
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      // 2. Create a slug from the restaurant name
+      const restaurantSlug = slugify(restaurantName);
+
+      // 3. Save additional user data in Firestore
+      await setDoc(doc(db, 'restaurants', user.uid), {
+        uid: user.uid,
+        restaurantName,
+        slug: restaurantSlug, // <-- The new URL-friendly slug
+        ownerName,
+        email: user.email,
+        createdAt: new Date(),
+      });
+
+      // 4. Redirect to login page on success
+      router.push('/login');
+
+    } catch (error: any) {
+      let errorMessage = 'Ocurrió un error al crear la cuenta.';
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Este correo electrónico ya está en uso.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'El formato del correo electrónico no es válido.';
+      }
+      setError(errorMessage);
+      console.error("Error during registration:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className='flex flex-col items-center justify-center min-h-screen bg-background p-4'>
       <div className='w-full max-w-md'>
-        <Link href='/' className='flex justify-center mb-6'>
+        <Link href='/home' className='flex justify-center mb-6'>
           <Image src='/alergenu.png' alt='Alergenu Logo' width={150} height={50} />
         </Link>
-        <Card>
+        <Card className="rounded-2xl">
           <form onSubmit={handleSubmit}>
             <CardHeader className='text-center space-y-2'>
               <CardTitle className='text-2xl'>Crea tu cuenta</CardTitle>
@@ -69,6 +132,8 @@ export default function RegisterPage() {
                     required
                     value={restaurantName}
                     onChange={(e) => setRestaurantName(e.target.value)}
+                    className="rounded-full"
+                    disabled={loading}
                   />
                 </div>
                 <div className='grid gap-2'>
@@ -79,6 +144,8 @@ export default function RegisterPage() {
                     required
                     value={ownerName}
                     onChange={(e) => setOwnerName(e.target.value)}
+                    className="rounded-full"
+                    disabled={loading}
                   />
                 </div>
                 <div className='grid gap-2'>
@@ -90,68 +157,80 @@ export default function RegisterPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="rounded-full"
+                    disabled={loading}
                   />
                 </div>
-                <div className='grid gap-2 relative'>
+                <div className='grid gap-2'>
                   <Label htmlFor='password'>Contraseña</Label>
-                  <Input
-                    id='password'
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    className='absolute bottom-0 right-2 h-7 w-7'
-                    onClick={() => setShowPassword((prev) => !prev)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className='h-4 w-4' />
-                    ) : (
-                      <Eye className='h-4 w-4' />
-                    )}
-                    <span className='sr-only'>
-                      {showPassword ? 'Ocultar' : 'Mostrar'}
-                    </span>
-                  </Button>
+                  <div className="relative flex items-center">
+                    <Input
+                      id='password'
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="rounded-full pr-10"
+                      disabled={loading}
+                    />
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      className='absolute right-2 h-7 w-7'
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      disabled={loading}
+                    >
+                      {showPassword ? (
+                        <EyeOff className='h-4 w-4' />
+                      ) : (
+                        <Eye className='h-4 w-4' />
+                      )}
+                      <span className='sr-only'>
+                        {showPassword ? 'Ocultar' : 'Mostrar'}
+                      </span>
+                    </Button>
+                  </div>
                 </div>
-                <div className='grid gap-2 relative'>
+                <div className='grid gap-2'>
                   <Label htmlFor='confirm-password'>Confirmar contraseña</Label>
-                  <Input
-                    id='confirm-password'
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    className='absolute bottom-0 right-2 h-7 w-7'
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className='h-4 w-4' />
-                    ) : (
-                      <Eye className='h-4 w-4' />
-                    )}
-                    <span className='sr-only'>
-                      {showConfirmPassword ? 'Ocultar' : 'Mostrar'}
-                    </span>
-                  </Button>
+                   <div className="relative flex items-center">
+                    <Input
+                      id='confirm-password'
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="rounded-full pr-10"
+                      disabled={loading}
+                    />
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      className='absolute right-2 h-7 w-7'
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      disabled={loading}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className='h-4 w-4' />
+                      ) : (
+                        <Eye className='h-4 w-4' />
+                      )}
+                      <span className='sr-only'>
+                        {showConfirmPassword ? 'Ocultar' : 'Mostrar'}
+                      </span>
+                    </Button>
+                  </div>
                 </div>
                 {error && (
-                  <p className='px-1 text-sm text-destructive'>{error}</p>
+                  <p className='px-1 py-2 font-medium text-sm text-destructive text-center bg-red-50 border border-destructive rounded-full'>{error}</p>
                 )}
               </div>
             </CardContent>
             <CardFooter className='flex flex-col items-center gap-4'>
-              <Button type='submit' className='w-full'>
-                Crear cuenta
+              <Button type='submit' className='w-full rounded-full' disabled={loading}>
+                {loading ? 'Creando cuenta...' : 'Crear cuenta'}
               </Button>
               <p className='text-xs text-muted-foreground text-center'>
                 Al crear una cuenta, aceptas nuestros{' '}
@@ -160,7 +239,7 @@ export default function RegisterPage() {
                   className='underline underline-offset-4 hover:text-primary'
                 >
                   Términos del Servicio
-                </Link>{' '}
+                </Link>
                 y{' '}
                 <Link
                   href='/legal/privacy-policy'

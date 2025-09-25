@@ -1,14 +1,18 @@
-import { HeaderB2B } from "@/components/lilunch/HeaderB2B";
+'use client';
 
-export default function DashboardLayout({
-  children,
-}: {
+import { Header } from '@/components/layout/header';
+
+interface DashboardLayoutProps {
   children: React.ReactNode;
-}) {
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex flex-col min-h-screen">
-      <HeaderB2B />
-      <main className="flex-1 container py-8">{children}</main>
+      <Header />
+      <div className="flex-grow">
+        {children}
+      </div>
     </div>
   );
 }

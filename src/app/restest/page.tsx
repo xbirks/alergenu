@@ -1,70 +1,52 @@
 'use client';
 
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import Image from 'next/image';
 
-export default function RestestPage() {
+export default function AllergenProfilePage() {
   const router = useRouter();
 
   const handleAllergicClick = () => {
-    router.push('/m/1?alergias=true');
+    router.push('/restest/allergies');
   };
 
   const handleNotAllergicClick = () => {
-    // Clear allergens from local storage before navigating
-    localStorage.removeItem('lilunch-allergens');
-    router.push('/m/1');
+    router.push('/restest/menu');
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background p-6">
-      <header className="flex justify-center items-center py-4">
-        <Image src="/alergenu.png" alt="Alergenu Logo" width={150} height={50} />
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-center p-4">
+      <header className="w-full absolute top-0 flex justify-center p-6">
+         <Image src="/alergenu.png" alt="Alergenu Logo" width={180} height={45} />
       </header>
 
-      <main className="flex-1 flex flex-col justify-center text-center">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-semibold tracking-tight">
-            Cuidamos tu <span className="font-extrabold text-blue-600 dark:text-blue-400">salud</span> en cualquier restaurante
-          </h1>
-          <p className="text-base text-muted-foreground max-w-sm mx-auto">
+      <main className="w-full max-w-md flex flex-col items-center gap-6">
+        <div className="grid gap-2">
+            <h1 className="text-5xl font-extrabold tracking-tight">Cuidamos tu <span className="text-blue-600">salud</span> en cualquier restaurante</h1>
+            <p className="text-xl text-muted-foreground">
             ¿Tienes alguna alergia o intolerancia alimentaria?
-          </p>
+            </p>
         </div>
-      </main>
 
-      <footer className="w-full max-w-sm mx-auto pb-4">
-        <div className="flex flex-col gap-3">
-          <Button
+        <div className="w-full space-y-4 pt-4">
+          <Button 
             size="lg"
-            className="w-full h-14 text-base font-medium rounded-full"
+            className="w-full text-lg font-bold rounded-full h-14"
             onClick={handleAllergicClick}
           >
             Soy alérgico
           </Button>
-          <Button
+          <Button 
             size="lg"
-            variant="secondary"
-            className="w-full h-14 text-base font-medium rounded-full bg-muted hover:bg-muted/80 text-muted-foreground"
+            variant="outline" // <-- Aplicado el borde con 'outline'
+            className="w-full text-lg font-regular rounded-full h-14"
             onClick={handleNotAllergicClick}
           >
             No soy alérgico
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground text-center mt-6 px-4">
-          Al continuar, aceptas nuestras{' '}
-          <Link href="/legal/terms-of-service" className="underline">
-            Condiciones de Servicio
-          </Link>{' '}
-          y{' '}
-          <Link href="/legal/privacy-policy" className="underline">
-            Política de Privacidad
-          </Link>
-          .
-        </p>
-      </footer>
+      </main>
     </div>
   );
 }
