@@ -105,6 +105,8 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+  
+  const isFormComplete = restaurantName && ownerName && email && password && confirmPassword;
 
   return (
     <div className='flex flex-col items-center justify-center min-h-screen bg-background p-4'>
@@ -137,7 +139,7 @@ export default function RegisterPage() {
                   />
                 </div>
                 <div className='grid gap-2'>
-                  <Label htmlFor='owner-name'>Tu nombre</Label>
+                  <Label htmlFor='owner-name'>Nombre y apellido</Label>
                   <Input
                     id='owner-name'
                     placeholder='Ej: María López'
@@ -229,7 +231,7 @@ export default function RegisterPage() {
               </div>
             </CardContent>
             <CardFooter className='flex flex-col items-center gap-4'>
-              <Button type='submit' className='w-full rounded-full' disabled={loading}>
+              <Button type='submit' className='w-full rounded-full' disabled={!isFormComplete || loading}>
                 {loading ? 'Creando cuenta...' : 'Crear cuenta'}
               </Button>
               <p className='text-xs text-muted-foreground text-center'>
@@ -238,9 +240,9 @@ export default function RegisterPage() {
                   href='/legal/terms-of-service'
                   className='underline underline-offset-4 hover:text-primary'
                 >
-                  Términos del Servicio
+                  Términos y Condiciones
                 </Link>
-                y{' '}
+                {' y nuestra '}
                 <Link
                   href='/legal/privacy-policy'
                   className='underline underline-offset-4 hover:text-primary'

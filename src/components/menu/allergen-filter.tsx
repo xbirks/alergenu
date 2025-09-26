@@ -6,14 +6,17 @@ import { Button } from '@/components/ui/button';
 import { ALLERGENS } from '@/lib/allergens';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { AllergenIcon } from '@/components/icons/allergens';
+import { db } from '@/lib/firebase/firebase';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 
 interface AllergenFilterProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onFilterChange: (selectedAllergens: string[]) => void;
+  restaurantUid: string;
 }
 
-export function AllergenFilter({ isOpen, onOpenChange, onFilterChange }: AllergenFilterProps) {
+export function AllergenFilter({ isOpen, onOpenChange, onFilterChange, restaurantUid }: AllergenFilterProps) {
   const [storedAllergens, setStoredAllergens] = useLocalStorage<string[]>('selectedAllergens', []);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>(storedAllergens);
 
@@ -27,7 +30,19 @@ export function AllergenFilter({ isOpen, onOpenChange, onFilterChange }: Allerge
     );
   };
 
-  const handleDone = () => {
+  const handleDone = async () => {
+    const sessionStorageKey = `allergySave_${restaurantUid}`;
+
+    if (selectedAllergens.length > 0 && !sessionStorage.getItem(sessionStorageKey)) {
+        const restaurantDocRef = doc(db, 'restaurants', restaurantUid);
+        try {
+            await updateDoc(restaurantDocRef, { allergicSaves: increment(1) });
+            sessionStorage.setItem(sessionStorageKey, 'true');
+        } catch (error) {
+            console.error("Failed to increment allergicSaves count: ", error);
+        }
+    }
+
     setStoredAllergens(selectedAllergens);
     onFilterChange(selectedAllergens);
     onOpenChange(false);

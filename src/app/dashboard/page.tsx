@@ -13,12 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2, Eye } from 'lucide-react';
+import { Loader2, Eye, HeartHandshake } from 'lucide-react';
 
 interface RestaurantData {
   restaurantName?: string;
   ownerName?: string;
   slug?: string;
+  qrScans?: number;
+  allergicSaves?: number;
 }
 
 export default function DashboardPage() {
@@ -125,37 +127,32 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="rounded-2xl">
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold">Platos en la carta</CardTitle>
+            <CardTitle className="text-base font-bold flex items-center gap-2">
+                <HeartHandshake className="h-5 w-5 text-blue-600"/>
+                Personas alérgicas ayudadas
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-extrabold">0</div>
+            <div className="text-4xl font-extrabold text-blue-600">{restaurantData.allergicSaves || 0}</div>
             <CardDescription className="text-sm">
-              platos creados
+             personas han usado el filtro
             </CardDescription>
           </CardContent>
         </Card>
         <Card className="rounded-2xl">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold">Menús disponibles</CardTitle>
+            <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Eye className="h-5 w-5"/>
+                Visitas al menú
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-extrabold">0</div>
+            <div className="text-4xl font-extrabold">{restaurantData.qrScans || 0}</div>
             <CardDescription className="text-sm">
-              menús publicados
-            </CardDescription>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold">Visitas al QR</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">0</div>
-            <CardDescription className="text-sm">
-             escaneos este mes
+             visualizaciones totales
             </CardDescription>
           </CardContent>
         </Card>

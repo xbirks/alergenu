@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { db } from '@/lib/firebase/firebase';
-import { doc, getDoc, collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where, limit, updateDoc, increment } from 'firebase/firestore';
 import { Loader2, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AllergenFilter } from '@/components/menu/allergen-filter';
@@ -46,6 +46,7 @@ export default function PublicMenuPage() {
   const restaurantSlug = params.restaurantId as string;
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [restaurantUid, setRestaurantUid] = useState<string | null>(null);
   const [groupedMenu, setGroupedMenu] = useState<GroupedMenu>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,16 +79,25 @@ export default function PublicMenuPage() {
 
         const restaurantDoc = querySnapshot.docs[0];
         const restaurantData = restaurantDoc.data() as Restaurant;
-        const restaurantUid = restaurantDoc.id;
+        const uid = restaurantDoc.id;
         setRestaurant(restaurantData);
+        setRestaurantUid(uid);
 
-        const categoriesQuery = query(collection(db, 'restaurants', restaurantUid, 'categories'));
+        // Increment QR scans
+        const restaurantDocRef = doc(db, 'restaurants', uid);
+        try {
+          await updateDoc(restaurantDocRef, { qrScans: increment(1) });
+        } catch (scanError) {
+          console.error("Failed to increment QR scan count: ", scanError);
+        }
+
+        const categoriesQuery = query(collection(db, 'restaurants', uid, 'categories'));
         const categoriesSnap = await getDocs(categoriesQuery);
         const fetchedCategories = categoriesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
         fetchedCategories.sort((a, b) => a.name.localeCompare(b.name));
         setCategories(fetchedCategories);
 
-        const menuItemsQuery = query(collection(db, 'restaurants', restaurantUid, 'menuItems'));
+        const menuItemsQuery = query(collection(db, 'restaurants', uid, 'menuItems'));
         const menuItemsSnap = await getDocs(menuItemsQuery);
         const fetchedItems = menuItemsSnap.docs
           .map(doc => ({ id: doc.id, ...doc.data() } as MenuItem))
@@ -166,7 +176,7 @@ export default function PublicMenuPage() {
       );
   }, [categories, groupedMenu, filteredGroupedMenu, incompatibleItemsByCategory]);
 
-  if (loading) {
+  if (loading || !restaurantUid) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -192,6 +202,7 @@ export default function PublicMenuPage() {
         isOpen={isFilterSheetOpen}
         onOpenChange={setFilterSheetOpen}
         onFilterChange={setSelectedAllergens}
+        restaurantUid={restaurantUid}
       />
       <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur-sm">
         <div className="container flex h-16 max-w-2xl items-center justify-between px-4">

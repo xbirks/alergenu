@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase/firebase';
 import { signOut } from 'firebase/auth';
@@ -64,8 +64,8 @@ export function Header() {
           <Image
             src="/icon_alergenu.png" 
             alt="Alergenu Logo"
-            width={40}      // <-- Tamaño corregido
-            height={40}     // <-- Tamaño corregido
+            width={40}      
+            height={40}     
             priority
           />
         </Link>
@@ -87,6 +87,10 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push('/dashboard/preferences')}>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Preferencias</span>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Cerrar sesión</span>

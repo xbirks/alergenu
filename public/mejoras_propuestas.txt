@@ -1,0 +1,57 @@
+Propuestas de Mejora para Alergenu
+
+---
+
+Aquí tienes un resumen de las funcionalidades y mejoras que podrían llevar a Alergenu al siguiente nivel. Las he agrupado por el valor que aportarían al producto.
+
+### 1. Para potenciar la inteligencia de tu negocio ###
+
+Funcionalidades para darte información valiosa sobre tus clientes y tu carta.
+
+*   **Analítica de Platos:**
+    -   Saber qué platos son los más populares (más clickeados o donde la gente pasa más tiempo).
+    -   Ayuda a decidir qué platos potenciar o cuáles necesitan una mejor descripción.
+
+*   **Informe de Alérgenos:**
+    -   Un gráfico que muestre los alérgenos más filtrados.
+    -   Permite identificar la necesidad de añadir más opciones (ej. "sin gluten") y atraer a más público.
+
+*   **Gestor de "Fuera de Carta":**
+    -   Opción para marcar un plato como "no disponible temporalmente" sin borrarlo.
+    -   Evita la frustración del cliente.
+
+---
+
+### 2. Para mejorar la experiencia del comensal ###
+
+Pequeños toques que hacen la vida del cliente más fácil.
+
+*   **Menú Multidioma:**
+    -   Añadir nombres y descripciones de platos en varios idiomas.
+    -   La app detectaría el idioma del navegador para mostrar la carta correcta. Ideal para zonas turísticas.
+
+*   **Sugerencias y Platos Destacados:**
+    -   Marcar platos como "Sugerencia del Chef", "Nuevo" o "Plato Estrella".
+    -   Guía al cliente y permite promocionar platos específicos.
+
+*   **Filtros Avanzados:**
+    -   Además de alérgenos, filtrar por "vegetariano", "vegano", "picante", etc.
+    -   Hace la carta accesible a más personas con necesidades dietéticas.
+
+---
+
+### 3. Para hacer el producto más robusto (y monetizable) ###
+
+Funcionalidades que podrían formar parte de un plan "Premium" en el futuro.
+
+*   **Gestión de Múltiples Cartas:**
+    -   Crear y guardar diferentes menús ("Menú de Mediodía", "Carta de Vinos", "Menú de Fin de Semana").
+    -   Activar el menú correspondiente con un solo clic.
+
+*   **Personalización del QR y la Página:**
+    -   Permitir a los restaurantes subir su logo para que aparezca en la página del menú y en el QR.
+    -   Refuerza la imagen de marca.
+
+*   **Feedback de Clientes:**
+    -   Opción para que los comensales valoren un plato o dejen un comentario privado.
+    -   Fuente de información directa y de calidad para el restaurante.
