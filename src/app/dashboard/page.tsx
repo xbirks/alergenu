@@ -18,6 +18,7 @@ import { Loader2, Eye } from 'lucide-react';
 interface RestaurantData {
   restaurantName?: string;
   ownerName?: string;
+  slug?: string;
 }
 
 export default function DashboardPage() {
@@ -35,14 +36,16 @@ export default function DashboardPage() {
     }
 
     const fetchRestaurantData = async () => {
-      const menuUrl = `${window.location.origin}/menu/${user.uid}`;
-      setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(menuUrl)}`);
-      
       const docRef = doc(db, 'restaurants', user.uid);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setRestaurantData(docSnap.data() as RestaurantData);
+        const data = docSnap.data() as RestaurantData;
+        setRestaurantData(data);
+        if (data.slug) {
+          const menuUrl = `${window.location.origin}/menu/${data.slug}`;
+          setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(menuUrl)}`);
+        }
       } else {
         console.error('No restaurant data found for this user!');
       }
@@ -83,8 +86,8 @@ export default function DashboardPage() {
             size="lg"
             variant="outline"
             className='w-full text-lg font-bold rounded-full h-14'
-            onClick={() => user && window.open(`/menu/${user.uid}`, '_blank')}
-            disabled={!user}
+            onClick={() => restaurantData?.slug && window.open(`/menu/${restaurantData.slug}`, '_blank')}
+            disabled={!restaurantData?.slug}
         >
             <Eye className="mr-2 h-5 w-5" />
             Ver carta pública

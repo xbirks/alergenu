@@ -27,7 +27,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { AllergenIcon } from '@/components/icons/allergens';
 
 // Helper function to create a URL-friendly slug from a string
 const slugify = (text: string) => {
@@ -234,11 +236,26 @@ export default function MenuPage() {
               
               <div className="px-4 pb-4 pt-2 mt-auto">
                 {itemAllergens.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
                     {itemAllergens.map(allergen => (
-                      <div key={allergen.id} title={allergen.name}>
-                        <img src={`/allergens/${allergen.icon}`} alt={allergen.name} className="h-6 w-6" />
-                      </div>
+                      <TooltipProvider key={allergen.id}>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <div
+                              className="h-5 w-5 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: allergen.color }}
+                            >
+                              <AllergenIcon
+                                allergenId={allergen.id}
+                                className="h-3 w-3 text-white"
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{allergen.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     ))}
                   </div>
                 )}
