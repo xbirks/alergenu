@@ -89,8 +89,9 @@ export default function PreferencesPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-grow flex items-center justify-center bg-muted/40 p-4 md:p-8">
+    // El layout padre (dashboard/layout.tsx) ya proporciona el <main> y el padding.
+    // Este div solo necesita centrar el contenido.
+    <div className="flex items-center justify-center">
         <div className="w-full max-w-md">
           <form onSubmit={handleSave}>
             <Card className="rounded-2xl shadow-lg">
@@ -133,7 +134,6 @@ export default function PreferencesPage() {
             </Card>
           </form>
         </div>
-      </main>
     </div>
   );
 }

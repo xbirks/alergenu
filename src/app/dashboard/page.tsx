@@ -66,7 +66,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-8 p-6 md:p-10 max-w-3xl mx-auto">
+    <div className="flex flex-col gap-8">
       <div className="grid gap-2">
          <h1 className="text-4xl font-extrabold tracking-tight"> 
             ¡Hola, {restaurantData.ownerName || 'bienvenido'}!
@@ -157,6 +157,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </main>
+    </div>
   );
 }

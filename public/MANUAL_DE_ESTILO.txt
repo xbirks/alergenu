@@ -33,7 +33,8 @@ El diseño de la aplicación es minimalista, limpio y se basa en los siguientes 
         -   **Botón Fantasma (Sin borde):** Transparente y sin borde. Se usa para acciones menos importantes (`variant="ghost"`).
     -   **TARJETAS (`Card`):** Usadas en el dashboard. Tienen bordes muy redondeados (`rounded-2xl`). Son limpias, con una sombra muy sutil (`shadow-sm`) o sin ella. **NO LLEVAN ICONOS**, a menos que se pidan expresamente.
     -   **AVATAR (Icono de Usuario):** Un círculo con un borde sutil y las iniciales del usuario.
-
+    -  LOS BOTONES ES MUY IMPORTANTE QUE TODOS SIGAN LA MISMA ESTéTICA: 
+El botón tiene un tamaño de lg (grande), una altura de h-14 (56px) y un tamaño de texto de text-lg (1.125rem). Salvo que estén dentro de otros contenedores que se pueden adaptar al tamaño de los cntenedores.
 3.  **LOGOTIPO:**
     -   **Panel de Control (`/dashboard`):** Se usa la versión compacta, solo el icono sin texto: `icon_alergenu.png`.
     -   **Páginas Públicas (`/restest`, login, etc.):** Se usa la versión completa con texto: `alergenu.png`.

@@ -30,21 +30,22 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { AllergenIcon } from '@/components/icons/allergens';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-// Helper function to create a URL-friendly slug from a string
+
 const slugify = (text: string) => {
   const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;';
   const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------';
   const p = new RegExp(a.split('').join('|'), 'g');
 
   return text.toString().toLowerCase()
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(p, c => b.charAt(a.indexOf(c))) // Replace special characters
-    .replace(/&/g, '-and-') // Replace & with 'and'
-    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-    .replace(/\-\-+/g, '-') // Replace multiple - with single -
-    .replace(/^-+/, '') // Trim - from start of text
-    .replace(/-+$/, ''); // Trim - from end of text
+    .replace(/\s+/g, '-') 
+    .replace(p, c => b.charAt(a.indexOf(c))) 
+    .replace(/&/g, '-and-') 
+    .replace(/[^\w\-]+/g, '') 
+    .replace(/\-\-+/g, '-') 
+    .replace(/^-+/, '') 
+    .replace(/-+$/, ''); 
 }
 
 interface MenuItem {
@@ -55,6 +56,12 @@ interface MenuItem {
   description?: string;
   allergens?: string[];
   isAvailable: boolean;
+  createdAt: any;
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 export default function MenuPage() {
@@ -63,6 +70,7 @@ export default function MenuPage() {
   const { toast } = useToast();
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [restaurantSlug, setRestaurantSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,81 +80,75 @@ export default function MenuPage() {
     new Map<string, Allergen>(ALLERGENS.map(a => [a.id, a]))
   , []);
 
-  // Effect to update existing restaurant with a slug if it doesn't have one
   useEffect(() => {
     if (!user) return;
-
     const restaurantRef = doc(db, 'restaurants', user.uid);
-    
-    const checkForSlug = async () => {
-      try {
-        const docSnap = await getDoc(restaurantRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (!data.slug) {
-            console.log('Restaurant slug not found. Creating one...');
-            const newSlug = slugify(data.restaurantName);
-            await updateDoc(restaurantRef, { slug: newSlug });
-            setRestaurantSlug(newSlug);
-             console.log(`Slug "${newSlug}" created and saved.`);
-          } else {
-            setRestaurantSlug(data.slug);
-          }
+    getDoc(restaurantRef).then(docSnap => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (!data.slug) {
+          const newSlug = slugify(data.restaurantName);
+          updateDoc(restaurantRef, { slug: newSlug });
+          setRestaurantSlug(newSlug);
         } else {
-          console.log("No such document!");
+          setRestaurantSlug(data.slug);
         }
-      } catch (error) {
-        console.error("Error checking or updating slug: ", error);
       }
-    };
-
-    checkForSlug();
+    });
   }, [user]);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      setError('Por favor, inicia sesión para gestionar tu carta.');
-      setLoading(false);
+ useEffect(() => {
+    if (authLoading) {
       return;
     }
 
-    const menuItemsQuery = query(
-      collection(db, 'restaurants', user.uid, 'menuItems'),
-      orderBy('createdAt', 'desc')
-    );
+    if (!user) {
+      setError('Por favor, inicia sesión para ver tu carta.');
+      setLoading(false);
+      return;
+    }
+    
+    setError(null);
 
-    const unsubscribe = onSnapshot(menuItemsQuery, 
-      (snapshot) => {
-        const items = snapshot.docs.map(doc => {
+    const categoriesQuery = query(collection(db, 'restaurants', user.uid, 'categories'), orderBy('name', 'asc'));
+    const unsubscribeCategories = onSnapshot(categoriesQuery, snapshot => {
+      setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category)));
+    }, (err) => {
+      console.error("Error fetching categories: ", err);
+      setError('No se pudieron cargar las categorías.');
+    });
+
+    const menuItemsQuery = query(collection(db, 'restaurants', user.uid, 'menuItems'), orderBy('createdAt', 'desc'));
+    const unsubscribeMenuItems = onSnapshot(menuItemsQuery, snapshot => {
+      const items = snapshot.docs.map(doc => {
           const data = doc.data();
           return {
             id: doc.id,
-            isAvailable: data.isAvailable === false ? false : true,
+            isAvailable: data.isAvailable !== false, // Default to true if undefined
             ...data,
           } as MenuItem;
         });
-        setMenuItems(items);
-        setLoading(false);
-      },
-      (err) => {
-        console.error("Error al cargar los platos: ", err);
-        setError('Hubo un problema al cargar tu carta. Inténtalo de nuevo.');
-        setLoading(false);
-      }
-    );
-    return () => unsubscribe();
+      setMenuItems(items);
+      setLoading(false);
+    }, err => {
+      console.error("Error fetching menu items: ", err);
+      setError('Hubo un problema al cargar tu carta.');
+      setLoading(false);
+    });
+
+    return () => {
+      unsubscribeCategories();
+      unsubscribeMenuItems();
+    };
   }, [user, authLoading]);
 
   const handleDelete = async () => {
     if (!itemToDelete || !user) return;
     try {
-      const docRef = doc(db, 'restaurants', user.uid, 'menuItems', itemToDelete.id);
-      await deleteDoc(docRef);
+      await deleteDoc(doc(db, 'restaurants', user.uid, 'menuItems', itemToDelete.id));
       toast({ title: 'Plato eliminado', description: `El plato "${itemToDelete.name}" ha sido eliminado.`});
     } catch (error) {
-      console.error("Error deleting document: ", error);
-      toast({ title: 'Error al eliminar', description: 'No se pudo eliminar el plato. Por favor, inténtalo de nuevo.', variant: 'destructive'});
+      toast({ title: 'Error al eliminar', description: 'No se pudo eliminar el plato.', variant: 'destructive'});
     } finally {
       setItemToDelete(null);
     }
@@ -162,7 +164,6 @@ export default function MenuPage() {
         description: `El plato \'${item.name}\' ahora está ${newStatus ? 'disponible' : 'no disponible'}.`
       });
     } catch (error) {
-      console.error("Error al actualizar la disponibilidad: ", error);
       toast({ title: 'Error', description: 'No se pudo actualizar la disponibilidad.', variant: 'destructive' });
     }
   };
@@ -175,22 +176,25 @@ export default function MenuPage() {
     }
   };
 
+  const menuByCategory = useMemo(() => {
+    const grouped: { [key: string]: MenuItem[] } = {};
+    menuItems.forEach(item => {
+      const category = item.category || 'Sin categoría';
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(item);
+    });
+    return grouped;
+  }, [menuItems]);
+
   const renderContent = () => {
     if (loading || authLoading) {
-      return (
-        <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-12 text-center mt-8">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Cargando tu carta...</p>
-        </div>
-      );
+      return <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-12 text-center mt-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" /><p className="text-muted-foreground">Cargando tu carta...</p></div>;
     }
 
     if (error) {
-      return (
-         <div className="border-2 border-destructive/50 bg-destructive/10 rounded-lg p-12 text-center mt-8">
-          <p className="text-destructive font-semibold">{error}</p>
-        </div>
-      );
+      return <div className="border-2 border-destructive/50 bg-destructive/10 rounded-lg p-12 text-center mt-8"><p className="text-destructive font-semibold">{error}</p></div>;
     }
 
     if (menuItems.length === 0) {
@@ -202,82 +206,76 @@ export default function MenuPage() {
       );
     }
 
+    const orderedCategories = categories.map(c => c.name).sort();
+
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
-        {menuItems.map((item) => {
-          const itemAllergens = item.allergens?.map(id => allergensMap.get(id)).filter(Boolean) as Allergen[] || [];
+      <Accordion type="single" collapsible className="w-full space-y-4 mt-8">
+        {orderedCategories.map(categoryName => {
+          const items = menuByCategory[categoryName] || [];
+          if (items.length === 0) return null;
+
+          const categoryId = categories.find(c => c.name === categoryName)?.id || categoryName;
+
           return (
-            <div key={item.id} className={cn("bg-card border rounded-2xl shadow-sm overflow-hidden flex flex-col transition-opacity", !item.isAvailable && "opacity-50")}>
-              <div className="p-4 pb-2 flex-grow">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-lg leading-tight pr-2">{item.name}</h3>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => router.push(`/dashboard/menu/edit/${item.id}`)}>
-                        <FilePenLine className="mr-2 h-4 w-4"/>
-                        Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive focus:text-destructive/90">
-                        <Trash2 className="mr-2 h-4 w-4"/>
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                {item.description && (
-                  <p className="text-muted-foreground text-sm mb-3">{item.description}</p>
-                )}
-              </div>
-              
-              <div className="px-4 pb-4 pt-2 mt-auto">
-                {itemAllergens.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    {itemAllergens.map(allergen => (
-                      <TooltipProvider key={allergen.id}>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <div
-                              className="h-5 w-5 rounded-full flex items-center justify-center"
-                              style={{ backgroundColor: allergen.color }}
-                            >
-                              <AllergenIcon
-                                allergenId={allergen.id}
-                                className="h-3 w-3 text-white"
-                              />
+            <AccordionItem value={categoryId} key={categoryId} className="border rounded-2xl overflow-hidden shadow-sm">
+              <AccordionTrigger className="px-6 py-4 text-xl font-bold hover:no-underline bg-white">
+                <span>{categoryName} <span className="font-normal text-muted-foreground">({items.length})</span></span>
+                </AccordionTrigger>
+              <AccordionContent className="p-6 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {items.map((item) => {
+                    const itemAllergens = item.allergens?.map(id => allergensMap.get(id)).filter(Boolean) as Allergen[] || [];
+                    return (
+                      <div key={item.id} className={cn("bg-card border rounded-2xl shadow-sm overflow-hidden flex flex-col transition-opacity", !item.isAvailable && "opacity-50")}>
+                        <div className="p-4 pb-2 flex-grow">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-bold text-lg leading-tight pr-2">{item.name}</h3>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => router.push(`/dashboard/menu/edit/${item.id}`)}><FilePenLine className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive focus:text-destructive/90"><Trash2 className="mr-2 h-4 w-4"/>Eliminar</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          {item.description && <p className="text-muted-foreground text-sm mb-3">{item.description}</p>}
+                        </div>
+                        <div className="px-4 pb-4 pt-2 mt-auto">
+                          {itemAllergens.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                              {itemAllergens.map(allergen => (
+                                <TooltipProvider key={allergen.id}>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <div className="h-5 w-5 rounded-full flex items-center justify-center" style={{ backgroundColor: allergen.color }}>
+                                        <AllergenIcon allergenId={allergen.id} className="h-3 w-3 text-white" />
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>{allergen.name}</p></TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ))}
                             </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{allergen.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ))}
-                  </div>
-                )}
-                <div className="flex justify-between items-center">
-                  <span className="bg-secondary text-secondary-foreground text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap">{item.category}</span>
-                  <span className="font-bold text-lg">{item.price.toFixed(2).replace('.', ',')}€</span>
+                          )}
+                          <div className="flex justify-between items-center">
+                             <span className="font-bold text-lg">{item.price.toFixed(2).replace('.', ',')}€</span>
+                          </div>
+                           <div className="flex items-center space-x-2 mt-4 pt-4 border-t">
+                              <Switch id={`available-${item.id}`} checked={item.isAvailable} onCheckedChange={(checked) => handleAvailabilityToggle(item, checked)}/>
+                              <Label htmlFor={`available-${item.id}`} className={cn("text-sm font-medium", !item.isAvailable && "text-muted-foreground")}>{item.isAvailable ? 'Disponible' : 'Agotado'}</Label>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-                 <div className="flex items-center space-x-2 mt-4 pt-4 border-t">
-                    <Switch 
-                        id={`available-${item.id}`}
-                        checked={item.isAvailable}
-                        onCheckedChange={(checked) => handleAvailabilityToggle(item, checked)}
-                    />
-                    <Label htmlFor={`available-${item.id}`} className={cn("text-sm font-medium", !item.isAvailable && "text-muted-foreground")}>
-                        {item.isAvailable ? 'Disponible' : 'Agotado'}
-                    </Label>
-                </div>
-              </div>
-            </div>
+              </AccordionContent>
+            </AccordionItem>
           )
         })}
-      </div>
+      </Accordion>
     );
   };
 
@@ -288,29 +286,10 @@ export default function MenuPage() {
           <h1 className="text-3xl font-bold">Mi Carta</h1>
           <p className="text-muted-foreground">Gestiona los platos y categorías de tu restaurante.</p>
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-4 md:mt-0">
-            <Button
-                variant="outline"
-                className="w-full font-bold md:w-auto shadow-sm rounded-full"
-                onClick={handleViewPublicMenu}
-                disabled={authLoading || !user || !restaurantSlug}
-            >
-                <Eye className="mr-2 h-4 w-4" />
-                Ver carta pública
-            </Button>
-             <Button 
-              variant="outline"
-              className="w-full font-bold md:w-auto shadow-sm rounded-full"
-              onClick={() => router.push('/dashboard/menu/categories')}>
-              <LayoutGrid className="mr-2 h-4 w-4" />
-              Gestionar categorías
-            </Button>
-            <Button 
-              className="w-full font-bold md:w-auto shadow-sm rounded-full"
-              onClick={() => router.push('/dashboard/menu/new')}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Añadir plato
-            </Button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 md:mt-0">
+            <Button size="lg" className="w-full font-bold rounded-full h-14 text-lg" onClick={() => router.push('/dashboard/menu/new')}><PlusCircle className="mr-2 h-4 w-4" />Añadir plato</Button>
+            <Button size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg" onClick={() => router.push('/dashboard/menu/categories')}><LayoutGrid className="mr-2 h-4 w-4" />Gestionar categorías</Button>
+            <Button size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg" onClick={handleViewPublicMenu} disabled={authLoading || !user || !restaurantSlug}><Eye className="mr-2 h-4 w-4" />Ver carta pública</Button>
         </div>
       </header>
       
@@ -322,15 +301,11 @@ export default function MenuPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El plato se eliminará permanentemente de tu carta.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Esta acción no se puede deshacer. El plato se eliminará permanentemente de tu carta.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full">
-              Sí, eliminar
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full">Sí, eliminar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
