@@ -18,7 +18,7 @@ import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import { auth, db } from '@/lib/firebase/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
 
 // Helper function to create a URL-friendly slug from a string
 const slugify = (text: string) => {
@@ -83,14 +83,27 @@ export default function RegisterPage() {
       await setDoc(doc(db, 'restaurants', user.uid), {
         uid: user.uid,
         restaurantName,
-        slug: restaurantSlug, // <-- The new URL-friendly slug
+        slug: restaurantSlug, 
         ownerName,
         email: user.email,
         createdAt: new Date(),
       });
 
-      // 4. Redirect to login page on success
-      router.push('/login');
+      // 4. Create default categories
+      const categoriesCollectionRef = collection(db, 'restaurants', user.uid, 'categories');
+      const defaultCategories = [
+        { name: 'Entrantes', order: 1 },
+        { name: 'Platos Principales', order: 2 },
+        { name: 'Postres', order: 3 },
+        { name: 'Bebidas', order: 4 },
+      ];
+
+      for (const category of defaultCategories) {
+        await addDoc(categoriesCollectionRef, category);
+      }
+
+      // 5. Redirect to welcome page on success
+      router.push('/welcome');
 
     } catch (error: any) {
       let errorMessage = 'Ocurrió un error al crear la cuenta.';

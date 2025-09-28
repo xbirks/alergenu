@@ -54,7 +54,7 @@ interface MenuItem {
   category: string;
   price: number;
   description?: string;
-  allergens?: string[];
+  allergens?: { [key: string]: 'yes' | 'traces' | 'no' };
   isAvailable: boolean;
   createdAt: any;
 }
@@ -224,7 +224,8 @@ export default function MenuPage() {
               <AccordionContent className="p-6 pt-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {items.map((item) => {
-                    const itemAllergens = item.allergens?.map(id => allergensMap.get(id)).filter(Boolean) as Allergen[] || [];
+                    const itemAllergenIds = item.allergens ? Object.keys(item.allergens) : [];
+                    const itemAllergens = itemAllergenIds.map(id => allergensMap.get(id)).filter(Boolean) as Allergen[];
                     return (
                       <div key={item.id} className={cn("bg-card border rounded-2xl shadow-sm overflow-hidden flex flex-col transition-opacity", !item.isAvailable && "opacity-50")}>
                         <div className="p-4 pb-2 flex-grow">
@@ -300,7 +301,7 @@ export default function MenuPage() {
       <AlertDialog open={itemToDelete !== null} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+            <AlertDialogTitle>¿Estás absolutely seguro?</AlertDialogTitle>
             <AlertDialogDescription>Esta acción no se puede deshacer. El plato se eliminará permanentemente de tu carta.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
