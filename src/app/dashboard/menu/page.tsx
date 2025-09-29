@@ -281,7 +281,7 @@ export default function MenuPage() {
   };
 
   return (
-    <div className="p-6 md:p-10">
+    <div>
       <header className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div className="mb-4 md:mb-0">
           <h1 className="text-3xl font-bold">Mi Carta</h1>

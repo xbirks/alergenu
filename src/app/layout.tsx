@@ -2,7 +2,6 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/header";
 import { LegalFooter } from '@/components/layout/Footer';
 
 const manrope = Manrope({ 
@@ -24,7 +23,6 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`flex flex-col min-h-screen bg-white ${manrope.className}`}>
-        <Header />
         <div className="flex-grow">{children}</div>
         <LegalFooter />
       </body>

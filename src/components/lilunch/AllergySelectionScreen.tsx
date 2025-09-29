@@ -85,7 +85,8 @@ export function AllergySelectionScreen({
       {/* -- Footer -- */}
       <footer className="mt-auto">
         <Button 
-            className="w-full rounded-full bg-black text-white font-bold py-6 text-lg hover:bg-gray-800 shadow-lg"
+            size="lg"
+            className="w-full text-lg h-14 rounded-full bg-blue-600 hover:bg-blue-700"
             onClick={() => onConfirm(selected)}
         >
           Hecho {selectedCount > 0 && `(${selectedCount})`}

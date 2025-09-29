@@ -85,7 +85,13 @@ export function AllergenFilter({ isOpen, onOpenChange, onFilterChange, restauran
           </div>
         </div>
         <SheetFooter>
-          <Button onClick={handleDone} className="w-full text-lg py-6 h-auto">Hecho</Button>
+          <Button 
+            onClick={handleDone} 
+            size="lg" 
+            className="w-full text-lg h-14 rounded-full bg-blue-600 hover:bg-blue-700"
+          >
+            Hecho
+          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

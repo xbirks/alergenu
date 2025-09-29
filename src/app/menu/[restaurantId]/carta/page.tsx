@@ -100,7 +100,22 @@ export default function PublicMenuPage() {
         const menuItemsQuery = query(collection(db, 'restaurants', uid, 'menuItems'));
         const menuItemsSnap = await getDocs(menuItemsQuery);
         const fetchedItems = menuItemsSnap.docs
-          .map(doc => ({ id: doc.id, ...doc.data() } as MenuItem))
+          .map(doc => {
+              const item = { id: doc.id, ...doc.data() };
+
+              if (typeof item.allergens === 'string') {
+                item.allergens = item.allergens.split(',').map(s => s.trim()).filter(Boolean);
+              } else if (!Array.isArray(item.allergens)) {
+                item.allergens = [];
+              }
+
+              if (typeof item.traces === 'string') {
+                item.traces = item.traces.split(',').map(s => s.trim()).filter(Boolean);
+              } else if (!Array.isArray(item.traces)) {
+                item.traces = [];
+              }
+              return item as MenuItem;
+            })
           .filter(item => item.isAvailable);
 
         const grouped = fetchedItems.reduce((acc, item) => {
@@ -205,13 +220,14 @@ export default function PublicMenuPage() {
         restaurantUid={restaurantUid}
       />
       <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur-sm">
-        <div className="container flex h-16 max-w-2xl items-center justify-between px-4">
+        <div className="flex h-20 max-w-5xl mx-auto items-center justify-between p-6 md:px-10">
           <Link href={`/menu/${restaurantSlug}`}>
-            <Image src="/icon_alergenu.png" alt="Alergenu Logo" width={36} height={36} />
+            <Image src="/icon_alergenu.png" alt="Alergenu Logo" width={40} height={40} />
           </Link>
           <Button
-            className="rounded-full relative text-base font-medium bg-gray-100 hover:bg-gray-200 text-gray-800"
+            variant="outline"
             onClick={() => setFilterSheetOpen(true)}
+            className="relative rounded-full"
           >
             <SlidersHorizontal className="mr-2 h-4 w-4" />
             Mis alergias
@@ -224,7 +240,7 @@ export default function PublicMenuPage() {
         </div>
       </header>
 
-      <main className="container mx-auto max-w-2xl px-4 py-8">
+      <main className="max-w-5xl mx-auto p-6 md:p-10">
         <div className="mb-6 aspect-[16/10] w-full overflow-hidden rounded-2xl shadow-sm">
           <Image
             src={restaurant?.coverImage || "https://www.ermo.es/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FDelibreads-1.70184391.jpg&w=2048&q=75"}
