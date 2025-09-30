@@ -28,7 +28,7 @@
           "--"
           "--port"
           "$PORT"
-          "--host"
+          "--hostname"
           "0.0.0.0"
           "--disable-host-check"
         ];

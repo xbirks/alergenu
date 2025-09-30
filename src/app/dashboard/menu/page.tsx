@@ -32,7 +32,6 @@ import { useToast } from '@/hooks/use-toast';
 import { AllergenIcon } from '@/components/icons/allergens';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-
 const slugify = (text: string) => {
   const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;';
   const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------';
@@ -221,57 +220,56 @@ export default function MenuPage() {
               <AccordionTrigger className="px-6 py-4 text-xl font-bold hover:no-underline bg-white">
                 <span>{categoryName} <span className="font-normal text-muted-foreground">({items.length})</span></span>
                 </AccordionTrigger>
-              <AccordionContent className="p-6 pt-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <AccordionContent className="px-6 bg-white">
+                <ul className="-mx-6 divide-y divide-gray-200/80">
                   {items.map((item) => {
                     const itemAllergenIds = item.allergens ? Object.keys(item.allergens) : [];
                     const itemAllergens = itemAllergenIds.map(id => allergensMap.get(id)).filter(Boolean) as Allergen[];
                     return (
-                      <div key={item.id} className={cn("bg-card border rounded-2xl shadow-sm overflow-hidden flex flex-col transition-opacity", !item.isAvailable && "opacity-50")}>
-                        <div className="p-4 pb-2 flex-grow">
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-bold text-lg leading-tight pr-2">{item.name}</h3>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => router.push(`/dashboard/menu/edit/${item.id}`)}><FilePenLine className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive focus:text-destructive/90"><Trash2 className="mr-2 h-4 w-4"/>Eliminar</DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          {item.description && <p className="text-muted-foreground text-sm mb-3">{item.description}</p>}
+                       <li key={item.id} className={cn("flex flex-col sm:flex-row sm:items-start sm:justify-between px-6 py-4", !item.isAvailable && "opacity-60")}>
+                        <div className="flex-1 min-w-0 mr-0 sm:mr-6">
+                            <h3 className="font-bold text-lg leading-tight">{item.name}</h3>
+                            {item.description && <p className="text-muted-foreground text-sm mt-1">{item.description}</p>}
+                            {itemAllergens.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                {itemAllergens.map(allergen => (
+                                    <TooltipProvider key={allergen.id}>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                        <div className="h-5 w-5 rounded-full flex items-center justify-center" style={{ backgroundColor: allergen.color }}>
+                                            <AllergenIcon allergenId={allergen.id} className="h-3 w-3 text-white" />
+                                        </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent><p>{allergen.name}</p></TooltipContent>
+                                    </Tooltip>
+                                    </TooltipProvider>
+                                ))}
+                                </div>
+                            )}
                         </div>
-                        <div className="px-4 pb-4 pt-2 mt-auto">
-                          {itemAllergens.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-2 mb-3">
-                              {itemAllergens.map(allergen => (
-                                <TooltipProvider key={allergen.id}>
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <div className="h-5 w-5 rounded-full flex items-center justify-center" style={{ backgroundColor: allergen.color }}>
-                                        <AllergenIcon allergenId={allergen.id} className="h-3 w-3 text-white" />
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>{allergen.name}</p></TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ))}
+
+                        <div className="flex items-center justify-between flex-shrink-0 mt-4 sm:mt-0 self-end sm:self-start w-full sm:w-auto sm:space-x-4">
+                            <div className="flex items-center space-x-2">
+                                <Switch id={`available-${item.id}`} checked={item.isAvailable} onCheckedChange={(checked) => handleAvailabilityToggle(item, checked)}/>
+                                <Label htmlFor={`available-${item.id}`} className="text-sm font-medium text-muted-foreground">{item.isAvailable ? 'Disponible' : 'Agotado'}</Label>
                             </div>
-                          )}
-                          <div className="flex justify-between items-center">
-                             <span className="font-bold text-lg">{item.price.toFixed(2).replace('.', ',')}€</span>
-                          </div>
-                           <div className="flex items-center space-x-2 mt-4 pt-4 border-t">
-                              <Switch id={`available-${item.id}`} checked={item.isAvailable} onCheckedChange={(checked) => handleAvailabilityToggle(item, checked)}/>
-                              <Label htmlFor={`available-${item.id}`} className={cn("text-sm font-medium", !item.isAvailable && "text-muted-foreground")}>{item.isAvailable ? 'Disponible' : 'Agotado'}</Label>
-                          </div>
+                            <div className='flex items-center space-x-4'>
+                                <span className="font-bold text-lg text-right">{item.price.toFixed(2).replace('.', ',')}€</span>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => router.push(`/dashboard/menu/edit/${item.id}`)}><FilePenLine className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive focus:text-destructive/90"><Trash2 className="mr-2 h-4 w-4"/>Eliminar</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
-                      </div>
+                      </li>
                     )
                   })}
-                </div>
+                </ul>
               </AccordionContent>
             </AccordionItem>
           )

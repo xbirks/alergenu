@@ -14,11 +14,14 @@ import {
   orderBy,
   serverTimestamp,
   writeBatch,
-  getDocs
+  getDocs,
+  updateDoc,
+  where
 } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Trash2, ArrowLeft, PlusCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Loader2, Trash2, ArrowLeft, PlusCircle, FilePenLine } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Category {
@@ -45,6 +48,9 @@ export default function CategoriesPage() {
   const [newCategory, setNewCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
 
   // Effect for listening to real-time category changes
   useEffect(() => {
@@ -145,6 +151,57 @@ export default function CategoriesPage() {
       toast({ title: 'Error', description: 'No se pudo eliminar la categoría.', variant: 'destructive' });
     }
   };
+  
+  const handleStartEdit = (category: Category) => {
+    setCategoryToEdit(category);
+    setNewCategoryName(category.name);
+  };
+
+  const handleRenameCategory = async () => {
+    if (!user || !categoryToEdit || newCategoryName.trim() === '') return;
+
+    const newName = newCategoryName.trim();
+    const oldName = categoryToEdit.name;
+
+    if (newName === oldName) {
+      setCategoryToEdit(null);
+      return;
+    }
+
+    const categoryExists = categories.some(cat => cat.name.toLowerCase() === newName.toLowerCase() && cat.id !== categoryToEdit.id);
+    if (categoryExists) {
+      toast({ title: 'Categoría duplicada', description: 'Ya existe otra categoría con este nombre.', variant: 'destructive' });
+      return;
+    }
+
+    const batch = writeBatch(db);
+
+    // 1. Update the category document itself
+    const categoryDocRef = doc(db, 'restaurants', user.uid, 'categories', categoryToEdit.id);
+    batch.update(categoryDocRef, { name: newName });
+
+    try {
+      // 2. Find all menu items with the old category name and update them
+      const menuItemsRef = collection(db, 'restaurants', user.uid, 'menuItems');
+      const q = query(menuItemsRef, where("category", "==", oldName));
+      const querySnapshot = await getDocs(q);
+      
+      querySnapshot.forEach((doc) => {
+        batch.update(doc.ref, { category: newName });
+      });
+
+      // 3. Commit the batch
+      await batch.commit();
+      
+      toast({ title: 'Categoría actualizada', description: `Se ha renombrado a "${newName}" y ${querySnapshot.size} platos han sido actualizados.` });
+    } catch (error) {
+      console.error("Error renaming category and updating items: ", error);
+      toast({ title: 'Error de actualización', description: 'No se pudo renombrar la categoría y actualizar los platos asociados.', variant: 'destructive' });
+    } finally {
+      setCategoryToEdit(null);
+      setNewCategoryName('');
+    }
+  };
 
   if (authLoading || loading) {
     return (
@@ -165,7 +222,7 @@ export default function CategoriesPage() {
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Gestionar Categorías</h1>
-        <p className="text-muted-foreground">Añade o elimina las categorías de tu carta.</p>
+        <p className="text-muted-foreground">Añade, elimina o renombra las categorías de tu carta.</p>
       </div>
 
       <form onSubmit={handleAddCategory} className="flex items-center gap-2 mb-8">
@@ -189,9 +246,14 @@ export default function CategoriesPage() {
             {categories.map((cat, index) => (
               <li key={cat.id} className={`flex items-center justify-between p-4 ${index > 0 ? 'border-t' : ''}`}>
                 <span className="font-medium">{cat.name}</span>
-                <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.id)} className='text-destructive rounded-full'>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className='flex items-center'>
+                    <Button variant="ghost" size="icon" onClick={() => handleStartEdit(cat)} className='rounded-full text-muted-foreground'>
+                        <FilePenLine className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.id)} className='text-destructive rounded-full'>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
               </li>
             ))}
           </ul>
@@ -201,6 +263,28 @@ export default function CategoriesPage() {
           )
         )}
       </div>
+      
+      <Dialog open={categoryToEdit !== null} onOpenChange={() => setCategoryToEdit(null)}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Renombrar Categoría</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+                <Input
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Nuevo nombre de la categoría"
+                />
+            </div>
+            <DialogFooter className="gap-2">
+                <DialogClose asChild>
+                    <Button variant="outline" className='rounded-full'>Cancelar</Button>
+                </DialogClose>
+                <Button onClick={handleRenameCategory} className='rounded-full'>Guardar Cambios</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
