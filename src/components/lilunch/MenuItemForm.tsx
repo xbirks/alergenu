@@ -42,7 +42,7 @@ interface MenuItem {
     id: string;
     name: string;
     category: string;
-    price: number;
+    price: number; // Stored in cents
     description?: string;
     allergens?: { [key: string]: 'no' | 'traces' | 'yes' };
     isAvailable: boolean;
@@ -86,7 +86,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
             name: existingMenuItem.name,
             category: existingMenuItem.category,
             description: existingMenuItem.description || '',
-            price: existingMenuItem.price,
+            price: existingMenuItem.price / 100, // Convert from cents to euros for display
             allergens: currentAllergens,
             isAvailable: existingMenuItem.isAvailable === false ? false : true,
         });
@@ -112,6 +112,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
 
       const dataToSave = {
         ...values,
+        price: Math.round(values.price * 100), // Convert from euros to cents for storage
         allergens: allergensToSave,
         updatedAt: serverTimestamp(),
       };
@@ -152,7 +153,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
             <FormItem>
               <FormLabel className='font-bold text-lg'>Nombre del plato</FormLabel>
               <FormControl>
-                <Input placeholder="Ej: Paella Valenciana" {...field} className="h-12 text-lg"/>
+                <Input placeholder="Ej: Paella Valenciana" {...field} className={`h-12 text-lg ${field.value ? 'text-blue-600 font-bold' : ''}`}/>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -189,7 +190,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
                 <Textarea
                   placeholder="Una breve descripción del plato (opcional)"
                   {...field}
-                  className="text-lg"
+                  className={`text-lg ${field.value ? 'text-blue-600 font-bold' : ''}`}
                 />
               </FormControl>
               <FormMessage />
@@ -210,7 +211,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
                     inputMode="decimal"
                     step="0.01"
                     placeholder="Ej: 12.50"
-                    className="pr-10 h-12 text-lg"
+                    className={`pr-10 h-12 text-lg ${field.value ? 'text-blue-600 font-bold' : ''}`}
                     {...field}
                   />
                 </FormControl>

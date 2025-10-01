@@ -12,6 +12,7 @@ import { AllergenFilter } from '@/components/menu/allergen-filter';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { AllergenIconDisplay } from '@/components/menu/allergen-icon-display';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ALLERGENS } from '@/lib/allergens';
 
 
 interface Restaurant {
@@ -24,10 +25,10 @@ interface MenuItem {
   id: string;
   name: string;
   category: string;
-  price: number;
+  price: number; // Price is stored in cents
   description?: string;
-  allergens?: string[];
-  traces?: string[];
+  allergens: string[]; // IDs of allergens present in the dish
+  traces: string[];    // IDs of allergens that may be present as traces
   isAvailable: boolean;
 }
 
@@ -83,7 +84,6 @@ export default function PublicMenuPage() {
         setRestaurant(restaurantData);
         setRestaurantUid(uid);
 
-        // Increment QR scans
         const restaurantDocRef = doc(db, 'restaurants', uid);
         try {
           await updateDoc(restaurantDocRef, { qrScans: increment(1) });
@@ -101,21 +101,31 @@ export default function PublicMenuPage() {
         const menuItemsSnap = await getDocs(menuItemsQuery);
         const fetchedItems = menuItemsSnap.docs
           .map(doc => {
-              const item = { id: doc.id, ...doc.data() };
+            const data = doc.data();
+            const allergenData = data.allergens || {};
 
-              if (typeof item.allergens === 'string') {
-                item.allergens = item.allergens.split(',').map(s => s.trim()).filter(Boolean);
-              } else if (!Array.isArray(item.allergens)) {
-                item.allergens = [];
-              }
+            const contains: string[] = [];
+            const traces: string[] = [];
 
-              if (typeof item.traces === 'string') {
-                item.traces = item.traces.split(',').map(s => s.trim()).filter(Boolean);
-              } else if (!Array.isArray(item.traces)) {
-                item.traces = [];
+            for (const key in allergenData) {
+              if (allergenData[key] === 'yes') {
+                contains.push(key);
+              } else if (allergenData[key] === 'traces') {
+                traces.push(key);
               }
-              return item as MenuItem;
-            })
+            }
+            
+            return {
+              id: doc.id,
+              name: data.name,
+              category: data.category,
+              price: data.price,
+              description: data.description,
+              isAvailable: data.isAvailable,
+              allergens: contains,
+              traces: traces,
+            } as MenuItem;
+          })
           .filter(item => item.isAvailable);
 
         const grouped = fetchedItems.reduce((acc, item) => {
@@ -155,8 +165,8 @@ export default function PublicMenuPage() {
 
       allItems.forEach(item => {
         const isCompatible = 
-          (!item.allergens || item.allergens.every(allergen => !selectedAllergens.includes(allergen))) &&
-          (!item.traces || item.traces.every(trace => !selectedAllergens.includes(trace)));
+          (item.allergens.every(allergen => !selectedAllergens.includes(allergen))) &&
+          (item.traces.every(trace => !selectedAllergens.includes(trace)));
 
         if (isCompatible) {
           compatibleItems.push(item);
@@ -274,7 +284,7 @@ export default function PublicMenuPage() {
                       <div key={item.id} className="py-6">
                         <div className="flex justify-between items-start">
                           <h3 className="text-lg font-medium uppercase tracking-normal text-gray-800">{item.name}</h3>
-                          <p className="text-lg font-semibold text-gray-800 whitespace-nowrap pl-4">{item.price.toFixed(2).replace('.', ',')}€</p>
+                          <p className="text-lg font-semibold text-gray-800 whitespace-nowrap pl-4">{(item.price / 100).toFixed(2).replace('.', ',')}€</p>
                         </div>
                         {item.description && <p className="text-base text-gray-500 mt-1">{item.description}</p>}
                         <div className="flex flex-wrap gap-2 mt-4">
@@ -300,7 +310,7 @@ export default function PublicMenuPage() {
                           <div key={item.id} className="py-6 px-4 bg-gray-50/80 opacity-70">
                              <div className="flex justify-between items-start">
                                 <h3 className="text-lg font-medium uppercase tracking-normal text-gray-700">{item.name}</h3>
-                                <p className="text-lg font-semibold text-gray-700 whitespace-nowrap pl-4">{item.price.toFixed(2).replace('.', ',')}€</p>
+                                <p className="text-lg font-semibold text-gray-700 whitespace-nowrap pl-4">{(item.price / 100).toFixed(2).replace('.', ',')}€</p>
                               </div>
                             {item.description && <p className="text-base text-gray-500 mt-1">{item.description}</p>}
                             <div className="flex flex-wrap items-center gap-3 mt-4">
@@ -327,6 +337,36 @@ export default function PublicMenuPage() {
               <p className="mt-2 text-muted-foreground">No se han encontrado platos que coincidan con tus selecciones. Prueba a cambiar los filtros.</p>
           </div>
         )}
+
+        <section className="mt-16 pt-10 pb-12 bg-gray-50 rounded-2xl">
+          <div className="max-w-4xl mx-auto px-6">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-800 mb-2">Leyenda de Alérgenos</h2>
+            <p className="text-muted-foreground mb-8">Iconos utilizados para identificar la presencia de alérgenos en nuestros platos.</p>
+
+            <div className="mb-10">
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">Presencia confirmada en el plato</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-5">
+                  {ALLERGENS.map(allergen => (
+                    <div key={allergen.id} className="flex items-center gap-3">
+                      <AllergenIconDisplay allergenId={allergen.id} type="contains" />
+                      <span className="font-medium text-gray-700">{allergen.name}</span>
+                    </div>
+                  ))}
+                </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">Posibles trazas en el plato</h3>
+              <p className="text-sm text-gray-500 mb-6">Este estilo de icono indica que no podemos garantizar la ausencia de contacto cruzado con el alérgeno durante la elaboración.</p>
+              <div className="flex flex-wrap gap-x-4 gap-y-5">
+                {ALLERGENS.map(allergen => (
+                    <AllergenIconDisplay key={`${allergen.id}-traces-legend`} allergenId={allergen.id} type="traces" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
       </main>
     </div>
   );

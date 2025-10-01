@@ -67,9 +67,13 @@ export function CategoryCombobox({ value, onChange, className }: CategoryCombobo
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn('w-full justify-between h-12 text-lg', className)}
+          className={cn(
+            'w-full justify-between h-12 text-lg',
+            value && 'text-blue-600 font-bold',
+            className
+          )}
         >
-          {value ? dbCategories.find(c => c.name === value)?.name : 'Selecciona una categoría...'}
+          {value || 'Selecciona una categoría...'}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
