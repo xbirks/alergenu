@@ -19,42 +19,42 @@ env:
 
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     # REEMPLAZA ESTE VALOR con tu API Key real de Firebase.
-    value: "AIzaSyBsp6SPUe9d4-Epq60p6ODX_fvoRlF9pAM"
+    value: "TU_API_KEY_AQUI"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     # REEMPLAZA ESTE VALOR con tu Auth Domain real de Firebase.
-    value: "alergenu.firebaseapp.com"
+    value: "TU_AUTH_DOMAIN_AQUI"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     # REEMPLAZA ESTE VALOR con tu Project ID real de Firebase.
-    value: "alergenu"
+    value: "TU_PROJECT_ID_AQUI"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     # REEMPLAZA ESTE VALOR con tu Storage Bucket real de Firebase.
-    value: "alergenu.appspot.com"
+    value: "TU_STORAGE_BUCKET_AQUI"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     # REEMPLAZA ESTE VALOR con tu Messaging Sender ID real de Firebase.
-    value: "626307824039"
+    value: "TU_MESSAGING_SENDER_ID_AQUI"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    # REEMPLAZA ESTE VALOR con tu App ID rjuan eal de Firebase.
-    value: "1:626307824039:web:4b9a44f6244089261b9e82"
+    # REEMPLAZA ESTE VALOR con tu App ID real de Firebase.
+    value: "TU_APP_ID_AQUI"
     availability:
       - BUILD
       - RUNTIME
