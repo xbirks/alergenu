@@ -1,21 +1,21 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
+// import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { LogIn } from 'lucide-react';
 
 export function PublicHeader() {
-  const { user, loading } = useAuth();
+  // const { user, loading } = useAuth(); // <--- TEMPORALMENTE DESACTIVADO
   const router = useRouter();
 
   const handleAccess = () => {
-    if (user) {
-      router.push('/dashboard');
-    } else {
+    // if (user) {
+    //   router.push('/dashboard');
+    // } else {
       router.push('/login');
-    }
+    // }
   };
 
   return (
@@ -29,14 +29,14 @@ export function PublicHeader() {
         onClick={() => router.push('/home')}
       />
       <div>
-        {loading ? (
+        {/* {loading ? ( // <--- TEMPORALMENTE DESACTIVADO
           <div className="h-10 w-28 rounded-full bg-muted animate-pulse" />
-        ) : (
+        ) : ( */} 
           <Button onClick={handleAccess} variant="outline" className="rounded-full">
             <LogIn className="mr-2 h-4 w-4" />
             Acceder
           </Button>
-        )}
+        {/* )} */}
       </div>
     </header>
   );
