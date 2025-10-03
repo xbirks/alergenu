@@ -1,36 +1,34 @@
 import { Container } from "@/components/layout/Container";
 import { ImageGallery } from "@/components/layout/ImageGallery";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ArrowIcon } from "@/components/icons/ArrowIcon";
 
 export default function Home() {
   return (
-    <Container>
-      <div className="flex flex-col items-center text-center">
-        {/* El padding vertical excesivo (py-24) ha sido eliminado de aquí */}
-        <div className="flex flex-col items-center pt-24"> {/* Mantenemos solo padding superior */}
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-            La carta de tu restaurante, <br />
-            accesible para todos.
-          </h1>
-          <p className="mt-6 text-lg leading-8 text-gray-600">
-            Alergenu es la solución digital que ayuda a tus clientes a elegir sus platos con seguridad y confianza, <br />
-            evitando cualquier alérgeno o intolerancia.
+    <Container as="main" className="py-20">
+      <div className="grid grid-cols-2 items-center gap-10">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-5xl font-bold leading-tight">Descubre un mundo de sabores sin preocupaciones</h1>
+          <p className="text-lg text-muted-foreground">
+            Nuestra app te ayuda a encontrar restaurantes y productos seguros para tus alergias e intolerancias alimentarias. 
+            Explora, descubre y disfruta de la comida con total tranquilidad.
           </p>
-          <div className="mt-10 flex items-center gap-x-6">
-            <Button href="/#">
-              Descubre cómo funciona
-              <ArrowIcon className="ml-2 h-4 w-4" />
+          <div className="flex items-center gap-4">
+            <Button size="lg" asChild>
+              <a href="/register">
+                Únete gratis
+                <ArrowIcon />
+              </a>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <a href="/mapa">
+                Explora el mapa
+              </a>
             </Button>
           </div>
         </div>
-      </div>
-      
-      {/* Añadimos un margen superior controlado a la galería para separarla */}
-      <div className="mt-20">
         <ImageGallery />
       </div>
-
     </Container>
   );
 }
