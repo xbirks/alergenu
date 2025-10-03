@@ -19,7 +19,7 @@ export function PublicHeader() {
   };
 
   return (
-    <header className="flex items-center justify-between p-4 border-b bg-card">
+    <header className="flex items-center justify-between p-4 bg-card">
       <Image 
         src="/icon_alergenu.png" 
         alt="Alergenü Icon" 
