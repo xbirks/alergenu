@@ -53,7 +53,7 @@ env:
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    # REEMPLAZA ESTE VALOR con tu App ID real de Firebase.
+    # REEMPLAZA ESTE VALOR con tu App ID rjuan eal de Firebase.
     value: "1:626307824039:web:4b9a44f6244089261b9e82"
     availability:
       - BUILD
