@@ -9,16 +9,27 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-// Estructura del plato para recibir los datos
-interface MenuItem {
+// Estructura del plato para recibir los datos de Firestore
+interface MenuItemFetch {
     id: string;
     name: string;
     category: string;
     price: number;
     description?: string;
-    allergens?: string[];
+    allergens?: string[]; // El tipo que llega de Firebase
     isAvailable: boolean;
 }
+
+// Helper para convertir el array de alérgenos a un mapa, como espera el formulario
+const toAllergenMap = (
+  arr?: string[]
+): Record<string, "yes" | "no" | "traces"> | undefined => {
+  return arr?.reduce((acc, key) => {
+    acc[key] = "yes"; // Asumimos 'yes' para los alérgenos presentes en el array
+    return acc;
+  }, {} as Record<string, "yes" | "no" | "traces">);
+};
+
 
 export default function EditMenuItemPage() {
     const router = useRouter();
@@ -26,7 +37,7 @@ export default function EditMenuItemPage() {
     const { id: menuItemId } = params; // Obtenemos el ID del plato de la URL
 
     const { user, loading: authLoading } = useAuth();
-    const [menuItem, setMenuItem] = useState<MenuItem | null>(null);
+    const [menuItem, setMenuItem] = useState<MenuItemFetch | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [notFound, setNotFound] = useState(false);
@@ -40,7 +51,7 @@ export default function EditMenuItemPage() {
                 const docSnap = await getDoc(docRef);
 
                 if (docSnap.exists()) {
-                    setMenuItem({ id: docSnap.id, ...docSnap.data() } as MenuItem);
+                    setMenuItem({ id: docSnap.id, ...docSnap.data() } as MenuItemFetch);
                 } else {
                     // El plato no existe o no pertenece a este usuario
                     setNotFound(true);
@@ -86,9 +97,10 @@ export default function EditMenuItemPage() {
         }
 
         if (menuItem) {
-            // Aseguramos que isAvailable tenga un valor booleano para pasar al formulario
+            // Transformamos los datos para que coincidan con lo que espera el formulario
             const menuItemWithDefaults = {
                 ...menuItem,
+                allergens: toAllergenMap(menuItem.allergens), // <-- ARREGLO APLICADO
                 isAvailable: menuItem.isAvailable === false ? false : true,
             };
             return <MenuItemForm existingMenuItem={menuItemWithDefaults} />;
