@@ -1,0 +1,16 @@
+[debug] [2025-10-04T13:35:18.013Z] ----------------------------------------------------------------------
+[debug] [2025-10-04T13:35:18.028Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/0yk9nzw3ibqkjc4dy03f3v9nf5rxqylc-firebase-tools-14.18.0/lib/node_modules/firebase-tools/lib/bin/firebase.js login
+[debug] [2025-10-04T13:35:18.028Z] CLI Version:   14.18.0
+[debug] [2025-10-04T13:35:18.028Z] Platform:      linux
+[debug] [2025-10-04T13:35:18.029Z] Node Version:  v20.19.1
+[debug] [2025-10-04T13:35:18.029Z] Time:          Sat Oct 04 2025 13:35:18 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-10-04T13:35:18.029Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-10-04T13:35:18.036Z] Checked if tokens are valid: false, expires at: 1759583936551
+[debug] [2025-10-04T13:35:18.036Z] Checked if tokens are valid: false, expires at: 1759583936551
+[debug] [2025-10-04T13:35:18.037Z] > refreshing access token with scopes: []
+[debug] [2025-10-04T13:35:18.039Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-10-04T13:35:18.040Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-04T13:35:18.216Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-10-04T13:35:18.220Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-10-04T13:35:18.243Z] >>> [apiv2][query] GET https://monospace-pa.googleapis.com/v1/workspaces/studio-9217724895 [none]

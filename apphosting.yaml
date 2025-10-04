@@ -1,60 +1,48 @@
-# Configuración para Firebase App Hosting
 
-# Especifica la versión del esquema de configuración.
-# Es una buena práctica incluirlo para la compatibilidad futura.
+# Configuración para Firebase App Hosting
 specVersion: v1alpha1
 
 # Configuración para el entorno de ejecución del servidor (backend)
-runConfig:
-  # Opcional: define los límites de recursos para el servicio de Cloud Run subyacente.
-  # Por ejemplo, puedes ajustar la CPU, la memoria, etc.
-  # cpu: 1
-  # memoryMiB: 512
+runConfig: {}
 
 # Definición de variables de entorno para la aplicación.
 env:
-  # --- Variables públicas de Firebase para Next.js ---
-  # Estas variables son necesarias tanto en el momento de la compilación (BUILD)
-  # como en el de la ejecución (RUNTIME) para que el cliente pueda conectarse a Firebase.
-
+  # --- Clave de API de Firebase (gestionada como secreto) ---
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    # REEMPLAZA ESTE VALOR con tu API Key real de Firebase.
-    value: "TU_API_KEY_AQUI"
+    # Referencia a la clave guardada de forma segura en Google Secret Manager.
+    secret: GOOGLE_CLOUD_API_KEY
     availability:
       - BUILD
       - RUNTIME
 
+  # --- Identificadores públicos de Firebase ---
+  # Estos valores no son secretos y son necesarios para la configuración del cliente.
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    # REEMPLAZA ESTE VALOR con tu Auth Domain real de Firebase.
-    value: "TU_AUTH_DOMAIN_AQUI"
+    value: "studio-9217724895-dd75b.firebaseapp.com"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    # REEMPLAZA ESTE VALOR con tu Project ID real de Firebase.
-    value: "TU_PROJECT_ID_AQUI"
+    value: "studio-9217724895-dd75b"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    # REEMPLAZA ESTE VALOR con tu Storage Bucket real de Firebase.
-    value: "TU_STORAGE_BUCKET_AQUI"
+    value: "studio-9217724895-dd75b.appspot.com"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    # REEMPLAZA ESTE VALOR con tu Messaging Sender ID real de Firebase.
-    value: "TU_MESSAGING_SENDER_ID_AQUI"
+    value: "202532880221"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    # REEMPLAZA ESTE VALOR con tu App ID real de Firebase.
-    value: "TU_APP_ID_AQUI"
+    value: "1:202532880221:web:cd4618a40491855af472b4"
     availability:
       - BUILD
       - RUNTIME

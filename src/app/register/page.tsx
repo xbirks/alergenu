@@ -102,8 +102,8 @@ export default function RegisterPage() {
         await addDoc(categoriesCollectionRef, category);
       }
 
-      // 5. Redirect to welcome page on success
-      router.push('/welcome');
+      // 5. Redirect to dashboard page on success
+      router.push('/dashboard');
 
     } catch (error: any) {
       let errorMessage = 'Ocurrió un error al crear la cuenta.';

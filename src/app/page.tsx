@@ -5,7 +5,7 @@ import { ArrowIcon } from "@/components/icons/ArrowIcon";
 
 export default function Home() {
   return (
-    <Container as="main" className="py-20">
+    <Container className="py-20">
       <div className="grid grid-cols-2 items-center gap-10">
         <div className="flex flex-col gap-4">
           <h1 className="text-5xl font-bold leading-tight">Descubre un mundo de sabores sin preocupaciones</h1>

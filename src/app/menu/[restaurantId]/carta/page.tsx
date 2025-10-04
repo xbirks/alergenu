@@ -253,7 +253,7 @@ export default function PublicMenuPage() {
       <main className="max-w-5xl mx-auto p-6 md:p-10">
         <div className="mb-6 aspect-[16/10] w-full overflow-hidden rounded-2xl shadow-sm">
           <Image
-            src={restaurant?.coverImage || "https://www.ermo.es/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FDelibreads-1.70184391.jpg&w=2048&q=75"}
+            src={restaurant?.coverImage || "https://www.ermo.es/_next/static/media/Delibreads-1.70184391.jpg"}
             alt={restaurant?.restaurantName || 'Restaurant'}
             width={800}
             height={500}

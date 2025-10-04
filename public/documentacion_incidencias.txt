@@ -1,0 +1,49 @@
+HISTORIAL DE INCIDENCIAS Y SOLUCIONES (Octubre 2025)
+
+Este documento resume la cadena de problemas encontrados y las soluciones aplicadas para estabilizar el entorno de desarrollo y despliegue de la aplicación Alergenu.
+
+---
+### Incidencia 1: Error de Autenticación al Registrar Usuarios
+---
+
+- **Síntoma:** Al intentar registrar un nuevo usuario, la operación fallaba. La consola del navegador mostraba el error: `requests-from-referer-are-blocked`.
+- **Causa Raíz:** La configuración de seguridad de Firebase Authentication bloquea por defecto las peticiones desde dominios que no conoce. Nuestra aplicación se ejecutaba en un dominio temporal y dinámico del entorno de desarrollo en la nube (ej: `...cloudworkstations.dev`), que no estaba en la lista de dominios autorizados de Firebase.
+- **Solución:** Se añadió el dominio dinámico del entorno de desarrollo a la lista de "Dominios autorizados" en la consola de Firebase > Authentication > Settings.
+
+---
+### Incidencia 2: El Proyecto "Fantasma" - La Causa de Todos los Males
+---
+
+- **Síntoma:** A pesar de la solución anterior, los errores persistían. El despliegue fallaba y la configuración parecía no aplicarse.
+- **Causa Raíz:** Descubrimos que el entorno de desarrollo "Studio" había creado automáticamente un nuevo proyecto de Firebase (`studio-9217724895-dd75b`) y había modificado la configuración local para apuntar a él, sin que fuéramos conscientes. Nosotros seguíamos configurando manualmente el proyecto original (`alergenuapp`), mientras que el código y los intentos de despliegue estaban usando el nuevo proyecto `studio-...`, que no tenía nada configurado.
+- **Soluciones Aplicadas:**
+    1.  **Se adoptó el nuevo proyecto (`studio-...`) como la fuente de verdad.**
+    2.  **Se actualizó `.env.local`:** Se rellenó este archivo con las credenciales correctas (apiKey, authDomain, etc.) del proyecto `studio-...`.
+    3.  **Se actualizó `apphosting.yaml`:** Se modificaron todas las variables de entorno públicas (`NEXT_PUBLIC_FIREBASE_PROJECT_ID`, etc.) para que usaran los valores del proyecto `studio-...`.
+
+---
+### Incidencia 3: Redirección Incorrecta Post-Registro
+---
+
+- **Síntoma:** Una vez solucionado el registro, los usuarios eran redirigidos a una página genérica (`/welcome`) en lugar de a su panel de control (`/dashboard`).
+- **Causa Raíz:** El código en `src/app/register/page.tsx` contenía una lógica de redirección obsoleta.
+- **Solución:** Se modificó el archivo `src/app/register/page.tsx` para que, tras un registro exitoso, el usuario sea redirigido a `/dashboard`.
+
+---
+### Incidencia 4: Entorno de Desarrollo Inestable y Error de Secreto en Despliegue
+---
+
+- **Síntoma:** Nos preocupaba que el cambio de proyecto pudiera volver a suceder. Además, el despliegue seguía fallando con un error de `Misconfigured secret GOOGLE_CLOUD_API_KEY`.
+- **Causas Raíces:**
+    1.  **Inestabilidad:** No existía un archivo `.firebaserc`, lo que dejaba la puerta abierta a que el entorno cambiara el proyecto por defecto.
+    2.  **Error de Secreto (en 3 actos):**
+        a. El `apphosting.yaml` instruía al sistema a buscar la `API_KEY` en Google Secret Manager.
+        b. El secreto se había creado en el proyecto incorrecto (`alergenuapp` en lugar de `studio-...`).
+        c. Una vez creado en el proyecto correcto, el servicio de despliegue (App Hosting) no tenía *permiso* para leerlo.
+- **Soluciones Aplicadas:**
+    1.  **Creación de `.firebaserc`:** Se creó este archivo en la raíz del proyecto con el contenido `{"projects": {"default": "studio-9217724895-dd75b"}}` para "fijar" el proyecto por defecto y evitar cambios futuros.
+    2.  **Autenticación en el Terminal:** Se ejecutó `firebase login --reauth` para forzar un nuevo inicio de sesión seguro.
+    3.  **Concesión de Permisos:** Se ejecutó el comando `firebase apphosting:secrets:grantaccess GOOGLE_CLOUD_API_KEY --backend=studio` para dar al servicio de despliegue la "llave" para leer el secreto.
+
+---
+**ESTADO ACTUAL:** El entorno está estable, configurado y listo para desplegar. Todos los archivos de código y las configuraciones de la nube apuntan al proyecto correcto, y los permisos necesarios han sido concedidos.

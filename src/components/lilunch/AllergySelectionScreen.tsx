@@ -47,7 +47,7 @@ export function AllergySelectionScreen({
             : "bg-white text-gray-700 border-gray-300"
         )}
       >
-        <img src={`/allergens/${allergen.icon}`} alt="" className={cn("h-5 w-5", isSelected && "invert brightness-0")} />
+        <img src={`/allergens/${allergen.id}.svg`} alt="" className={cn("h-5 w-5", isSelected && "invert brightness-0")} />
         {allergen.name}
       </button>
     );

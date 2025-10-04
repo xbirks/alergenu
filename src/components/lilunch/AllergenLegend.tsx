@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ALLERGENS } from '@/lib/allergens';
-import { AllergenIcon } from './AllergenIcon';
+import { AllergenIcon } from '@/components/icons/allergens';
 import { cn } from '@/lib/utils';
 import { allergenColors } from './colors';
 
@@ -19,8 +19,7 @@ export function AllergenLegend() {
               <div key={allergen.id} className="flex items-center gap-3">
                 <AllergenIcon 
                   allergenId={allergen.id}
-                  className={cn(allergenColors[allergen.id], 'rounded-md')}
-                  iconClassName="size-4"
+                  className={cn(allergenColors[allergen.id], 'rounded-md', 'size-4')}
                 />
                 <span className="font-medium text-sm">{allergen.name}</span>
               </div>
