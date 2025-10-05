@@ -61,6 +61,7 @@ interface MenuItem {
 interface Category {
   id: string;
   name: string;
+  order: number;
 }
 
 export default function MenuPage() {
@@ -97,10 +98,7 @@ export default function MenuPage() {
   }, [user]);
 
  useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-
+    if (authLoading) return;
     if (!user) {
       setError('Por favor, inicia sesión para ver tu carta.');
       setLoading(false);
@@ -109,7 +107,7 @@ export default function MenuPage() {
     
     setError(null);
 
-    const categoriesQuery = query(collection(db, 'restaurants', user.uid, 'categories'), orderBy('name', 'asc'));
+    const categoriesQuery = query(collection(db, 'restaurants', user.uid, 'categories'), orderBy('order', 'asc'));
     const unsubscribeCategories = onSnapshot(categoriesQuery, snapshot => {
       setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category)));
     }, (err) => {
@@ -123,7 +121,7 @@ export default function MenuPage() {
           const data = doc.data();
           return {
             id: doc.id,
-            isAvailable: data.isAvailable !== false, // Default to true if undefined
+            isAvailable: data.isAvailable !== false,
             ...data,
           } as MenuItem;
         });
@@ -191,11 +189,9 @@ export default function MenuPage() {
     if (loading || authLoading) {
       return <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-12 text-center mt-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" /><p className="text-muted-foreground">Cargando tu carta...</p></div>;
     }
-
     if (error) {
       return <div className="border-2 border-destructive/50 bg-destructive/10 rounded-lg p-12 text-center mt-8"><p className="text-destructive font-semibold">{error}</p></div>;
     }
-
     if (menuItems.length === 0) {
       return (
         <div className="border-2 border-dashed rounded-lg p-12 text-center mt-8">
@@ -205,20 +201,16 @@ export default function MenuPage() {
       );
     }
 
-    const orderedCategories = categories.map(c => c.name).sort();
-
     return (
       <Accordion type="single" collapsible className="w-full space-y-4 mt-8">
-        {orderedCategories.map(categoryName => {
-          const items = menuByCategory[categoryName] || [];
+        {categories.map(category => {
+          const items = menuByCategory[category.name] || [];
           if (items.length === 0) return null;
 
-          const categoryId = categories.find(c => c.name === categoryName)?.id || categoryName;
-
           return (
-            <AccordionItem value={categoryId} key={categoryId} className="border rounded-2xl overflow-hidden shadow-sm">
+            <AccordionItem value={category.id} key={category.id} className="border rounded-2xl overflow-hidden shadow-sm">
               <AccordionTrigger className="px-6 py-4 text-xl font-bold hover:no-underline bg-white">
-                <span>{categoryName} <span className="font-normal text-muted-foreground">({items.length})</span></span>
+                <span>{category.name} <span className="font-normal text-muted-foreground">({items.length})</span></span>
                 </AccordionTrigger>
               <AccordionContent className="px-6 bg-white">
                 <ul className="-mx-6 divide-y divide-gray-200/80">
@@ -254,7 +246,7 @@ export default function MenuPage() {
                                 <Label htmlFor={`available-${item.id}`} className="text-sm font-medium text-muted-foreground">{item.isAvailable ? 'Disponible' : 'Agotado'}</Label>
                             </div>
                             <div className='flex items-center space-x-4'>
-                                <span className="font-bold text-lg text-right">{item.price.toFixed(2).replace('.', ',')}€</span>
+                                <span className="font-bold text-lg text-right">{(item.price / 100).toFixed(2).replace('.', ',')}€</span>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>

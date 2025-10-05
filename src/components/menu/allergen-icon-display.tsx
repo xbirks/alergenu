@@ -35,10 +35,10 @@ export const AllergenIconDisplay = ({ allergenId, type, className, isHighlighted
       color: allergen.color
     },
     highlighted: {
-      backgroundColor: '#ef4444', // Red-500
+      backgroundColor: '#EA3939',
       color: 'white',
       transform: 'scale(1.05)',
-      border: '2px solid #ef4444'
+      border: '2px solid #EA3939'
     },
   };
 

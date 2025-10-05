@@ -12,7 +12,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <>
       <Header />
       <main>
-        <div className="max-w-5xl mx-auto p-6 md:p-10">
+        <div className="max-w-7xl mx-auto p-6 md:p-10">
           {children}
         </div>
       </main>
