@@ -30,11 +30,11 @@ import { AllergenSelector } from '@/components/lilunch/AllergenSelector';
 const allergenStatus = z.enum(['no', 'traces', 'yes']);
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: 'El nombre del plato es demasiado corto.' }),
-  category: z.string().min(1, { message: 'Debes seleccionar o crear una categoría.' }),
+  name: z.string().min(1, { message: 'El nombre del plato no puede estar vacío.' }),
+  category: z.string().min(1, { message: 'Debes seleccionar una categoría.' }),
   description: z.string().optional(),
   price: z.coerce.number().positive({ message: 'El precio debe ser un número positivo.' }),
-  allergens: z.record(allergenStatus).optional(),
+  allergens: z.record(allergenStatus),
   isAvailable: z.boolean(),
 });
 
@@ -42,7 +42,7 @@ interface MenuItem {
     id: string;
     name: string;
     category: string;
-    price: number; // Stored in cents
+    price: number;
     description?: string;
     allergens?: { [key: string]: 'no' | 'traces' | 'yes' };
     isAvailable: boolean;
@@ -79,6 +79,8 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
     },
   });
 
+  const { formState: { errors } } = form;
+
   useEffect(() => {
     if (isEditMode && existingMenuItem) {
         const currentAllergens = { ...defaultAllergens, ...existingMenuItem.allergens };
@@ -86,7 +88,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
             name: existingMenuItem.name,
             category: existingMenuItem.category,
             description: existingMenuItem.description || '',
-            price: existingMenuItem.price / 100, // Convert from cents to euros for display
+            price: existingMenuItem.price / 100,
             allergens: currentAllergens,
             isAvailable: existingMenuItem.isAvailable === false ? false : true,
         });
@@ -94,6 +96,8 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
   }, [isEditMode, existingMenuItem, form, defaultAllergens]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (Object.keys(errors).length > 0) return;
+
     if (!user) {
       toast({ title: 'Error de autenticación', description: 'No se ha podido verificar tu identidad.', variant: 'destructive' });
       return;
@@ -112,7 +116,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
 
       const dataToSave = {
         ...values,
-        price: Math.round(values.price * 100), // Convert from euros to cents for storage
+        price: Math.round(values.price * 100),
         allergens: allergensToSave,
         updatedAt: serverTimestamp(),
       };
@@ -140,20 +144,23 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
   }
 
   const buttonText = isEditMode ? 'Guardar cambios' : 'Añadir plato';
-  const buttonSubmittingText = isEditMode ? 'Guardando cambios...' : 'Añadiendo plato...';
+  const buttonSubmittingText = isEditMode ? 'Guardando...' : 'Añadiendo plato...';
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className='font-bold text-lg'>Nombre del plato</FormLabel>
+              <FormLabel className='text-lg font-bold text-gray-800 pb-2 inline-block'>Nombre del plato</FormLabel>
               <FormControl>
-                <Input placeholder="Ej: Paella Valenciana" {...field} className={`h-12 text-lg ${field.value ? 'text-blue-600 font-bold' : ''}`}/>
+                <Input 
+                  placeholder="Ej: Paella Valenciana" 
+                  {...field} 
+                  className={`h-14 px-5 text-base rounded-full ${errors.name ? 'border-2 border-red-500' : ''} ${field.value ? 'text-blue-600 font-bold' : ''}`}/>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -165,16 +172,14 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
           name="category"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel className='font-bold text-lg'>Categoría</FormLabel>
+              <FormLabel className='text-lg font-bold text-gray-800 pb-2 inline-block'>Categoría</FormLabel>
               <FormControl>
                 <CategoryCombobox 
                   value={field.value}
                   onChange={field.onChange}
+                  hasError={!!errors.category}
                 />
               </FormControl>
-              <FormDescription className="text-base">
-                Clasifica tu plato en una categoría o crea una nueva.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -185,12 +190,12 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className='font-bold text-lg'>Descripción</FormLabel>
+              <FormLabel className='text-lg font-bold text-gray-800 pb-2 inline-block'>Descripción</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Una breve descripción del plato (opcional)"
+                  placeholder="(Opcional) Una breve descripción del plato ayudará al comensal a decidirse."
                   {...field}
-                  className={`text-lg ${field.value ? 'text-blue-600 font-bold' : ''}`}
+                  className={`text-base rounded-2xl px-5 py-4 h-28 ${field.value ? 'text-blue-600 font-bold' : ''}`}
                 />
               </FormControl>
               <FormMessage />
@@ -203,19 +208,19 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
           name="price"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className='font-bold text-lg'>Precio</FormLabel>
+              <FormLabel className='text-lg font-bold text-gray-800 pb-2 inline-block'>Precio</FormLabel>
               <div className="relative">
                 <FormControl>
                   <Input
                     type="number"
                     inputMode="decimal"
                     step="0.01"
-                    placeholder="Ej: 12.50"
-                    className={`pr-10 h-12 text-lg ${field.value ? 'text-blue-600 font-bold' : ''}`}
+                    placeholder="Ej: 12,50"
                     {...field}
+                    className={`h-14 px-5 text-base rounded-full pr-12 ${errors.price ? 'border-2 border-red-500' : ''} ${field.value ? 'text-blue-600 font-bold' : ''}`}
                   />
                 </FormControl>
-                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
                   <span className="text-muted-foreground text-lg">€</span>
                 </div>
               </div>
@@ -223,27 +228,27 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
             </FormItem>
           )}
         />
-
+        
         <FormField
           control={form.control}
           name="allergens"
           render={() => (
-            <FormItem>
+            <FormItem className="pt-8">
                <div className="mb-4">
-                <FormLabel className="text-lg font-bold">Alérgenos</FormLabel>
-                <FormDescription className="text-base">
+                <h2 className="text-3xl font-bold tracking-tight text-gray-900">Alérgenos</h2>
+                <p className="text-sm text-muted-foreground mt-2">
                   Para cada alérgeno, indica si el plato no lo contiene, si tiene trazas o si está presente.
-                </FormDescription>
+                </p>
               </div>
-              <div className="space-y-4">
+              <div>
                 {ALLERGENS.map((allergen) => (
                     <FormField
                       key={allergen.id}
                       control={form.control}
                       name={`allergens.${allergen.id}` as const}
                       render={({ field }) => (
-                        <FormItem className="flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-lg border p-4">
-                           <FormLabel className="font-semibold text-lg mb-4 sm:mb-0">
+                        <FormItem className="flex flex-row items-center justify-between border-b py-4">
+                           <FormLabel className="font-semibold text-lg flex-1">
                                 {allergen.name}
                             </FormLabel>
                           <FormControl>
@@ -258,17 +263,17 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
             </FormItem>
           )}
         />
-        
+
         <FormField
             control={form.control}
             name="isAvailable"
             render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                        <FormLabel className="text-lg font-bold">
+                <FormItem className="flex flex-row items-center justify-between border-b py-4">
+                    <div className="space-y-1.5">
+                        <FormLabel className="text-3xl font-bold tracking-tight text-gray-900">
                             Disponibilidad
                         </FormLabel>
-                        <FormDescription className="text-base">
+                        <FormDescription className="text-sm text-muted-foreground">
                             Indica si el plato está actualmente disponible o agotado.
                         </FormDescription>
                     </div>
@@ -282,10 +287,15 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
             )}
         />
         
-        <Button size="lg" type="submit" className="w-full rounded-full font-bold text-lg h-14" disabled={isSubmitting || authLoading}>
-            {(isSubmitting || authLoading) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {isSubmitting ? buttonSubmittingText : (authLoading ? 'Verificando usuario...' : buttonText)}
-        </Button>
+        <div className="pt-6">
+            <Button size="lg" type="submit" className="w-full rounded-full font-bold text-lg h-16 bg-blue-600 hover:bg-blue-700" disabled={isSubmitting || authLoading}>
+                {(isSubmitting || authLoading) 
+                    ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> 
+                    : null
+                }
+                {isSubmitting ? buttonSubmittingText : (authLoading ? 'Verificando...' : buttonText)}
+            </Button>
+        </div>
 
       </form>
     </Form>

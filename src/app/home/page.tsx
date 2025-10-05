@@ -57,6 +57,7 @@ const businessBenefits = [
 
 const pricingPlans = [
   {
+    id: 'gratuito',
     name: 'Plan Gratuito',
     badge: '3 meses gratis',
     features: [
@@ -70,6 +71,7 @@ const pricingPlans = [
     isFeatured: false,
   },
   {
+    id: 'autonomia',
     name: 'Plan Autonomía',
     price: '19€',
     priceDetails: 'Mensual, IVA inc.',
@@ -86,6 +88,7 @@ const pricingPlans = [
     isFeatured: false,
   },
   {
+    id: 'premium',
     name: 'Plan Premium',
     price: '49€',
     priceDetails: 'Mensual, IVA inc.',
@@ -172,7 +175,7 @@ export default function HomePage() {
               <Link href="/register">Empezar gratis hoy</Link>
             </Button>
             <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-normal text-neutral-800 hover:bg-gray-200" style={{ backgroundColor: '#D9D9D9' }}>
-              <Link href="/pricing">Explorar planes y precios</Link>
+              <Link href="#precios">Explorar planes y precios</Link>
             </Button>
           </div>
         </section>
@@ -311,7 +314,7 @@ export default function HomePage() {
         </section>
 
         {/* Pricing Section */}
-        <section className="w-full max-w-2xl mx-auto mt-28 container px-4">
+        <section id="precios" className="w-full max-w-2xl mx-auto mt-28 container px-4">
             <div className="text-left mb-12">
                 <h2 className="text-[32px] font-extrabold tracking-tight">Planes y precios</h2>
                 <p className="text-[18px] text-muted-foreground mt-4">
@@ -352,7 +355,7 @@ export default function HomePage() {
                         </ul>
 
                         <Button asChild size="lg" className={`w-full rounded-full h-14 text-lg font-bold mt-8 ${plan.isFeatured ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary hover:bg-primary/90 text-white'}`}>
-                            <Link href="/register">{plan.buttonText}</Link>
+                            <Link href={`/register?plan=${plan.id}`}>{plan.buttonText}</Link>
                         </Button>
                     </div>
                 ))}

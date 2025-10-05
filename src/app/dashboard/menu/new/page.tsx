@@ -6,17 +6,17 @@ import { MenuItemForm } from '@/components/lilunch/MenuItemForm';
 
 export default function NewDishPage() {
   return (
-    <div>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
-        <Link href="/dashboard/menu" className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors">
-          <ArrowLeft className="mr-2 h-4 w-4" />
+        <Link href="/dashboard/menu" className="inline-flex items-center gap-x-2 text-gray-600 font-semibold rounded-full bg-gray-100 hover:bg-gray-200 px-4 py-2 transition-colors">
+          <ArrowLeft className="h-4 w-4" />
           Volver a mi carta
         </Link>
       </div>
       
-      <div className='mb-8'>
-        <h1 className="text-3xl font-bold mb-1">Añadir nuevo plato</h1>
-        <p className="text-muted-foreground">Rellena los detalles para añadir un nuevo ítem a tu carta digital.</p>
+      <div className='mb-10'>
+        <h1 className="text-4xl font-bold tracking-tight mb-2 text-gray-900">Añadir nuevo plato</h1>
+        <p className="text-lg text-muted-foreground">Rellena los detalles para añadir un nuevo ítem a tu carta digital.</p>
       </div>
 
       <MenuItemForm />

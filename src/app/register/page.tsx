@@ -1,65 +1,123 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import { auth, db } from '@/lib/firebase/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { PublicHeader } from '@/components/layout/PublicHeader';
 
-// Helper function to create a URL-friendly slug from a string
 const slugify = (text: string) => {
   const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;';
   const b = 'aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------';
   const p = new RegExp(a.split('').join('|'), 'g');
 
   return text.toString().toLowerCase()
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(p, c => b.charAt(a.indexOf(c))) // Replace special characters
-    .replace(/&/g, '-and-') // Replace & with 'and'
-    .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-    .replace(/\-\-+/g, '-') // Replace multiple - with single -
-    .replace(/^-+/, '') // Trim - from start of text
-    .replace(/-+$/, ''); // Trim - from end of text
+    .replace(/\s+/g, '-')
+    .replace(p, c => b.charAt(a.indexOf(c)))
+    .replace(/&/g, '-and-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
-export default function RegisterPage() {
+const pricingPlans = [
+    {
+      id: 'gratuito',
+      name: 'Plan gratuito',
+      price: null,
+      details: '3 meses gratis',
+    },
+    {
+      id: 'autonomia',
+      name: 'Plan Autonomía',
+      price: '19€',
+      details: 'Mensual, IVA inc.',
+    },
+    {
+      id: 'premium',
+      name: 'Plan Premium',
+      price: '49€',
+      details: 'Mensual, IVA inc.',
+    },
+];
+
+function RegisterForm() {
   const router = useRouter();
-  // Input values
+  const searchParams = useSearchParams();
+  const restaurantNameRef = useRef<HTMLInputElement>(null);
+
+  const [selectedPlan, setSelectedPlan] = useState('gratuito');
   const [restaurantName, setRestaurantName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
-  // UI state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [submissionAttempted, setSubmissionAttempted] = useState(false);
+
+  // State for managing placeholder visibility
+  const [placeholders, setPlaceholders] = useState({
+    restaurantName: 'Ej: Restaurante Pepe',
+    ownerName: 'Ej: María Pérez Fernández',
+    email: 'Ej: mariaperez@gmail.com',
+  });
+
+  const handleFocus = (field: keyof typeof placeholders) => {
+    setPlaceholders(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const handleBlur = (field: keyof typeof placeholders, originalPlaceholder: string, value: string) => {
+    if (!value) {
+      setPlaceholders(prev => ({ ...prev, [field]: originalPlaceholder }));
+    }
+  };
+
+  useEffect(() => {
+    const planFromUrl = searchParams.get('plan');
+    if (planFromUrl && ['gratuito', 'autonomia', 'premium'].includes(planFromUrl)) {
+      setSelectedPlan(planFromUrl);
+    }
+  }, [searchParams]);
+  
+  const handlePlanSelection = (planId: string) => {
+    setSelectedPlan(planId);
+    if (planId === 'gratuito' && restaurantNameRef.current) {
+      restaurantNameRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  };
+
+  const isFormComplete = restaurantName && ownerName && email && password && confirmPassword;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setSubmissionAttempted(true);
     setError('');
 
+    if (!isFormComplete || !termsAccepted) {
+        setError('Por favor, rellena todos los campos obligatorios y acepta los términos.');
+        return;
+    }
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden.');
       return;
     }
-
     if (password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres.');
       return;
@@ -68,28 +126,21 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // 1. Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
-      // 2. Create a slug from the restaurant name
       const restaurantSlug = slugify(restaurantName);
 
-      // 3. Save additional user data in Firestore
       await setDoc(doc(db, 'restaurants', user.uid), {
         uid: user.uid,
         restaurantName,
         slug: restaurantSlug, 
         ownerName,
         email: user.email,
+        selectedPlan: selectedPlan,
         createdAt: new Date(),
+        termsAcceptedAt: new Date(),
       });
 
-      // 4. Create default categories
       const categoriesCollectionRef = collection(db, 'restaurants', user.uid, 'categories');
       const defaultCategories = [
         { name: 'Entrantes', order: 1 },
@@ -102,7 +153,6 @@ export default function RegisterPage() {
         await addDoc(categoriesCollectionRef, category);
       }
 
-      // 5. Redirect to dashboard page on success
       router.push('/dashboard');
 
     } catch (error: any) {
@@ -113,167 +163,180 @@ export default function RegisterPage() {
         errorMessage = 'El formato del correo electrónico no es válido.';
       }
       setError(errorMessage);
-      console.error("Error during registration:", error);
     } finally {
       setLoading(false);
     }
   };
-  
-  const isFormComplete = restaurantName && ownerName && email && password && confirmPassword;
 
   return (
-    <div className='flex flex-col items-center justify-center min-h-screen bg-background p-4'>
-      <div className='w-full max-w-md'>
-        <Link href='/home' className='flex justify-center mb-6'>
-          <Image src='/alergenu.png' alt='Alergenu Logo' width={150} height={50} />
-        </Link>
-        <Card className="rounded-2xl">
-          <form onSubmit={handleSubmit}>
-            <CardHeader className='text-center space-y-2'>
-              <CardTitle className='text-2xl'>Crea tu cuenta</CardTitle>
-              <CardDescription>
-                Introduce tus datos para empezar a digitalizar tu carta.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className='grid gap-4'>
-                <div className='grid gap-2'>
-                  <Label htmlFor='restaurant-name'>
-                    Nombre del restaurante
-                  </Label>
-                  <Input
-                    id='restaurant-name'
-                    placeholder='Ej: La Buena Tapa'
-                    required
-                    value={restaurantName}
-                    onChange={(e) => setRestaurantName(e.target.value)}
-                    className="rounded-full"
-                    disabled={loading}
-                  />
+    <div className="min-h-screen bg-background">
+      <PublicHeader />
+      <main className="flex items-start justify-center py-10 px-4">
+        <div className="w-full max-w-md mx-auto">
+            <div className="bg-white">
+                <div className="text-center">
+                    <Image src='/alergenu.png' alt='Alergenu Logo' width={180} height={48} className="mx-auto mt-16 mb-10" />
+                    <h1 className="text-2xl font-bold tracking-tight mb-1">Crea tu cuenta</h1>
+                    <p className="text-muted-foreground text-sm">
+                        Introduce tus datos y en menos de 2 minutos estarás creando tu carta.
+                    </p>
                 </div>
-                <div className='grid gap-2'>
-                  <Label htmlFor='owner-name'>Nombre y apellido</Label>
-                  <Input
-                    id='owner-name'
-                    placeholder='Ej: María López'
-                    required
-                    value={ownerName}
-                    onChange={(e) => setOwnerName(e.target.value)}
-                    className="rounded-full"
-                    disabled={loading}
-                  />
-                </div>
-                <div className='grid gap-2'>
-                  <Label htmlFor='email'>Email</Label>
-                  <Input
-                    id='email'
-                    type='email'
-                    placeholder='maria@ejemplo.com'
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="rounded-full"
-                    disabled={loading}
-                  />
-                </div>
-                <div className='grid gap-2'>
-                  <Label htmlFor='password'>Contraseña</Label>
-                  <div className="relative flex items-center">
-                    <Input
-                      id='password'
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="rounded-full pr-10"
-                      disabled={loading}
-                    />
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      className='absolute right-2 h-7 w-7'
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      disabled={loading}
-                    >
-                      {showPassword ? (
-                        <EyeOff className='h-4 w-4' />
-                      ) : (
-                        <Eye className='h-4 w-4' />
-                      )}
-                      <span className='sr-only'>
-                        {showPassword ? 'Ocultar' : 'Mostrar'}
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-                <div className='grid gap-2'>
-                  <Label htmlFor='confirm-password'>Confirmar contraseña</Label>
-                   <div className="relative flex items-center">
-                    <Input
-                      id='confirm-password'
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="rounded-full pr-10"
-                      disabled={loading}
-                    />
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      className='absolute right-2 h-7 w-7'
-                      onClick={() => setShowConfirmPassword((prev) => !prev)}
-                      disabled={loading}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className='h-4 w-4' />
-                      ) : (
-                        <Eye className='h-4 w-4' />
-                      )}
-                      <span className='sr-only'>
-                        {showConfirmPassword ? 'Ocultar' : 'Mostrar'}
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-                {error && (
-                  <p className='px-1 py-2 font-medium text-sm text-destructive text-center bg-red-50 border border-destructive rounded-full'>{error}</p>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className='flex flex-col items-center gap-4'>
-              <Button type='submit' className='w-full rounded-full' disabled={!isFormComplete || loading}>
-                {loading ? 'Creando cuenta...' : 'Crear cuenta'}
-              </Button>
-              <p className='text-xs text-muted-foreground text-center'>
-                Al crear una cuenta, aceptas nuestros{' '}
-                <Link
-                  href='/legal/terms-of-service'
-                  className='underline underline-offset-4 hover:text-primary'
-                >
-                  Términos y Condiciones
-                </Link>
-                {' y nuestra '}
-                <Link
-                  href='/legal/privacy-policy'
-                  className='underline underline-offset-4 hover:text-primary'
-                >
-                  Política de Privacidad
-                </Link>
-                .
-              </p>
-            </CardFooter>
-          </form>
-        </Card>
-        <div className='mt-4 text-center text-sm'>
-          ¿Ya tienes una cuenta?{' '}
-          <Link href='/login' className='underline'>
-            Inicia sesión
-          </Link>
+                
+                <form onSubmit={handleSubmit} className="space-y-5 mt-10">
+                    {/* Plan Selector */}
+                    <div>
+                        <div className="space-y-4">
+                            {pricingPlans.map((plan) => {
+                                const isSelected = selectedPlan === plan.id;
+                                return (
+                                <button
+                                    type="button"
+                                    key={plan.id}
+                                    onClick={() => handlePlanSelection(plan.id)}
+                                    className={`w-full flex justify-between items-center px-6 rounded-full transition-all duration-200 h-16`}
+                                    style={isSelected ? { backgroundColor: '#959595' } : { backgroundColor: '#f3f4f6' }}
+                                >
+                                    <span className={`font-semibold text-base ${isSelected ? 'text-white' : 'text-gray-800'}`}>{plan.name}</span>
+                                    <div className="flex items-center gap-x-4">
+                                        {plan.price && (
+                                            <div className="text-right">
+                                                <p className={`font-bold text-lg ${isSelected ? 'text-white' : 'text-gray-900'}`}>{plan.price}</p>
+                                                <p className={`text-xs ${isSelected ? 'text-gray-200' : 'text-muted-foreground'} -mt-1`}>{plan.details}</p>
+                                            </div>
+                                        )}
+                                        {isSelected && (
+                                            <span className="bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-full">
+                                                Seleccionado
+                                            </span>
+                                        )}
+                                    </div>
+                                </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="flex justify-start items-center gap-2 pt-4 px-2">
+                            <p className="text-sm text-gray-600">Tus pagos seguros con</p>
+                            <Image src="/icons/web_icons/stripe.svg" alt="Stripe Logo" width={48} height={20} />
+                        </div>
+                    </div>
+                    
+                    <hr className="!my-12 border-gray-200" />
+
+                    {/* Form Inputs */}
+                    <div className="space-y-5">
+                        <div>
+                            <Label htmlFor='restaurant-name' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Nombre del restaurante*</Label>
+                            <Input
+                                ref={restaurantNameRef}
+                                id='restaurant-name'
+                                placeholder={placeholders.restaurantName}
+                                onFocus={() => handleFocus('restaurantName')}
+                                onBlur={() => handleBlur('restaurantName', 'Ej: Restaurante Pepe', restaurantName)}
+                                required value={restaurantName}
+                                onChange={(e) => setRestaurantName(e.target.value)}
+                                className={`h-12 px-5 text-base rounded-full text-blue-600 ${submissionAttempted && !restaurantName ? 'border-2 border-red-500' : ''}`}
+                                disabled={loading}
+                            />
+                            <p className="text-xs text-muted-foreground mt-2 px-4">
+                            *Asegúrate que el nombre es correcto, más adelante no se podrá modificar. Va relacionado con tu QR.
+                            </p>
+                        </div>
+                        <div>
+                            <Label htmlFor='owner-name' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Tu nombre y apellidos</Label>
+                            <Input
+                                id='owner-name'
+                                placeholder={placeholders.ownerName}
+                                onFocus={() => handleFocus('ownerName')}
+                                onBlur={() => handleBlur('ownerName', 'Ej: María Pérez Fernández', ownerName)}
+                                required value={ownerName}
+                                onChange={(e) => setOwnerName(e.target.value)}
+                                className={`h-12 px-5 text-base rounded-full text-blue-600 ${submissionAttempted && !ownerName ? 'border-2 border-red-500' : ''}`}
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor='email' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Correo electrónico</Label>
+                            <Input
+                                id='email'
+                                type='email'
+                                placeholder={placeholders.email}
+                                onFocus={() => handleFocus('email')}
+                                onBlur={() => handleBlur('email', 'Ej: mariaperez@gmail.com', email)}
+                                required value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className={`h-12 px-5 text-base rounded-full text-blue-600 ${submissionAttempted && !email ? 'border-2 border-red-500' : ''}`}
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor='password' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Contraseña</Label>
+                            <div className="relative flex items-center">
+                                <Input
+                                    id='password'
+                                    type={showPassword ? 'text' : 'password'}
+                                    required value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className={`h-12 px-5 text-base rounded-full pr-12 text-blue-600 ${submissionAttempted && !password ? 'border-2 border-red-500' : ''}`}
+                                    disabled={loading}
+                                />
+                                <button type='button' onClick={() => setShowPassword(p => !p)} className="absolute right-1 h-10 w-10 flex items-center justify-center text-muted-foreground bg-white rounded-full">
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                        </div>
+                         <div>
+                            <Label htmlFor='confirm-password' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Repite tu contraseña</Label>
+                            <div className="relative flex items-center">
+                                <Input
+                                    id='confirm-password'
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    required value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className={`h-12 px-5 text-base rounded-full pr-12 text-blue-600 ${submissionAttempted && !confirmPassword ? 'border-2 border-red-500' : ''}`}
+                                    disabled={loading}
+                                />
+                                <button type='button' onClick={() => setShowConfirmPassword(p => !p)} className="absolute right-1 h-10 w-10 flex items-center justify-center text-muted-foreground bg-white rounded-full">
+                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Terms and Conditions */}
+                    <div className={`pt-4 space-y-4 rounded-lg ${submissionAttempted && !termsAccepted ? 'ring-2 ring-red-500' : ''}`}>
+                        <div className="flex justify-between items-center px-2">
+                            <Label htmlFor="terms" className="text-sm font-normal leading-relaxed peer-disabled:cursor-not-allowed peer-disabled:opacity-70 max-w-[85%]">
+                                Por favor, lee nuestros <Link href="/legal/terms-of-service" className="text-blue-600 underline">términos y condiciones</Link> y luego haz click para aceptarlas.*
+                            </Label>
+                             <Switch id="terms" checked={termsAccepted} onCheckedChange={setTermsAccepted} disabled={loading} />
+                        </div>
+                         <p className="text-xs text-muted-foreground px-4">
+                            *¡Importante! NO recibirás publicidad de ningún tipo ni se compartirán tus datos sensibles con empresas externas.
+                        </p>
+                    </div>
+                    
+                    {error && (
+                        <p className='text-center text-sm text-red-600 bg-red-50 p-3 rounded-full mt-4'>{error}</p>
+                    )}
+                    
+                    <div className="pt-4">
+                        <Button type='submit' size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }} disabled={loading}>
+                            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+                        </Button>
+                    </div>
+                </form>
+            </div>
         </div>
-      </div>
+      </main>
     </div>
   );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={<div>Cargando...</div>}>
+            <RegisterForm />
+        </Suspense>
+    );
 }

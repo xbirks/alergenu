@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,9 +31,10 @@ interface CategoryComboboxProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  hasError?: boolean;
 }
 
-export function CategoryCombobox({ value, onChange, className }: CategoryComboboxProps) {
+export function CategoryCombobox({ value, onChange, className, hasError }: CategoryComboboxProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
@@ -68,13 +69,15 @@ export function CategoryCombobox({ value, onChange, className }: CategoryCombobo
           role="combobox"
           aria-expanded={open}
           className={cn(
-            'w-full justify-between h-12 text-lg',
+            'w-full justify-between h-14 px-5 text-base rounded-full',
+            !value && 'text-muted-foreground font-normal',
             value && 'text-blue-600 font-bold',
+            hasError && 'border-2 border-red-500',
             className
           )}
         >
           {value || 'Selecciona una categoría...'}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -88,7 +91,7 @@ export function CategoryCombobox({ value, onChange, className }: CategoryCombobo
                   key={category.id}
                   value={category.name}
                   onSelect={() => handleSelectCategory(category.name)}
-                  className="cursor-pointer text-lg py-2"
+                  className="cursor-pointer text-base py-2"
                 >
                   <Check
                     className={cn(
