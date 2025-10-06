@@ -1,7 +1,14 @@
 export interface Allergen {
   id: string;
   name: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  iconUrl: string;
+  isCustom?: boolean;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  order: number;
 }
 
 export interface MenuItem {
@@ -10,11 +17,15 @@ export interface MenuItem {
   description?: string;
   price: number;
   category: string;
-  allergens?: string[];
-  createdAt: any; // O un tipo más específico de Firebase Timestamp
+  allergens: string[];
+  traces: string[];
+  isAvailable: boolean;
+  createdAt?: any; // Firebase Timestamp
 }
 
 export interface Restaurant {
   restaurantName: string;
   ownerName: string;
+  slug: string;
+  qrScans?: number;
 }

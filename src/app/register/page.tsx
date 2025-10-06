@@ -226,7 +226,7 @@ function RegisterForm() {
                     {/* Form Inputs */}
                     <div className="space-y-5">
                         <div>
-                            <Label htmlFor='restaurant-name' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Nombre del restaurante*</Label>
+                            <Label htmlFor='restaurant-name' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Nombre del restaurante*</Label>
                             <Input
                                 ref={restaurantNameRef}
                                 id='restaurant-name'
@@ -243,7 +243,7 @@ function RegisterForm() {
                             </p>
                         </div>
                         <div>
-                            <Label htmlFor='owner-name' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Tu nombre y apellidos</Label>
+                            <Label htmlFor='owner-name' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Tu nombre y apellidos</Label>
                             <Input
                                 id='owner-name'
                                 placeholder={placeholders.ownerName}
@@ -256,7 +256,7 @@ function RegisterForm() {
                             />
                         </div>
                         <div>
-                            <Label htmlFor='email' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Correo electrónico</Label>
+                            <Label htmlFor='email' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Correo electrónico</Label>
                             <Input
                                 id='email'
                                 type='email'
@@ -270,7 +270,7 @@ function RegisterForm() {
                             />
                         </div>
                         <div>
-                            <Label htmlFor='password' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Contraseña</Label>
+                            <Label htmlFor='password' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Contraseña</Label>
                             <div className="relative flex items-center">
                                 <Input
                                     id='password'
@@ -286,7 +286,7 @@ function RegisterForm() {
                             </div>
                         </div>
                          <div>
-                            <Label htmlFor='confirm-password' className="text-base font-medium text-gray-800 pb-2 inline-block pl-4">Repite tu contraseña</Label>
+                            <Label htmlFor='confirm-password' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Repite tu contraseña</Label>
                             <div className="relative flex items-center">
                                 <Input
                                     id='confirm-password'

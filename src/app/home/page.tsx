@@ -174,7 +174,7 @@ export default function HomePage() {
             <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }}>
               <Link href="/register">Empezar gratis hoy</Link>
             </Button>
-            <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-normal text-neutral-800 hover:bg-gray-200" style={{ backgroundColor: '#D9D9D9' }}>
+            <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-semibold text-neutral-800 hover:bg-gray-200" style={{ backgroundColor: '#D9D9D9' }}>
               <Link href="#precios">Explorar planes y precios</Link>
             </Button>
           </div>
