@@ -138,7 +138,7 @@ export default function HomePage() {
       
       <main className="pt-12 pb-20">
         
-        <section className="text-center w-full max-w-2xl mx-auto container px-4 pt-14">
+        <section className="text-center w-full max-w-2xl mx-auto container px-4 pt-10">
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter mb-4">
             Cuidamos la <span style={{ color: '#2563EB' }}>salud</span> de todos tus comensales
           </h1>

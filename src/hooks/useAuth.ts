@@ -15,7 +15,13 @@ export function useAuth(): AuthState {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+      // Si hay un usuario y su email ha sido verificado, lo establecemos.
+      if (currentUser && currentUser.emailVerified) {
+        setUser(currentUser);
+      } else {
+        // En cualquier otro caso (no hay usuario, o email no verificado), el usuario es null.
+        setUser(null);
+      }
       setLoading(false);
     });
 

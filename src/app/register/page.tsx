@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, collection, addDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+// Importar writeBatch y doc, ya no necesitamos addDoc directamente aquí
+import { doc, collection, writeBatch } from 'firebase/firestore';
 import { PublicHeader } from '@/components/layout/PublicHeader';
 
 const slugify = (text: string) => {
@@ -69,7 +70,6 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [submissionAttempted, setSubmissionAttempted] = useState(false);
 
-  // State for managing placeholder visibility
   const [placeholders, setPlaceholders] = useState({
     restaurantName: 'Ej: Restaurante Pepe',
     ownerName: 'Ej: María Pérez Fernández',
@@ -118,20 +118,24 @@ function RegisterForm() {
       setError('Las contraseñas no coinciden.');
       return;
     }
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
 
     setLoading(true);
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      const restaurantSlug = slugify(restaurantName);
 
-      await setDoc(doc(db, 'restaurants', user.uid), {
-        uid: user.uid,
+      await sendEmailVerification(user);
+
+      // --- INICIO DE LA SOLUCIÓN ATÓMICA ---
+      // 1. Crear un lote de escritura (batch)
+      const batch = writeBatch(db);
+
+      // 2. Añadir la creación del restaurante al lote
+      const restaurantSlug = slugify(restaurantName);
+      const restaurantRef = doc(db, 'restaurants', user.uid);
+      batch.set(restaurantRef, {
+        ownerId: user.uid,
         restaurantName,
         slug: restaurantSlug, 
         ownerName,
@@ -141,6 +145,7 @@ function RegisterForm() {
         termsAcceptedAt: new Date(),
       });
 
+      // 3. Añadir la creación de las categorías por defecto al lote
       const categoriesCollectionRef = collection(db, 'restaurants', user.uid, 'categories');
       const defaultCategories = [
         { name: 'Entrantes', order: 1 },
@@ -150,17 +155,27 @@ function RegisterForm() {
       ];
 
       for (const category of defaultCategories) {
-        await addDoc(categoriesCollectionRef, category);
+        const categoryRef = doc(categoriesCollectionRef); // Crea una referencia con un ID automático
+        batch.set(categoryRef, category);
       }
 
-      router.push('/dashboard');
+      // 4. Ejecutar todas las operaciones del lote de una sola vez
+      await batch.commit();
+      // --- FIN DE LA SOLUCIÓN ATÓMICA ---
+
+      router.push('/auth/verify-email');
 
     } catch (error: any) {
+      console.error("Error detallado en registro:", error); // Ayuda a ver el error real en la consola
       let errorMessage = 'Ocurrió un error al crear la cuenta.';
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'Este correo electrónico ya está en uso.';
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'El formato del correo electrónico no es válido.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'La contraseña es demasiado débil. Revisa los requisitos de seguridad.';
+      } else if (error.code === 'permission-denied') {
+        errorMessage = 'Error de permisos. Contacta con soporte.'; // Mensaje más específico si vuelve a fallar
       }
       setError(errorMessage);
     } finally {
@@ -183,7 +198,7 @@ function RegisterForm() {
                 </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-5 mt-10">
-                    {/* Plan Selector */}
+                    {/* ...el resto del formulario JSX permanece igual... */}
                     <div>
                         <div className="space-y-4">
                             {pricingPlans.map((plan) => {
@@ -223,7 +238,6 @@ function RegisterForm() {
                     
                     <hr className="!my-12 border-gray-200" />
 
-                    {/* Form Inputs */}
                     <div className="space-y-5">
                         <div>
                             <Label htmlFor='restaurant-name' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Nombre del restaurante*</Label>
@@ -284,6 +298,9 @@ function RegisterForm() {
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
+                            <p className="text-xs text-muted-foreground mt-2 px-4">
+                                Mínimo 8 caracteres, una mayúscula, un número y un caracter especial.
+                            </p>
                         </div>
                          <div>
                             <Label htmlFor='confirm-password' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Repite tu contraseña</Label>
@@ -303,7 +320,6 @@ function RegisterForm() {
                         </div>
                     </div>
 
-                    {/* Terms and Conditions */}
                     <div className={`pt-4 space-y-4 rounded-lg ${submissionAttempted && !termsAccepted ? 'ring-2 ring-red-500' : ''}`}>
                         <div className="flex justify-between items-center px-2">
                             <Label htmlFor="terms" className="text-sm font-normal leading-relaxed peer-disabled:cursor-not-allowed peer-disabled:opacity-70 max-w-[85%]">
@@ -321,8 +337,12 @@ function RegisterForm() {
                     )}
                     
                     <div className="pt-4">
-                        <Button type='submit' size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }} disabled={loading}>
-                            {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+                        <Button type='submit' size="lg" className="w-full rounded-full h-14 text-lg font-bold flex items-center justify-center" style={{ backgroundColor: '#2563EB' }} disabled={loading}>
+                           {loading ? (
+                                <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Creando cuenta...</>
+                            ) : (
+                                'Crear cuenta'
+                            )}
                         </Button>
                     </div>
                 </form>

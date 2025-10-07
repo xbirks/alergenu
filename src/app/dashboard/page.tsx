@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
+import { QrCard } from '@/components/dashboard/QrCard'; // 1. Importar el nuevo componente
 import {
   Card,
   CardContent,
@@ -28,7 +29,7 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [restaurantData, setRestaurantData] = useState<RestaurantData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  // 2. Eliminar el estado qrCodeUrl
 
   useEffect(() => {
     if (authLoading) return;
@@ -44,10 +45,7 @@ export default function DashboardPage() {
       if (docSnap.exists()) {
         const data = docSnap.data() as RestaurantData;
         setRestaurantData(data);
-        if (data.slug) {
-          const menuUrl = `${window.location.origin}/menu/${data.slug}`;
-          setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(menuUrl)}`);
-        }
+        // 3. Eliminar la lógica de generación de qrCodeUrl
       } else {
         console.error('No restaurant data found for this user!');
       }
@@ -96,36 +94,8 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <Card className="rounded-2xl">
-        <CardHeader>
-          <CardTitle>Código QR de tu Carta</CardTitle>
-          <CardDescription>
-            Tus clientes usarán este código para ver la carta digital.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col md:flex-row items-center justify-center md:justify-start gap-6 text-center md:text-left">
-          {qrCodeUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={qrCodeUrl}
-              alt="Código QR del restaurante"
-              width={160}
-              height={160}
-              className="rounded-lg"
-            />
-          )}
-          <div className="flex flex-col gap-3 w-full md:w-auto">
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full rounded-full font-bold h-12"
-              onClick={() => alert('Descarga del QR pendiente de implementación.')}
-            >
-              Descargar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* 4. Reemplazar la Card del QR por nuestro nuevo componente */}
+      {restaurantData.slug && <QrCard slug={restaurantData.slug} />}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20">
