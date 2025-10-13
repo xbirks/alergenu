@@ -71,7 +71,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur-sm">
       <div className="container flex h-20 items-center justify-between">
-        <Link href={user ? "/dashboard" : "/home"} className="flex items-center gap-2">
+        <Link id="tour-back-to-dashboard" href={user ? "/dashboard" : "/home"} className="flex items-center gap-2">
           <Image
             src="/icon_alergenu.png" 
             alt="Alergenu Logo"

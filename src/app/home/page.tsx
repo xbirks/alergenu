@@ -7,8 +7,8 @@ import { ImageGallery } from '@/components/layout/ImageGallery';
 import { Faq } from '@/components/layout/Faq';
 
 export const metadata: Metadata = {
-  title: 'ALERGENU | Carta digital con control de alérgenos para restaurantes y hoteles',
-  description: 'Digitaliza tu menú con ALERGENU. Carta QR que filtra alérgenos automáticamente en restaurantes, bares y hoteles. Cumple normativa y protege a tus clientes.',
+  title: 'Crea gratis tu carta digital con alérgenos | ALERGENU',
+  description: 'Crea y gestiona la carta de tu restaurante, actualiza precios y platos al instante y cumple con la ley de alérgenos de forma fácil y rápida.',
 };
 
 const benefits = [
@@ -136,7 +136,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <PublicHeader />
       
-      <main className="pt-12 pb-20">
+      <main className="pt-6 pb-20">
         
         <section className="text-center w-full max-w-2xl mx-auto container px-4 pt-10">
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter mb-4">

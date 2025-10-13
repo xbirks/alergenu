@@ -233,7 +233,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
           control={form.control}
           name="allergens"
           render={() => (
-            <FormItem className="pt-8">
+            <FormItem id="tour-allergens-section" className="pt-8">
                <div className="mb-4">
                 <h2 className="text-3xl font-bold tracking-tight text-gray-900">Alérgenos</h2>
                 <p className="text-sm text-muted-foreground mt-2">
@@ -241,13 +241,13 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
                 </p>
               </div>
               <div>
-                {ALLERGENS.map((allergen) => (
+                {ALLERGENS.map((allergen, index) => (
                     <FormField
                       key={allergen.id}
                       control={form.control}
                       name={`allergens.${allergen.id}` as const}
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between border-b py-4">
+                        <FormItem id={index === 0 ? "tour-traces-section" : undefined} className="flex flex-row items-center justify-between border-b py-4">
                            <FormLabel className="font-semibold text-lg flex-1">
                                 {allergen.name}
                             </FormLabel>

@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { QrCard } from '@/components/dashboard/QrCard'; // 1. Importar el nuevo componente
+import { QrCard } from '@/components/dashboard/QrCard';
 import {
   Card,
   CardContent,
@@ -29,7 +29,6 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [restaurantData, setRestaurantData] = useState<RestaurantData | null>(null);
   const [loading, setLoading] = useState(true);
-  // 2. Eliminar el estado qrCodeUrl
 
   useEffect(() => {
     if (authLoading) return;
@@ -45,7 +44,6 @@ export default function DashboardPage() {
       if (docSnap.exists()) {
         const data = docSnap.data() as RestaurantData;
         setRestaurantData(data);
-        // 3. Eliminar la lógica de generación de qrCodeUrl
       } else {
         console.error('No restaurant data found for this user!');
       }
@@ -76,6 +74,7 @@ export default function DashboardPage() {
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         <Button 
+            id="tour-edit-menu-button" // ID for the tour
             size="lg"
             className='w-full text-lg font-bold rounded-full h-14 bg-blue-600 hover:bg-blue-700'
             onClick={() => router.push('/dashboard/menu')}
@@ -83,6 +82,7 @@ export default function DashboardPage() {
             Editar mi carta
         </Button>
         <Button
+            id="tour-view-public-menu-button" // ID for the tour
             size="lg"
             variant="outline"
             className='w-full text-lg font-bold rounded-full h-14'
@@ -94,7 +94,6 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {/* 4. Reemplazar la Card del QR por nuestro nuevo componente */}
       {restaurantData.slug && <QrCard slug={restaurantData.slug} />}
 
       <div className="grid gap-6 md:grid-cols-2">

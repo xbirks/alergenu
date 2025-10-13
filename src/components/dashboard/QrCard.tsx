@@ -63,7 +63,7 @@ export function QrCard({ slug }: QrCardProps) {
           />
         </div>
         <p className="text-sm text-muted-foreground font-mono bg-slate-100 px-2 py-1 rounded break-all">{menuUrl}</p>
-        <Button onClick={handleDownload} className="w-full max-w-xs">
+        <Button id="tour-download-qr-button" onClick={handleDownload} className="w-full max-w-xs">
           Descargar QR
         </Button>
       </CardContent>

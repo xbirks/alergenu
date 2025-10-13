@@ -186,7 +186,7 @@ function RegisterForm() {
   return (
     <div className="min-h-screen bg-background">
       <PublicHeader />
-      <main className="flex items-start justify-center py-10 px-4">
+      <main className="flex items-start justify-center pt-2 pb-10 px-4">
         <div className="w-full max-w-md mx-auto">
             <div className="bg-white">
                 <div className="text-center">

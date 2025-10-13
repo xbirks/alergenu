@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-// Importar sendEmailVerification
 import { signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase/firebase';
 import { PublicHeader } from '@/components/layout/PublicHeader';
@@ -30,26 +29,18 @@ function LoginForm() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // --- INICIO DE LA MEJORA ---
       if (!user.emailVerified) {
-        // 1. Reenviar el correo de verificación automáticamente
         await sendEmailVerification(user);
-
-        // 2. Mostrar un mensaje claro y útil al usuario
         setError('Tu cuenta no está verificada. Te hemos reenviado un correo, revisa tu bandeja de entrada (y spam).');
-        
-        // 3. Desloguear al usuario para evitar estados inconsistentes
         await auth.signOut();
         setLoading(false);
         return; 
       }
-      // --- FIN DE LA MEJORA ---
 
       router.push('/dashboard');
 
     } catch (error: any) {
       let errorMessage = 'Ocurrió un error al iniciar sesión.';
-       // Mantener el manejo de errores estándar
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         errorMessage = 'Correo o contraseña incorrectos.';
       } else if (error.code === 'auth/invalid-email') {
@@ -59,7 +50,6 @@ function LoginForm() {
       }
       setError(errorMessage);
     } finally {
-        // Asegurarse de que el loading se detenga en todos los casos
         setLoading(false);
     }
   };
@@ -67,7 +57,7 @@ function LoginForm() {
   return (
     <div className="min-h-screen bg-background">
       <PublicHeader />
-      <main className="flex items-center justify-center py-20 px-4">
+      <main className="flex items-center justify-center pb-20 pt-2 px-4">
         <div className="w-full max-w-md mx-auto">
           <div className="bg-white">
             <div className="text-center">
@@ -121,7 +111,7 @@ function LoginForm() {
               )}
 
               <div className="pt-4">
-                  <Button type='submit' size="lg" className="w-full rounded-full h-14 text-lg font-bold flex items-center justify-center" style={{ backgroundColor: '#2563EB' }} disabled={loading}>
+                  <Button type='submit' size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }} disabled={loading}>
                       {loading ? (
                           <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Iniciando sesión...</>
                       ) : (
@@ -130,12 +120,14 @@ function LoginForm() {
                   </Button>
               </div>
 
-              <p className="text-center text-sm text-muted-foreground">
-                ¿No tienes cuenta?{' '}
-                <Link href="/register" className="font-semibold text-blue-600 hover:underline">
-                  Regístrate aquí
-                </Link>
-              </p>
+              <div className="text-center mt-6">
+                <p className="text-sm text-muted-foreground mb-2">
+                  ¿No tienes cuenta?
+                </p>
+                <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }}>
+                  <Link href="/register">Regístrate aquí</Link>
+                </Button>
+              </div>
             </form>
           </div>
         </div>

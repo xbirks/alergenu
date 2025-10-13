@@ -194,7 +194,7 @@ export default function MenuPage() {
     }
     if (menuItems.length === 0) {
       return (
-        <div className="border-2 border-dashed rounded-lg p-12 text-center mt-8">
+        <div id="tour-empty-dish-list" className="border-2 border-dashed rounded-lg p-12 text-center mt-8">
             <h3 className='text-xl font-semibold mb-2'>Tu carta está vacía</h3>
             <p className="text-muted-foreground">¡Añade tu primer plato para empezar a construir tu menú digital!</p>
         </div>
@@ -278,9 +278,9 @@ export default function MenuPage() {
           <p className="text-muted-foreground">Gestiona los platos y categorías de tu restaurante.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 md:mt-0">
-            <Button size="lg" className="w-full font-bold rounded-full h-14 text-lg" onClick={() => router.push('/dashboard/menu/new')}><PlusCircle className="mr-2 h-4 w-4" />Añadir plato</Button>
-            <Button size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg" onClick={() => router.push('/dashboard/menu/categories')}><LayoutGrid className="mr-2 h-4 w-4" />Gestionar categorías</Button>
-            <Button size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg" onClick={handleViewPublicMenu} disabled={authLoading || !user || !restaurantSlug}><Eye className="mr-2 h-4 w-4" />Ver carta pública</Button>
+            <Button id="tour-add-dish-button" size="lg" className="w-full font-bold rounded-full h-14 text-lg" onClick={() => router.push('/dashboard/menu/new')}><PlusCircle className="mr-2 h-4 w-4" />Añadir plato / bebida</Button>
+            <Button id="tour-manage-categories-button" size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg"><LayoutGrid className="mr-2 h-4 w-4" />Gestionar categorías</Button>
+            <Button id="tour-view-public-menu-button" size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg" onClick={handleViewPublicMenu} disabled={authLoading || !user || !restaurantSlug}><Eye className="mr-2 h-4 w-4" />Ver carta pública</Button>
         </div>
       </header>
       
