@@ -8,6 +8,7 @@ export interface Allergen {
 export interface Category {
   id: string;
   name: string;
+  name_en?: string;
   order: number;
 }
 

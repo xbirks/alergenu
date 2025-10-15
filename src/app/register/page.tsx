@@ -11,7 +11,6 @@ import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-// Importar writeBatch y doc, ya no necesitamos addDoc directamente aquí
 import { doc, collection, writeBatch } from 'firebase/firestore';
 import { PublicHeader } from '@/components/layout/PublicHeader';
 
@@ -127,11 +126,7 @@ function RegisterForm() {
 
       await sendEmailVerification(user);
 
-      // --- INICIO DE LA SOLUCIÓN ATÓMICA ---
-      // 1. Crear un lote de escritura (batch)
       const batch = writeBatch(db);
-
-      // 2. Añadir la creación del restaurante al lote
       const restaurantSlug = slugify(restaurantName);
       const restaurantRef = doc(db, 'restaurants', user.uid);
       batch.set(restaurantRef, {
@@ -145,28 +140,25 @@ function RegisterForm() {
         termsAcceptedAt: new Date(),
       });
 
-      // 3. Añadir la creación de las categorías por defecto al lote
       const categoriesCollectionRef = collection(db, 'restaurants', user.uid, 'categories');
       const defaultCategories = [
-        { name: 'Entrantes', order: 1 },
-        { name: 'Platos Principales', order: 2 },
-        { name: 'Postres', order: 3 },
-        { name: 'Bebidas', order: 4 },
+        { name_i18n: { es: 'Entrantes', en: 'Starters' }, order: 1 },
+        { name_i18n: { es: 'Platos Principales', en: 'Main Courses' }, order: 2 },
+        { name_i18n: { es: 'Postres', en: 'Desserts' }, order: 3 },
+        { name_i18n: { es: 'Bebidas', en: 'Drinks' }, order: 4 },
       ];
 
       for (const category of defaultCategories) {
-        const categoryRef = doc(categoriesCollectionRef); // Crea una referencia con un ID automático
+        const categoryRef = doc(categoriesCollectionRef); 
         batch.set(categoryRef, category);
       }
 
-      // 4. Ejecutar todas las operaciones del lote de una sola vez
       await batch.commit();
-      // --- FIN DE LA SOLUCIÓN ATÓMICA ---
 
       router.push('/auth/verify-email');
 
     } catch (error: any) {
-      console.error("Error detallado en registro:", error); // Ayuda a ver el error real en la consola
+      console.error("Error detallado en registro:", error); 
       let errorMessage = 'Ocurrió un error al crear la cuenta.';
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'Este correo electrónico ya está en uso.';
@@ -175,7 +167,7 @@ function RegisterForm() {
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'La contraseña es demasiado débil. Revisa los requisitos de seguridad.';
       } else if (error.code === 'permission-denied') {
-        errorMessage = 'Error de permisos. Contacta con soporte.'; // Mensaje más específico si vuelve a fallar
+        errorMessage = 'Error de permisos. Contacta con soporte.';
       }
       setError(errorMessage);
     } finally {

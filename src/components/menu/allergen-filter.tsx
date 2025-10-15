@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { ALLERGENS } from '@/lib/allergens';
+import { ALLERGENS, getAllergenName } from '@/lib/allergens';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { AllergenIcon } from '@/components/icons/allergens';
 import { db } from '@/lib/firebase/firebase';
@@ -14,11 +14,23 @@ interface AllergenFilterProps {
   onOpenChange: (isOpen: boolean) => void;
   onFilterChange: (selectedAllergens: string[]) => void;
   restaurantUid: string;
+  lang: string; // La prop de idioma que viene del padre
 }
 
-export function AllergenFilter({ isOpen, onOpenChange, onFilterChange, restaurantUid }: AllergenFilterProps) {
+export function AllergenFilter({ isOpen, onOpenChange, onFilterChange, restaurantUid, lang: propLang }: AllergenFilterProps) {
   const [storedAllergens, setStoredAllergens] = useLocalStorage<string[]>('selectedAllergens', []);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>(storedAllergens);
+
+  // --- INICIO DE LA CORRECCIÓN ---
+  // Estado local para el idioma, para asegurar que siempre esté sincronizado.
+  const [lang, setLang] = useState(propLang);
+
+  useEffect(() => {
+    // Cada vez que el panel se abre o el idioma de la página principal cambia,
+    // nos aseguramos de que el idioma de este componente esté actualizado.
+    setLang(propLang);
+  }, [propLang, isOpen]);
+  // --- FIN DE LA CORRERECCIÓN ---
 
   useEffect(() => {
     setSelectedAllergens(storedAllergens);
@@ -59,9 +71,12 @@ export function AllergenFilter({ isOpen, onOpenChange, onFilterChange, restauran
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetContent className="w-full max-w-sm flex flex-col">
         <SheetHeader>
-          <SheetTitle className="text-2xl font-bold">Mis Alergias</SheetTitle>
+          <SheetTitle className="text-2xl font-bold">{lang === 'es' ? 'Mis Alergias' : 'My Allergies'}</SheetTitle>
           <SheetDescription>
-            Selecciona los alérgenos a evitar. Resaltaremos lo que es seguro para ti.
+            {lang === 'es' 
+              ? 'Selecciona los alérgenos a evitar. Resaltaremos lo que es seguro para ti.'
+              : 'Select the allergens to avoid. We will highlight what is safe for you.'
+            }
           </SheetDescription>
         </SheetHeader>
         <div className="py-4 flex-grow overflow-y-auto">
@@ -78,7 +93,7 @@ export function AllergenFilter({ isOpen, onOpenChange, onFilterChange, restauran
                   }`}
                 >
                   <AllergenIcon allergenId={allergen.id} className={`h-5 w-5 ${isSelected ? 'text-white' : 'text-gray-600'}`} />
-                  {allergen.name}
+                  {getAllergenName(allergen.id, lang)}
                 </button>
               )
             })}
@@ -90,7 +105,7 @@ export function AllergenFilter({ isOpen, onOpenChange, onFilterChange, restauran
             size="lg" 
             className="w-full text-lg h-14 rounded-full bg-blue-600 hover:bg-blue-700"
           >
-            Hecho
+            {lang === 'es' ? 'Hecho' : 'Done'}
           </Button>
         </SheetFooter>
       </SheetContent>

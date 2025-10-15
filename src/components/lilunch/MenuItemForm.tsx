@@ -4,46 +4,57 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ALLERGENS } from '@/lib/allergens';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { CategoryCombobox } from '@/components/lilunch/CategoryCombobox';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase/firebase';
-import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { AllergenSelector } from '@/components/lilunch/AllergenSelector';
+import { I18nString } from '@/types/i18n';
+import { cn } from '@/lib/utils';
 
 const allergenStatus = z.enum(['no', 'traces', 'yes']);
 
 const formSchema = z.object({
-  name: z.string().min(1, { message: 'El nombre del plato no puede estar vacío.' }),
-  category: z.string().min(1, { message: 'Debes seleccionar una categoría.' }),
-  description: z.string().optional(),
-  price: z.coerce.number().positive({ message: 'El precio debe ser un número positivo.' }),
+  name_es: z.string().min(1, { message: 'El nombre del plato no puede estar vacío.' }),
+  name_en: z.string().optional(),
+  category: z.object({
+    id: z.string().min(1, { message: 'Debes seleccionar una categoría.' }),
+    name_i18n: z.object({ 
+      es: z.string(), 
+      en: z.string().optional() 
+    }).passthrough(),
+  }).nullable(),
+  description_es: z.string().optional(),
+  description_en: z.string().optional(),
+  price: z.string()
+    .min(1, 'El precio no puede estar vacío.')
+    .refine(val => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) >= 0, {
+      message: 'Introduce un precio válido (ej: 12,50).'
+    }),
   allergens: z.record(allergenStatus),
   isAvailable: z.boolean(),
 });
 
-interface MenuItem {
+export interface MenuItem {
     id: string;
-    name: string;
-    category: string;
+    name?: string;
+    name_i18n?: I18nString;
+    category?: string;
+    categoryId?: string;
+    category_i18n?: I18nString;
     price: number;
     description?: string;
+    description_i18n?: I18nString;
     allergens?: { [key: string]: 'no' | 'traces' | 'yes' };
     isAvailable: boolean;
 }
@@ -52,211 +63,212 @@ interface MenuItemFormProps {
   existingMenuItem?: MenuItem | null;
 }
 
+async function translateText(text: string): Promise<string> {
+  if (!text) return '';
+  try {
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, targetLang: 'en' }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Translation API error:', errorData.details || errorData.error);
+      return '';
+    }
+    const data = await response.json();
+    return data.translatedText;
+  } catch (error) {
+    console.error('Failed to fetch translation:', error);
+    return '';
+  }
+}
+
 export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
   const isEditMode = !!existingMenuItem;
 
-  const defaultAllergens = useMemo(() => {
-    return ALLERGENS.reduce((acc, allergen) => {
+  const defaultAllergens = useMemo(() => 
+    ALLERGENS.reduce((acc, allergen) => {
       acc[allergen.id] = 'no';
       return acc;
-    }, {} as Record<string, 'no' | 'traces' | 'yes'>);
-  }, []);
+    }, {} as Record<string, 'no' | 'traces' | 'yes'>)
+  , []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      category: '',
-      description: '',
-      price: undefined,
+      name_es: '',
+      name_en: '',
+      category: null,
+      description_es: '',
+      description_en: '',
+      price: '',
       allergens: defaultAllergens,
       isAvailable: true, 
     },
   });
 
-  const { formState: { errors } } = form;
-
   useEffect(() => {
-    if (isEditMode && existingMenuItem) {
-        const currentAllergens = { ...defaultAllergens, ...existingMenuItem.allergens };
-        form.reset({
-            name: existingMenuItem.name,
-            category: existingMenuItem.category,
-            description: existingMenuItem.description || '',
-            price: existingMenuItem.price / 100,
-            allergens: currentAllergens,
-            isAvailable: existingMenuItem.isAvailable === false ? false : true,
-        });
+    if (isEditMode && existingMenuItem && user) {
+      const fetchAndSetCategory = async (categoryId: string) => {
+        const catDoc = await getDoc(doc(db, 'restaurants', user.uid, 'categories', categoryId));
+        if (catDoc.exists()) {
+          const catData = catDoc.data();
+          form.setValue('category', {
+            id: catDoc.id,
+            name_i18n: catData.name_i18n || { es: catData.name, en: '' },
+          });
+        }
+      };
+
+      const name_i18n = existingMenuItem.name_i18n || { es: existingMenuItem.name || '' };
+      const description_i18n = existingMenuItem.description_i18n || { es: existingMenuItem.description || '' };
+      const name_en = (name_i18n.en && typeof name_i18n.en === 'string') ? name_i18n.en : '';
+      const description_en = (description_i18n.en && typeof description_i18n.en === 'string') ? description_i18n.en : '';
+      const priceString = (existingMenuItem.price / 100).toFixed(2).replace('.', ',');
+
+      form.reset({
+        name_es: name_i18n.es || '',
+        name_en: name_en,
+        description_es: description_i18n.es || '',
+        description_en: description_en,
+        price: priceString,
+        allergens: { ...defaultAllergens, ...existingMenuItem.allergens },
+        isAvailable: existingMenuItem.isAvailable !== false,
+        category: null,
+      });
+
+      const categoryId = existingMenuItem.categoryId || existingMenuItem.category;
+      if (categoryId) {
+        fetchAndSetCategory(categoryId);
+      }
     }
-  }, [isEditMode, existingMenuItem, form, defaultAllergens]);
+  }, [isEditMode, existingMenuItem, user, form, defaultAllergens]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (Object.keys(errors).length > 0) return;
-
     if (!user) {
-      toast({ title: 'Error de autenticación', description: 'No se ha podido verificar tu identidad.', variant: 'destructive' });
+      toast({ title: 'Error de autenticación', variant: 'destructive' });
+      return;
+    }
+    if (!values.category) {
+      form.setError('category', { type: 'manual', message: 'Debes seleccionar una categoría.' });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const allergensToSave: { [key: string]: 'no' | 'traces' | 'yes' } = {};
-      if (values.allergens) {
-        for (const [key, value] of Object.entries(values.allergens)) {
-          if (value !== 'no') {
-            allergensToSave[key] = value;
-          }
-        }
-      }
+      const allergensToSave = Object.entries(values.allergens)
+        .filter(([, value]) => value !== 'no')
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+      
+      const priceInCents = Math.round(parseFloat(values.price.replace(',', '.')) * 100);
 
-      const dataToSave = {
-        ...values,
-        price: Math.round(values.price * 100),
+      const dataToSave: any = {
+        price: priceInCents,
         allergens: allergensToSave,
+        categoryId: values.category.id,
+        category_i18n: values.category.name_i18n,
+        isAvailable: values.isAvailable,
         updatedAt: serverTimestamp(),
       };
 
       if (isEditMode && existingMenuItem) {
+        dataToSave.name_i18n = { es: values.name_es, en: values.name_en || '' };
+        dataToSave.description_i18n = { es: values.description_es || '', en: values.description_en || '' };
+        
         const docRef = doc(db, 'restaurants', user.uid, 'menuItems', existingMenuItem.id);
         await updateDoc(docRef, dataToSave);
-        toast({ title: '¡Plato actualizado!', description: `El plato \'${values.name}\' ha sido guardado.` });
+        toast({ title: '¡Plato actualizado!', description: `El plato '${values.name_es}' ha sido guardado.` });
       } else {
+        toast({ title: 'Traduciendo plato...', description: 'Por favor, espera un momento.'});
+        const [translatedName, translatedDescription] = await Promise.all([
+          translateText(values.name_es),
+          translateText(values.description_es || '')
+        ]);
+
+        dataToSave.name_i18n = { es: values.name_es, en: translatedName };
+        dataToSave.description_i18n = { es: values.description_es || '', en: translatedDescription };
+        dataToSave.createdAt = serverTimestamp();
+
         const collectionRef = collection(db, 'restaurants', user.uid, 'menuItems');
-        await addDoc(collectionRef, {
-            ...dataToSave,
-            createdAt: serverTimestamp(),
-        });
-        toast({ title: '¡Plato guardado!', description: `El plato \'${values.name}\' ha sido añadido a tu carta.` });
+        await addDoc(collectionRef, dataToSave);
+        toast({ title: '¡Plato añadido!', description: `El plato '${values.name_es}' se ha guardado y traducido.` });
       }
+      
       router.push('/dashboard/menu');
 
     } catch (error) {
-      console.error("Error al guardar el plato: ", error);
-      toast({ title: 'Error al guardar', description: 'Ha ocurrido un problema al guardar. Por favor, inténtalo de nuevo.', variant: 'destructive' });
+      console.error("Error saving item: ", error);
+      toast({ title: 'Error al guardar', description: 'Ha ocurrido un problema. Por favor, inténtalo de nuevo.', variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  const buttonText = isEditMode ? 'Guardar cambios' : 'Añadir plato';
-  const buttonSubmittingText = isEditMode ? 'Guardando...' : 'Añadiendo plato...';
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='text-lg font-bold text-gray-800 pb-2 inline-block'>Nombre del plato</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="Ej: Paella Valenciana" 
-                  {...field} 
-                  className={`h-14 px-5 text-base rounded-full ${errors.name ? 'border-2 border-red-500' : ''} ${field.value ? 'text-blue-600 font-bold' : ''}`}/>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel className='text-lg font-bold text-gray-800 pb-2 inline-block'>Categoría</FormLabel>
-              <FormControl>
-                <CategoryCombobox 
-                  value={field.value}
-                  onChange={field.onChange}
-                  hasError={!!errors.category}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='text-lg font-bold text-gray-800 pb-2 inline-block'>Descripción</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="(Opcional) Una breve descripción del plato ayudará al comensal a decidirse."
-                  {...field}
-                  className={`text-base rounded-2xl px-5 py-4 h-28 ${field.value ? 'text-blue-600 font-bold' : ''}`}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="price"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className='text-lg font-bold text-gray-800 pb-2 inline-block'>Precio</FormLabel>
-              <div className="relative">
-                <FormControl>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.01"
-                    placeholder="Ej: 12,50"
-                    {...field}
-                    className={`h-14 px-5 text-base rounded-full pr-12 ${errors.price ? 'border-2 border-red-500' : ''} ${field.value ? 'text-blue-600 font-bold' : ''}`}
-                  />
-                </FormControl>
-                <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
-                  <span className="text-muted-foreground text-lg">€</span>
-                </div>
+        {isEditMode ? (
+          <Tabs defaultValue="es" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="es">Español</TabsTrigger>
+              <TabsTrigger value="en">Inglés</TabsTrigger>
+            </TabsList>
+            <TabsContent value="es" className="pt-6">
+              <div className='space-y-8'>
+                <FormField control={form.control} name="name_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Nombre del plato (ES)</FormLabel><FormControl><Input placeholder="Ej: Paella Valenciana" {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
+                <FormField control={form.control} name="description_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Descripción (ES)</FormLabel><FormControl><Textarea placeholder="(Opcional) Una breve descripción del plato." {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
               </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            </TabsContent>
+            <TabsContent value="en" className="pt-6">
+              <div className='space-y-8'>
+                <FormField control={form.control} name="name_en" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Nombre del plato (EN)</FormLabel><FormControl><Input placeholder="Ej: Valencian Paella" {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
+                <FormField control={form.control} name="description_en" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Descripción (EN)</FormLabel><FormControl><Textarea placeholder="(Optional) A brief description of the dish." {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <>
+            <FormField control={form.control} name="name_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Nombre del plato</FormLabel><FormControl><Input placeholder="Ej: Paella Valenciana" {...field} className={cn("h-14 px-5 text-base rounded-full", field.value && "text-blue-600 font-bold")} /></FormControl><FormMessage /></FormItem>} />
+            <FormField control={form.control} name="description_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Descripción</FormLabel><FormControl><Textarea placeholder="(Opcional) Una breve descripción del plato." {...field} className={cn("text-base rounded-2xl px-5 py-4 h-28", field.value && "text-blue-600 font-bold")} /></FormControl><FormMessage /></FormItem>} />
+          </>
+        )}
+
+        <FormField control={form.control} name="category" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel className='text-lg font-bold text-gray-800'>Categoría</FormLabel><CategoryCombobox value={field.value} onChange={field.onChange} /><FormMessage /></FormItem>)} />
+        <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel className='text-lg font-bold text-gray-800'>Precio</FormLabel><div className="relative"><FormControl><Input type="text" inputMode="decimal" placeholder="Ej: 12,50" {...field} className="h-14 px-5 text-base rounded-full pr-12" /></FormControl><div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none"><span className="text-muted-foreground text-lg">€</span></div></div><FormMessage /></FormItem>)} />
         
         <FormField
           control={form.control}
           name="allergens"
           render={() => (
-            <FormItem id="tour-allergens-section" className="pt-8">
+            <FormItem className="pt-8">
                <div className="mb-4">
                 <h2 className="text-3xl font-bold tracking-tight text-gray-900">Alérgenos</h2>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Para cada alérgeno, indica si el plato no lo contiene, si tiene trazas o si está presente.
-                </p>
+                <p className="text-sm text-muted-foreground mt-2">Indica la presencia de alérgenos en el plato.</p>
               </div>
               <div>
-                {ALLERGENS.map((allergen, index) => (
-                    <FormField
-                      key={allergen.id}
-                      control={form.control}
-                      name={`allergens.${allergen.id}` as const}
-                      render={({ field }) => (
-                        <FormItem id={index === 0 ? "tour-traces-section" : undefined} className="flex flex-row items-center justify-between border-b py-4">
-                           <FormLabel className="font-semibold text-lg flex-1">
-                                {allergen.name}
-                            </FormLabel>
-                          <FormControl>
-                            <AllergenSelector value={field.value} onChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                {ALLERGENS.map((allergen) => (
+                  <FormField 
+                    key={allergen.id} 
+                    control={form.control} 
+                    name={`allergens.${allergen.id}`} 
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between border-b py-4">
+                        <FormLabel className="font-semibold text-lg flex-1">{allergen.name}</FormLabel>
+                        <FormControl>
+                          <AllergenSelector 
+                            value={field.value || 'no'} 
+                            onChange={field.onChange} 
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 ))}
               </div>
               <FormMessage />
@@ -270,33 +282,19 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
             render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between border-b py-4">
                     <div className="space-y-1.5">
-                        <FormLabel className="text-3xl font-bold tracking-tight text-gray-900">
-                            Disponibilidad
-                        </FormLabel>
-                        <FormDescription className="text-sm text-muted-foreground">
-                            Indica si el plato está actualmente disponible o agotado.
-                        </FormDescription>
-                    </div>
-                    <FormControl>
-                        <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                        />
-                    </FormControl>
+                        <FormLabel className="text-3xl font-bold tracking-tight text-gray-900">Disponibilidad</FormLabel>
+                        <FormDescription className="text-sm text-muted-foreground">Indica si el plato está actualmente disponible o agotado.</FormDescription>
+                    </div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                 </FormItem>
             )}
         />
         
         <div className="pt-6">
-            <Button size="lg" type="submit" className="w-full rounded-full font-bold text-lg h-16 bg-blue-600 hover:bg-blue-700" disabled={isSubmitting || authLoading}>
-                {(isSubmitting || authLoading) 
-                    ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> 
-                    : null
-                }
-                {isSubmitting ? buttonSubmittingText : (authLoading ? 'Verificando...' : buttonText)}
+            <Button size="lg" type="submit" className="w-full rounded-full font-bold text-lg h-16 bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : null}
+                {isSubmitting ? (isEditMode ? 'Guardando...' : 'Traduciendo y guardando...') : (isEditMode ? 'Guardar cambios' : 'Añadir plato')}
             </Button>
         </div>
-
       </form>
     </Form>
   );

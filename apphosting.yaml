@@ -1,48 +1,71 @@
 
-# Configuración para Firebase App Hosting
-specVersion: v1alpha1
+# The apphosting.yaml file is used to configure the App Hosting backend.
+# You can use this file to customize the behavior of the backend,
+# such as by setting environment variables and secrets.
+# For more information, see the App Hosting documentation:
+# https://firebase.google.com/docs/hosting/app-hosting/reference-yaml
 
-# Configuración para el entorno de ejecución del servidor (backend)
-runConfig: {}
+# The version of the apphosting.yaml schema.
+version: 1
 
-# Definición de variables de entorno para la aplicación.
+# The command to run to install dependencies.
+install: npm install
+
+# The command to run to build your app.
+# This is a required field.
+run: npm run build
+
+# The command to run to start your app.
+# This is a required field.
+# The command should start a web server that listens on the port specified
+# by the PORT environment variable.
+# For example:
+#   npm run start
+#   gunicorn -w 4 -b 0.0.0.0:$PORT myapp:app
+start: npm run start
+
+
+# The environment variables to set for your app.
+# Environment variables are key-value pairs that are passed to your app
+# at runtime.
 env:
-  # --- Clave de API de Firebase (gestionada como secreto) ---
+  - variable: FIREBASE_SERVICE_ACCOUNT
+    secret: FIREBASE_SERVICE_ACCOUNT
+    availability:
+      - BUILD
+      - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    # Referencia a la clave guardada de forma segura en Google Secret Manager.
     secret: GOOGLE_CLOUD_API_KEY
     availability:
       - BUILD
       - RUNTIME
-
-  # --- Identificadores públicos de Firebase ---
-  # Estos valores no son secretos y son necesarios para la configuración del cliente.
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     value: "studio-9217724895-dd75b.firebaseapp.com"
     availability:
       - BUILD
       - RUNTIME
-
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: "studio-9217724895-dd75b"
     availability:
       - BUILD
       - RUNTIME
-
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     value: "studio-9217724895-dd75b.appspot.com"
     availability:
       - BUILD
       - RUNTIME
-
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     value: "202532880221"
     availability:
       - BUILD
       - RUNTIME
-
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:202532880221:web:cd4618a40491855af472b4"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: GOOGLE_TRANSLATE_API_KEY
+    secret: TRADUCTOR_API
     availability:
       - BUILD
       - RUNTIME

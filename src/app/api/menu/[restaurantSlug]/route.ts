@@ -26,7 +26,6 @@ export async function GET(
     const restaurantId = restaurantDoc.id;
     const restaurantDocRef = adminDb.collection('restaurants').doc(restaurantId);
 
-    // Increment scan count asynchronously
     restaurantDocRef.update({ qrScans: FieldValue.increment(1) }).catch(err => {
       console.error('[API] Failed to increment QR scan count:', err);
     });
@@ -37,8 +36,18 @@ export async function GET(
       restaurantDocRef.collection('allergens').get(),
     ]);
 
-    const categories = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+    // Se envían las categorías con su objeto i18n garantizado
+    const categories = categoriesSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          id: doc.id, 
+          ...data, 
+          name_i18n: data.name_i18n || { es: data.name || '' },
+          name: data.name // Mantener el nombre simple para el mapa de categorías del frontend
+        } as Category;
+    });
     
+    // *** CORRECCIÓN DEFINITIVA ***
     const menuItems = menuItemsSnapshot.docs.map(doc => {
         const data = doc.data();
         const allergenData = data.allergens || {};
@@ -46,23 +55,32 @@ export async function GET(
         const traces: string[] = [];
 
         for (const key in allergenData) {
-            if (allergenData[key] === 'yes') {
-              contains.push(key);
-            } else if (allergenData[key] === 'traces') {
-              traces.push(key);
-            }
+            if (allergenData[key] === 'yes') contains.push(key);
+            else if (allergenData[key] === 'traces') traces.push(key);
         }
+
+        // 1. Garantizamos que los objetos de traducción existan.
+        const name_i18n = data.name_i18n || { es: data.name || '' };
+        const description_i18n = data.description_i18n || { es: data.description || '' };
+        
+        // 2. Extraemos el nombre de la categoría en español para usarlo como clave estable para agrupar.
+        // ESTA ES LA SOLUCIÓN AL BUG DE "VARIOS".
+        const categoryNameForGrouping = (data.category_i18n && data.category_i18n.es) 
+            ? data.category_i18n.es 
+            : (data.category || 'Varios');
 
         return {
             id: doc.id,
-            name: data.name,
-            category: data.category,
             price: data.price,
-            description: data.description,
             isAvailable: data.isAvailable,
             allergens: contains,
             traces: traces,
-            createdAt: data.createdAt
+            createdAt: data.createdAt,
+
+            // 3. Devolvemos la clave de agrupación y los objetos de traducción completos.
+            category: categoryNameForGrouping,
+            name_i18n: name_i18n,
+            description_i18n: description_i18n,
         } as MenuItem;
     }).filter(item => item.isAvailable);
 
