@@ -37,8 +37,9 @@ async function getMenuData(slug: string): Promise<MenuData> {
 }
 
 export default async function PublicMenuPage({ params }: { params: { restaurantId: string } }) {
+  const { restaurantId } = params;
   try {
-    const menuData = await getMenuData(params.restaurantId);
+    const menuData = await getMenuData(restaurantId);
 
     return (
       <PublicMenuClient 

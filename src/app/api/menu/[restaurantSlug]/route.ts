@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/firebase-admin';
+import { getAdminDb } from '@/lib/firebase/firebase-admin';
 import { FieldValue, FieldPath } from 'firebase-admin/firestore';
 import { Restaurant, Category, MenuItem, Allergen } from '@/lib/types';
 
@@ -8,6 +8,7 @@ export async function GET(
   { params }: { params: { restaurantSlug: string } }
 ) {
   try {
+    const adminDb = getAdminDb();
     const slug = params.restaurantSlug;
 
     if (!slug) {
@@ -36,18 +37,16 @@ export async function GET(
       restaurantDocRef.collection('allergens').get(),
     ]);
 
-    // Se envían las categorías con su objeto i18n garantizado
     const categories = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
         return { 
           id: doc.id, 
           ...data, 
           name_i18n: data.name_i18n || { es: data.name || '' },
-          name: data.name // Mantener el nombre simple para el mapa de categorías del frontend
+          name: data.name
         } as Category;
     });
     
-    // *** CORRECCIÓN DEFINITIVA ***
     const menuItems = menuItemsSnapshot.docs.map(doc => {
         const data = doc.data();
         const allergenData = data.allergens || {};
@@ -59,12 +58,9 @@ export async function GET(
             else if (allergenData[key] === 'traces') traces.push(key);
         }
 
-        // 1. Garantizamos que los objetos de traducción existan.
         const name_i18n = data.name_i18n || { es: data.name || '' };
         const description_i18n = data.description_i18n || { es: data.description || '' };
         
-        // 2. Extraemos el nombre de la categoría en español para usarlo como clave estable para agrupar.
-        // ESTA ES LA SOLUCIÓN AL BUG DE "VARIOS".
         const categoryNameForGrouping = (data.category_i18n && data.category_i18n.es) 
             ? data.category_i18n.es 
             : (data.category || 'Varios');
@@ -76,8 +72,6 @@ export async function GET(
             allergens: contains,
             traces: traces,
             createdAt: data.createdAt,
-
-            // 3. Devolvemos la clave de agrupación y los objetos de traducción completos.
             category: categoryNameForGrouping,
             name_i18n: name_i18n,
             description_i18n: description_i18n,
