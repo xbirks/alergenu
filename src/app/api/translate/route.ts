@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { text, targetLang } = requestBody;
-  const apiKey = process.env.TRADUCTOR_API;
+  const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
 
   if (apiKey) {
     console.log('Google Translate API Key found. Starts with:', apiKey.substring(0, 5));
