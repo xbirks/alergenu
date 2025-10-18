@@ -31,11 +31,11 @@ start: npm run start
 
 # Cambiado el SERVICE_ACCOUNT POR EL SDK
 env:
-  - variable: FIREBASE_SERVICE_ACCOUNT
-    secret: FIREBASE_SERVICE_ACCOUNT
-    availability:
-      - BUILD
-      - RUNTIME
+  # - variable: FIREBASE_SERVICE_ACCOUNT
+  #   secret: FIREBASE_SERVICE_ACCOUNT
+  #   availability:
+  #     - BUILD
+  #     - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     secret: GOOGLE_CLOUD_API_KEY
     availability:
