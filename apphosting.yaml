@@ -27,7 +27,9 @@ start: npm run start
 
 # The environment variables to set for your app.
 # Environment variables are key-value pairs that are passed to your app
-# at runtime.
+# at runtime. 
+
+# Cambiado el SERVICE_ACCOUNT POR EL SDK
 env:
   - variable: FIREBASE_SERVICE_ACCOUNT
     secret: FIREBASE_SERVICE_ACCOUNT
