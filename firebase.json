@@ -1,6 +1,9 @@
 {
   "hosting": {
     "source": ".",
-    "frameworksBackend": {}
+    "frameworksBackend": {
+      "backendId": "studio",
+      "region": "us-central1"
+    }
   }
 }
