@@ -1,3 +1,5 @@
+export const revalidate = 0;
+
 import { notFound } from 'next/navigation';
 import { PublicMenuClient } from '@/components/menu/public-menu-client';
 import { GET as getMenuApi } from '@/app/api/menu/[restaurantSlug]/route';
