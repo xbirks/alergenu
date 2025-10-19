@@ -44,13 +44,9 @@ export default async function PublicMenuPage({ params }: { params: { restaurantI
     const menuData = await getMenuData(restaurantId);
 
     return (
-      <PublicMenuClient 
-        restaurant={menuData.restaurant}
-        restaurantId={menuData.restaurantId}
-        initialCategories={menuData.categories}
-        initialItems={menuData.items}
-        customAllergens={menuData.customAllergens}
-      />
+      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+        {JSON.stringify(menuData, null, 2)}
+      </pre>
     );
   } catch (error) {
     return (
