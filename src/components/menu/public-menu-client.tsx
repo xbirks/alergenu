@@ -111,9 +111,26 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
   }, [initialCategories]);
 
   const orderedCategoryNames = useMemo(() => {
-    const categoryOrder = initialCategories.map(c => c.name);
-    const allKnownCategories = new Set(Object.keys(groupedMenu));
-    return categoryOrder.filter(name => allKnownCategories.has(name));
+    const officialOrderMap = new Map(initialCategories.map((c, i) => [c.name, i]));
+    const allKnownCategories = Object.keys(groupedMenu);
+
+    allKnownCategories.sort((a, b) => {
+        const orderA = officialOrderMap.get(a);
+        const orderB = officialOrderMap.get(b);
+
+        if (orderA !== undefined && orderB !== undefined) {
+            return orderA - orderB;
+        }
+        if (orderA !== undefined) {
+            return -1;
+        }
+        if (orderB !== undefined) {
+            return 1;
+        }
+        return a.localeCompare(b);
+    });
+
+    return allKnownCategories;
   }, [initialCategories, groupedMenu]);
   
   return (
@@ -170,7 +187,7 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
                   <section key={categoryName} id={sectionId}>
                     <div className="-mx-4 sm:-mx-6 lg:-mx-8">
                       <h2 className="bg-blue-600 text-white text-2xl font-semibold px-4 sm:px-6 lg:px-4 py-4 tracking-normal">
-                        {getTranslated(categoryTranslationMap.get(categoryName), lang)}
+                        {getTranslated(categoryTranslationMap.get(categoryName), lang) || categoryName}
                       </h2>
                     </div>
                     <div className="space-y-6 mt-[40px]">
