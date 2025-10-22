@@ -1,65 +1,140 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Términos y Condiciones del Servicio | Alergenu',
-  description: 'Lee nuestros términos y condiciones de servicio. Al usar Alergenu, aceptas estas reglas, incluyendo tu responsabilidad como restaurante.',
-};
+import React from 'react';
 
 export default function TermsOfServicePage() {
   return (
-    <article className="prose prose-lg max-w-none prose-p:my-4 prose-headings:my-8 prose-headings:font-bold prose-h2:text-2xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
-            Términos y Condiciones del Servicio
-          </h1>
-          <p className="mt-4 text-xl text-gray-500">Última actualización: 1 de Agosto de 2024</p>
-        </div>
+    <div className="prose lg:prose-xl max-w-4xl mx-auto py-12 px-4">
+        <h1 className="text-5xl font-bold mb-8">Términos y Condiciones de Uso</h1>
 
+        <h2 className="text-3xl font-bold mt-12 mb-4">1. Identificación del Titular</h2>
         <p>
-          Bienvenido a Alergenu. Estos Términos y Condiciones ("Términos") rigen tu acceso y uso de la plataforma de software como servicio (SaaS) ofrecida por Andrés Ortega Montoya ("nosotros", "nuestro" o "Alergenu"). Al registrarte y utilizar nuestros servicios, aceptas estar vinculado por estos Términos.
+            En cumplimiento de lo dispuesto por la Ley 34/2002, de 11 de julio, de servicios de la sociedad de la información y comercio electrónico (LSSI-CE), se informa que el presente sitio web y la aplicación “Alergenu” son titularidad de:
+        </p>
+        <ul>
+            <li><strong>Titular:</strong> Andrés Ortega Montoya</li>
+            <li><strong>NIF:</strong> 49570884L</li>
+            <li><strong>Domicilio:</strong> Plaza Rafael Atard 20A, piso 2, puerta 3, 46940, Manises, Valencia (España)</li>
+            <li><strong>Correo electrónico:</strong> hola@soyandres.es</li>
+            <li><strong>Teléfono de contacto:</strong> 675 392 216</li>
+        </ul>
+        <p>En adelante, “el Titular” o “Alergenu”.</p>
+
+        <h2 className="text-3xl font-bold mt-12 mb-4">2. Objeto y Ámbito de Aplicación</h2>
+        <p>
+            Las presentes condiciones regulan el acceso, navegación y uso del sitio web y de la aplicación web Alergenu (en adelante, “la Plataforma”), así como las responsabilidades derivadas de su utilización.
+        </p>
+        <p>
+            El acceso y uso de la Plataforma atribuyen la condición de Usuario, ya sea Restaurante (Usuario Registrado) o Cliente Final (Usuario No Registrado), implicando la aceptación plena y sin reservas de todas las disposiciones contenidas en este documento.
         </p>
 
-        <h2>1. Aceptación de los Términos</h2>
+        <h2 className="text-3xl font-bold mt-12 mb-4">3. Descripción del Servicio</h2>
         <p>
-          Al crear una cuenta en Alergenu, confirmas que has leído, entendido y aceptado estos Términos en su totalidad. Si no estás de acuerdo con alguna parte de los términos, no puedes utilizar nuestros servicios. Declaras ser mayor de edad y tener capacidad legal para suscribir este contrato en nombre del restaurante o negocio que representas.
+            Alergenu es una aplicación web que permite a los restaurantes digitalizar sus menús y gestionar la información de alérgenos de sus platos.
+        </p>
+        <p>Funcionalidades principales:</p>
+        <ul>
+            <li><strong>Para Restaurantes:</strong> Registro, gestión del perfil, creación y edición de menús, asignación de alérgenos, generación de códigos QR y traducción automática de los textos.</li>
+            <li><strong>Para Clientes Finales:</strong> Acceso sin registro a los menús de los restaurantes, filtrado de platos en función de sus alergias y visualización en distintos idiomas.</li>
+        </ul>
+
+        <h2 className="text-3xl font-bold mt-12 mb-4">4. Condiciones de Uso</h2>
+        <h3 className="text-xl font-bold mt-8 mb-2">4.1. Usuarios Registrados (Restaurantes)</h3>
+        <ul>
+            <li>El acceso y uso de las funcionalidades para restaurantes requieren registro y autenticación mediante correo electrónico y contraseña gestionados por Firebase Authentication.</li>
+            <li>El Usuario es responsable de mantener la confidencialidad de sus credenciales de acceso y de toda la información introducida en su cuenta.</li>
+            <li>El Usuario garantiza que los datos proporcionados son veraces, exactos y actualizados.</li>
+        </ul>
+
+        <h3 className="text-xl font-bold mt-8 mb-2">4.2. Usuarios Finales (Clientes)</h3>
+        <ul>
+            <li>Los clientes acceden libremente al menú del restaurante a través de un enlace o código QR, sin necesidad de registro ni de facilitar datos personales.</li>
+            <li>La selección de alérgenos se almacena únicamente en el dispositivo del usuario (mediante localStorage) y no se transmite a los servidores de Alergenu.</li>
+        </ul>
+
+        <h2 className="text-3xl font-bold mt-12 mb-4">5. Responsabilidad del Contenido</h2>
+        <p>
+            Los restaurantes son los únicos responsables de la veracidad, exactitud y actualización de la información publicada en sus menús, incluyendo ingredientes, precios y alérgenos.
+        </p>
+        <p>
+            Alergenu actúa como proveedor de servicio tecnológico, sin intervenir en la elaboración, validación o garantía de dicha información.
+        </p>
+        <p>
+            El Titular no se hace responsable de posibles errores, omisiones o desactualizaciones en los menús publicados por los restaurantes.
         </p>
 
-        <h2>2. Descripción del Servicio</h2>
-        <p>Alergenu proporciona una plataforma online que permite a los restaurantes ("Cliente" o "tú") crear, gestionar y publicar menús y cartas digitales, con un sistema específico para la declaración de alérgenos conforme a la normativa vigente.</p>
-
-        <h2>3. Cuentas y Registro</h2>
-        <p>Para utilizar el servicio, debes registrarte y crear una cuenta, proporcionando información veraz y completa. Eres responsable de mantener la confidencialidad de tu contraseña y de todas las actividades que ocurran bajo tu cuenta. Debes notificarnos inmediatamente cualquier uso no autorizado de tu cuenta.</p>
-
-        <h2>4. Suscripciones y Pagos</h2>
-        <p>Ofrecemos diferentes planes de suscripción, incluyendo un plan gratuito y planes de pago con funcionalidades avanzadas. Los precios y características de cada plan se detallan en nuestro Sitio Web. Los pagos se procesan a través de nuestra pasarela de pago segura (Stripe). Las suscripciones son recurrentes y se renovarán automáticamente a menos que se cancelen antes del final del período de facturación actual. No se realizarán reembolsos por períodos de suscripción parciales.</p>
-
-        <h2 className="text-red-700">5. Responsabilidad del Cliente sobre el Contenido</h2>
+        <h2 className="text-3xl font-bold mt-12 mb-4">6. Propiedad Intelectual e Industrial</h2>
         <p>
-          Esta es una de las cláusulas más importantes de nuestro acuerdo. Alergenu es una herramienta tecnológica que facilita la visualización de información. Sin embargo, el Cliente es el <strong>único y exclusivo responsable</strong> de la totalidad del contenido que introduce, gestiona y publica a través de la plataforma. Esto incluye, pero no se limita a:
+            Todo el contenido, diseño, código fuente, logotipos, textos, gráficos e interfaces de usuario de la Plataforma son propiedad exclusiva de Andrés Ortega Montoya o de terceros licenciantes, y están protegidos por la legislación española e internacional sobre propiedad intelectual e industrial.
         </p>
-        <ul className="list-disc pl-6 space-y-2">
-            <li><strong>La exactitud y veracidad de la lista de alérgenos</strong> de cada plato, conforme al Reglamento (UE) Nº 1169/2011.</li>
-            <li>La correcta asignación de precios.</li>
-            <li>La descripción de los platos y cualquier otra información proporcionada.</li>
+        <p>
+            Queda prohibida cualquier reproducción, distribución, comunicación pública, transformación o utilización sin la autorización expresa y por escrito del Titular.
+        </p>
+
+        <h2 className="text-3xl font-bold mt-12 mb-4">7. Uso Aceptable de la Plataforma</h2>
+        <p>
+            El Usuario se compromete a utilizar la Plataforma de conformidad con la ley, la moral, el orden público y los presentes Términos. En particular, se prohíbe:
+        </p>
+        <ul>
+            <li>Introducir o difundir virus o cualquier otro sistema que pueda dañar los sistemas informáticos.</li>
+            <li>Utilizar la Plataforma con fines fraudulentos o ilícitos.</li>
+            <li>Acceder sin autorización a datos de otros usuarios o a áreas restringidas del sistema.</li>
         </ul>
         <p>
-          <strong>Alergenu no verifica, valida ni certifica la información sobre alérgenos introducida por el restaurante.</strong> El Cliente entiende y acepta que es su obligación legal y moral garantizar que la información mostrada a los consumidores finales es precisa, completa y no induce a error. Cualquier reclamación, sanción administrativa, o daño derivado de una información incorrecta sobre alérgenos será responsabilidad exclusiva del Cliente, exonerando completamente a Alergenu y a su titular de cualquier responsabilidad.
+            El incumplimiento de estas condiciones podrá dar lugar a la suspensión o cancelación inmediata de la cuenta del Usuario infractor.
         </p>
 
-        <h2>6. Uso Aceptable de la Plataforma</h2>
-        <p>Te comprometes a no utilizar el servicio para ningún propósito ilegal o no autorizado. No debes, en el uso del Servicio, violar ninguna ley en tu jurisdicción. Te comprometes a no publicar contenido que sea difamatorio, obsceno, pornográfico, o que infrinja los derechos de propiedad intelectual de terceros.</p>
+        <h2 className="text-3xl font-bold mt-12 mb-4">8. Servicios de Terceros</h2>
+        <p>
+            La aplicación utiliza servicios de terceros para su funcionamiento, entre ellos:
+        </p>
+        <ul>
+            <li><strong>Firebase (Google Cloud Platform):</strong> para autenticación, base de datos y alojamiento.</li>
+            <li><strong>Servicios de traducción automática:</strong> empleados para traducir textos del menú a distintos idiomas.</li>
+        </ul>
+        <p>
+            El uso de estos servicios se rige por sus propias políticas de privacidad y términos de servicio.
+        </p>
 
-        <h2>7. Modificaciones del Servicio y Precios</h2>
-        <p>Nos reservamos el derecho de modificar o discontinuar, temporal o permanentemente, el Servicio (o cualquier parte de él) con o sin previo aviso. Los precios de todos los Servicios, incluidos, entre otros, las tarifas del plan de suscripción mensual, están sujetos a cambios con un aviso de 30 días de nuestra parte. Dicho aviso puede proporcionarse en cualquier momento publicando los cambios en el Sitio Web de Alergenu.</p>
+        <h2 className="text-3xl font-bold mt-12 mb-4">9. Modificaciones del Servicio y de las Condiciones</h2>
+        <p>
+            El Titular se reserva el derecho a:
+        </p>
+        <ul>
+            <li>Modificar en cualquier momento las características y funcionalidades de la Plataforma.</li>
+            <li>Actualizar, revisar o cambiar los presentes Términos y Condiciones, notificándolo en el sitio web o mediante correo electrónico en caso de usuarios registrados.</li>
+        </ul>
+        <p>
+            El uso continuado de la Plataforma tras la publicación de las modificaciones implicará su aceptación.
+        </p>
 
-        <h2>8. Cancelación y Terminación</h2>
-        <p>Eres el único responsable de cancelar adecuadamente tu cuenta. Puedes cancelar tu suscripción en cualquier momento desde el panel de control de tu cuenta. Si cancelas el Servicio antes del final de tu ciclo de facturación actual, tu cancelación entrará en vigencia inmediatamente y no se te cobrará de nuevo. Nos reservamos el derecho de suspender o cancelar tu cuenta si violas gravemente estos Términos.</p>
+        <h2 className="text-3xl font-bold mt-12 mb-4">10. Limitación de Responsabilidad</h2>
+        <p>
+            El Titular no garantiza la disponibilidad continua ni la ausencia de errores en el funcionamiento de la Plataforma.
+        </p>
+        <p>
+            En ningún caso será responsable por:
+        </p>
+        <ul>
+            <li>Daños derivados del uso indebido de la aplicación o de los datos proporcionados por terceros (restaurantes).</li>
+            <li>Pérdidas de beneficios, interrupciones de negocio o daños indirectos.</li>
+        </ul>
 
-        <h2>9. Limitación de Responsabilidad</h2>
-        <p>En la máxima medida permitida por la ley, Alergenu y su titular no serán responsables de ningún daño indirecto, incidental, especial, consecuente o punitivo, incluyendo, sin limitación, la pérdida de beneficios, datos, uso, fondo de comercio u otras pérdidas intangibles, resultantes de (i) tu acceso o uso o incapacidad para acceder o usar el servicio; (ii) cualquier conducta o contenido de un tercero en el servicio; (iii) cualquier contenido obtenido del servicio; y (iv) el acceso no autorizado, uso o alteración de tus transmisiones o contenido.</p>
+        <h2 className="text-3xl font-bold mt-12 mb-4">11. Suspensión del Servicio</h2>
+        <p>
+            El Titular podrá suspender temporal o definitivamente el acceso a la Plataforma por motivos técnicos, de mantenimiento o de fuerza mayor, sin que ello genere derecho a indemnización alguna.
+        </p>
 
-        <h2>10. Legislación y Jurisdicción Aplicable</h2>
-        <p>Estos Términos se regirán e interpretarán de acuerdo con las leyes de España. Cualquier disputa que surja de o en conexión con estos Términos será sometida a la jurisdicción exclusiva de los tribunales de la ciudad de Valencia.</p>
-    </article>
+        <h2 className="text-3xl font-bold mt-12 mb-4">12. Legislación Aplicable y Jurisdicción</h2>
+        <p>
+            Estas condiciones se rigen por la legislación española.
+        </p>
+        <p>
+            Para cualquier controversia derivada del uso del servicio, las partes se someten expresamente a los Juzgados y Tribunales de Valencia (España), salvo que la normativa aplicable disponga otra cosa.
+        </p>
+
+        <h2 className="text-3xl font-bold mt-12 mb-4">13. Contacto</h2>
+        <p>
+            Para cualquier duda, queja o reclamación relacionada con estos Términos y Condiciones, puede dirigirse al Titular mediante correo electrónico a hola@soyandres.es.
+        </p>
+    </div>
   );
 }

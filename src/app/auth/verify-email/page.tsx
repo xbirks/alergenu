@@ -47,7 +47,7 @@ export default function VerifyEmailPage() {
         <div className="w-full max-w-md mx-auto text-center">
             <div className="bg-white p-8 md:p-12 rounded-lg shadow-lg">
                 <MailCheck className="mx-auto h-16 w-16 text-green-500 mb-6" />
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">¡Un último paso!</h1>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">¡Un último paso!<br></br>Confirma tu correo.</h1>
                 <p className="text-muted-foreground text-base mb-8">
                     Te hemos enviado un correo de confirmación. Por favor, revisa tu bandeja de entrada (y la carpeta de spam) para verificar tu cuenta.
                 </p>
@@ -55,11 +55,7 @@ export default function VerifyEmailPage() {
                     Una vez verificada, podrás iniciar sesión sin problemas.
                 </p>
                 
-                <div className="space-y-4">
-                    <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }}>
-                        <Link href="/login">Ir a Iniciar Sesión</Link>
-                    </Button>
-
+                <div>
                     <Button 
                         onClick={handleResendEmail}
                         variant="outline"

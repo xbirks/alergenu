@@ -26,7 +26,7 @@ export function PublicHeader() {
         width={40} 
         height={40} 
         className="cursor-pointer"
-        onClick={() => router.push('/home')}
+        onClick={() => router.push('/')}
       />
       <div>
         {/* {loading ? ( // <--- TEMPORALMENTE DESACTIVADO
