@@ -1,3 +1,5 @@
+'use client';
+
 import type { Metadata } from 'next';
 
 // Metadatos para SEO y redes sociales
@@ -33,7 +35,7 @@ export const metadata: Metadata = {
   },
 };
 
-'use client';
+
 
 import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
