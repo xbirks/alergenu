@@ -50,6 +50,18 @@ function ActionHandler() {
     handleAction(mode, actionCode);
   }, [searchParams]);
 
+  useEffect(() => {
+    if (status === 'success') {
+      // Después de verificar, Firebase loguea al usuario automáticamente.
+      // Lo redirigimos al dashboard tras una breve pausa.
+      const timer = setTimeout(() => {
+        router.push('/dashboard?first_login=true');
+      }, 3000); // 3 segundos de espera
+
+      return () => clearTimeout(timer);
+    }
+  }, [status, router]);
+
   const renderContent = () => {
     switch (status) {
       case 'loading':
@@ -68,11 +80,9 @@ function ActionHandler() {
             <MailCheck className="mx-auto h-16 w-16 text-green-500 mb-6" />
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-3">¡Correo verificado!</h1>
             <p className="text-muted-foreground text-base mb-8">
-              Tu dirección de correo electrónico ha sido verificada correctamente. Ya puedes iniciar sesión.
+              Tu cuenta ha sido activada. Serás redirigido a tu panel de control en unos segundos...
             </p>
-            <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }}>
-              <Link href="/login">Ir a Iniciar Sesión</Link>
-            </Button>
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500" />
           </>
         );
       case 'error':

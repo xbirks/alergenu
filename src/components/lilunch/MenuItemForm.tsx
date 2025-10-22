@@ -28,12 +28,15 @@ const formSchema = z.object({
   name_es: z.string().min(1, { message: 'El nombre del plato no puede estar vacío.' }),
   name_en: z.string().optional(),
   category: z.object({
-    id: z.string().min(1, { message: 'Debes seleccionar una categoría.' }),
+    id: z.string(),
     name_i18n: z.object({ 
       es: z.string(), 
       en: z.string().optional() 
     }).passthrough(),
-  }).nullable(),
+  }, {
+    required_error: "Debes seleccionar una categoría.",
+    invalid_type_error: "Debes seleccionar una categoría.",
+  }),
   description_es: z.string().optional(),
   description_en: z.string().optional(),
   price: z.string()
@@ -113,6 +116,8 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
     },
   });
 
+  const { formState } = form;
+
   useEffect(() => {
     if (isEditMode && existingMenuItem && user) {
       const fetchAndSetCategory = async (categoryId: string) => {
@@ -155,11 +160,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
       toast({ title: 'Error de autenticación', variant: 'destructive' });
       return;
     }
-    if (!values.category) {
-      form.setError('category', { type: 'manual', message: 'Debes seleccionar una categoría.' });
-      return;
-    }
-
+    
     setIsSubmitting(true);
     try {
       const allergensToSave = Object.entries(values.allergens)
@@ -294,6 +295,11 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
                 {isSubmitting ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : null}
                 {isSubmitting ? (isEditMode ? 'Guardando...' : 'Traduciendo y guardando...') : (isEditMode ? 'Guardar cambios' : 'Añadir plato')}
             </Button>
+            {formState.isSubmitted && !formState.isValid && (
+                <p className="text-center text-sm text-destructive mt-4 font-semibold">
+                    Faltan campos obligatorios por completar.
+                </p>
+            )}
         </div>
       </form>
     </Form>

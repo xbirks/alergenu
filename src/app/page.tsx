@@ -1,15 +1,13 @@
+"use client";
+
+import { useState } from 'react';
 import { PublicHeader } from '@/components/layout/PublicHeader';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Metadata } from 'next';
 import Image from 'next/image';
 import { ImageGallery } from '@/components/layout/ImageGallery';
 import { Faq } from '@/components/layout/Faq';
-
-export const metadata: Metadata = {
-  title: 'Crea gratis tu carta digital con alérgenos | ALERGENU',
-  description: 'Crea y gestiona la carta de tu restaurante, actualiza precios y platos al instante y cumple con la ley de alérgenos de forma fácil y rápida.',
-};
+import { VideoModal } from "@/components/ui/video-modal";
 
 const benefits = [
   {
@@ -132,9 +130,21 @@ const faqData = [
 ];
 
 export default function HomePage() {
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  
+  const videoUrl = "https://www.youtube.com/embed/z5GEeM1CD3M";
+  const videoTitle = "Demostración de Alergenu";
+
   return (
     <div className="min-h-screen bg-background">
       <PublicHeader />
+
+      <VideoModal
+        open={isVideoModalOpen}
+        onOpenChange={setIsVideoModalOpen}
+        videoUrl={videoUrl}
+        title={videoTitle}
+      />
       
       <main className="pt-6 pb-20">
         
@@ -199,13 +209,11 @@ export default function HomePage() {
                 <h3 className="text-lg font-semibold tracking-tight leading-tight">Filtrado automático de los alérgenos en tiempo real.</h3>
               </div>
               <div className="pt-6">
-                <Button asChild className="rounded-full font-bold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 h-auto text-base">
-                  <Link href="#" className="inline-flex items-center">
-                    Ver demo
-                    <span className="relative w-5 h-5 ml-2">
-                        <Image src="/icons/web_icons/demo.svg" alt="Ver demo" layout="fill" />
-                    </span>
-                  </Link>
+                <Button onClick={() => setIsVideoModalOpen(true)} className="rounded-full font-bold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 h-auto text-base inline-flex items-center">
+                  Ver demo
+                  <span className="relative w-5 h-5 ml-2">
+                      <Image src="/icons/web_icons/demo.svg" alt="Ver demo" layout="fill" />
+                  </span>
                 </Button>
               </div>
             </div>
@@ -247,22 +255,17 @@ export default function HomePage() {
             </p>
         </section>
 
-        {/* Video Placeholder Section */}
-        <section className="w-full max-w-2xl mx-auto mt-12 container px-4">
-          <div className="relative aspect-video rounded-2xl overflow-hidden shadow-lg">
-            <Image
-              src="/assets/carrusel_(2).jpg"
-              alt="Demostración de Alergenu en un móvil"
-              layout="fill"
-              objectFit="cover"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                <div className="bg-white/90 rounded-full w-24 h-24 flex items-center justify-center backdrop-blur-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-black/80" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M10.804 8 5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z"/>
-                    </svg>
-                </div>
-            </div>
+        {/* Video Embed Section */}
+        <section className="w-full max-w-sm mx-auto mt-12 container px-4">
+          <div className="aspect-[9/16] rounded-2xl overflow-hidden shadow-lg">
+            <iframe
+              src="https://www.youtube.com/embed/z5GEeM1CD3M"
+              title="Demostración de Alergenu"
+              width="100%"
+              height="100%"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
           </div>
         </section>
 

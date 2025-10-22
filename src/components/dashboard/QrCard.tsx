@@ -43,7 +43,7 @@ export function QrCard({ slug }: QrCardProps) {
             size={256}
             level={"H"}
             imageSettings={{
-              src: '/icon_alergenu.png', // <-- Corregido
+              src: '/alergenu_square.png',
               height: 40,
               width: 40,
               excavate: true,
@@ -55,7 +55,7 @@ export function QrCard({ slug }: QrCardProps) {
             size={256}
             level={"H"}
             imageSettings={{
-              src: '/icon_alergenu.png', // <-- Corregido
+              src: '/alergenu_square.png',
               height: 40,
               width: 40,
               excavate: true,

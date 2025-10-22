@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Loader2, Eye, HeartHandshake } from 'lucide-react';
+import { VideoModal } from '@/components/ui/video-modal'; // Importar el modal de vídeo
 
 interface RestaurantData {
   restaurantName?: string;
@@ -24,11 +25,23 @@ interface RestaurantData {
   allergicSaves?: number;
 }
 
-export default function DashboardPage() {
+// El componente principal del dashboard
+function DashboardComponent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const [restaurantData, setRestaurantData] = useState<RestaurantData | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Estado para controlar el modal del vídeo de bienvenida
+  const [isFirstLoginVideoOpen, setIsFirstLoginVideoOpen] = useState(false);
+
+  useEffect(() => {
+    // Comprobar si es el primer login desde la URL
+    if (searchParams.get('first_login') === 'true') {
+      setIsFirstLoginVideoOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -61,71 +74,94 @@ export default function DashboardPage() {
     );
   }
 
+  // Definir los detalles del vídeo
+  const videoUrl = "https://www.youtube.com/embed/z5GEeM1CD3M";
+  const videoTitle = "¡Bienvenido a Alergenu! Un tour rápido";
+
   return (
-    <div className="flex flex-col gap-8">
-      <div className="grid gap-2">
-         <h1 className="text-4xl font-extrabold tracking-tight"> 
-            ¡Hola, {restaurantData.ownerName || 'bienvenido'}!
-        </h1>
-        <p className="text-lg text-muted-foreground font-regular">
-            Gestiona la carta de <span className='font-bold text-primary'>{restaurantData.restaurantName}</span>.
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-        <Button 
-            id="tour-edit-menu-button" // ID for the tour
-            size="lg"
-            className='w-full text-lg font-bold rounded-full h-14 bg-blue-600 hover:bg-blue-700'
-            onClick={() => router.push('/dashboard/menu')}
-        >
-            Editar mi carta
-        </Button>
-        <Button
-            id="tour-view-public-menu-button" // ID for the tour
-            size="lg"
-            variant="outline"
-            className='w-full text-lg font-bold rounded-full h-14'
-            onClick={() => restaurantData?.slug && window.open(`/menu/${restaurantData.slug}`, '_blank')}
-            disabled={!restaurantData?.slug}
-        >
-            <Eye className="mr-2 h-5 w-5" />
-            Ver carta pública
-        </Button>
-      </div>
+    <>
+      {/* Modal del vídeo de bienvenida */}
+      <VideoModal
+        open={isFirstLoginVideoOpen}
+        onOpenChange={setIsFirstLoginVideoOpen}
+        videoUrl={videoUrl}
+        title={videoTitle}
+      />
 
-      {restaurantData.slug && <QrCard slug={restaurantData.slug} />}
+      <div className="flex flex-col gap-8">
+         <div className="grid gap-2">
+           <h1 className="text-4xl font-extrabold tracking-tight"> 
+              ¡Hola, {restaurantData.ownerName || 'bienvenido'}!
+          </h1>
+          <p className="text-lg text-muted-foreground font-regular">
+              Gestiona la carta de <span className='font-bold text-primary'>{restaurantData.restaurantName}</span>.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          <Button 
+              id="tour-edit-menu-button"
+              size="lg"
+              className='w-full text-lg font-bold rounded-full h-14 bg-blue-600 hover:bg-blue-700'
+              onClick={() => router.push('/dashboard/menu')}
+          >
+              Editar mi carta
+          </Button>
+          <Button
+              id="tour-view-public-menu-button"
+              size="lg"
+              variant="outline"
+              className='w-full text-lg font-bold rounded-full h-14'
+              onClick={() => restaurantData?.slug && window.open(`/menu/${restaurantData.slug}`, '_blank')}
+              disabled={!restaurantData?.slug}
+          >
+              <Eye className="mr-2 h-5 w-5" />
+              Ver carta pública
+          </Button>
+        </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-                <HeartHandshake className="h-5 w-5 text-blue-600"/>
-                Personas alérgicas ayudadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-blue-600">{restaurantData.allergicSaves || 0}</div>
-            <CardDescription className="text-sm">
-             personas han usado el filtro
-            </CardDescription>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Eye className="h-5 w-5"/>
-                Visitas al menú
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{restaurantData.qrScans || 0}</div>
-            <CardDescription className="text-sm">
-             visualizaciones totales
-            </CardDescription>
-          </CardContent>
-        </Card>
+        {restaurantData.slug && <QrCard slug={restaurantData.slug} />}
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <HeartHandshake className="h-5 w-5 text-blue-600"/>
+                  Personas alérgicas ayudadas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold text-blue-600">{restaurantData.allergicSaves || 0}</div>
+              <CardDescription className="text-sm">
+               personas han usado el filtro
+              </CardDescription>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Eye className="h-5 w-5"/>
+                  Visitas al menú
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold">{restaurantData.qrScans || 0}</div>
+              <CardDescription className="text-sm">
+               visualizaciones totales
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
+  );
+}
+
+// Envolvemos el componente en Suspense para poder usar useSearchParams
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="h-16 w-16 animate-spin" /></div>}>
+      <DashboardComponent />
+    </Suspense>
   );
 }
