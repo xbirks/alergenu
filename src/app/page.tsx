@@ -71,7 +71,7 @@ const pricingPlans = [
   {
     id: 'autonomia',
     name: 'Plan Autonomía',
-    price: '19€',
+    price: '12€',
     priceDetails: 'Mensual, IVA inc.',
     features: [
       'Todas las funcionalidades incluidas.',

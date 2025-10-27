@@ -39,11 +39,15 @@ export async function GET(
 
     const categories = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
+        const name_i18n = data.name_i18n || {};
+        // The primary `name` should be the Spanish one, as a reliable fallback.
+        const name = name_i18n.es || data.name || '';
+
         return { 
           id: doc.id, 
-          ...data, 
-          name_i18n: data.name_i18n || { es: data.name || '' },
-          name: data.name
+          order: data.order,
+          name: name, // Default name (Spanish)
+          name_i18n: name_i18n, // Full translation object
         } as Category;
     });
     

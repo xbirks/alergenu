@@ -98,7 +98,7 @@ function DashboardComponent() {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
           <Button 
               id="tour-edit-menu-button"
               size="lg"
@@ -106,6 +106,13 @@ function DashboardComponent() {
               onClick={() => router.push('/dashboard/menu')}
           >
               Editar mi carta
+          </Button>
+          <Button
+              size="lg"
+              className='w-full text-lg font-bold rounded-full h-14 bg-blue-800 hover:bg-blue-900 text-white'
+              onClick={() => router.push('/dashboard/daily-menu')}
+          >
+              Menú del día
           </Button>
           <Button
               id="tour-view-public-menu-button"

@@ -1,0 +1,153 @@
+
+GUÍA DE IMPLEMENTACIÓN DE STRIPE PARA ALERGENU
+Última actualización: 27 octubre 2025
+-------------------------------------------
+
+**OBJETIVO:** Integrar un sistema de suscripciones de pago para los planes "Autonomía" y "Premium", asegurando la robustez, seguridad y escalabilidad del proceso. Este documento sirve como plan de acción completo y detallado.
+
+### FASE 1: CONFIGURACIÓN INICIAL Y MODELADO DE PRODUCTOS
+
+1.  **Crear cuenta de Stripe:**
+    *   Regístrate en Stripe (https://dashboard.stripe.com/register).
+    *   Completa el proceso de activación de la cuenta, incluyendo tus datos fiscales y bancarios.
+    *   Activa el "Modo de Prueba" (Test Mode) para todo el desarrollo inicial. NO uses el modo real (Live Mode) hasta que todo esté verificado.
+
+2.  **Obtener y Almacenar Claves API:**
+    *   En el Dashboard de Stripe > Desarrolladores > Claves API, encontrarás dos claves importantes:
+        *   **Clave publicable (Publishable key):** Se usa en el frontend. Empieza por `pk_test_...`
+        *   **Clave secreta (Secret key):** Se usa en el backend (Firebase Functions). NUNCA debe exponerse en el frontend. Empieza por `sk_test_...`
+    *   **ALMACENAMIENTO SEGURO:** Usa las variables de entorno de Firebase para almacenar estas claves. NO las escribas directamente en el código.
+        *   `firebase functions:config:set stripe.secret="sk_test_..."`
+        *   `firebase functions:config:set stripe.webhook_secret="whsec_..."` (Crearemos esta en el paso del Webhook).
+        *   La clave publicable se puede almacenar de forma similar o directamente en el código del frontend, ya que es pública.
+
+3.  **Instalar SDKs de Stripe:**
+    *   En tu terminal, dentro de la carpeta de Firebase Functions (`/functions` si la tienes, o la crearemos): `npm install stripe`
+    *   En la raíz de tu proyecto Next.js: `npm install @stripe/stripe-js`
+
+4.  **Modelar Productos en Stripe Dashboard:**
+    *   Ve a Productos > Añadir producto.
+    *   **Producto 1:**
+        *   **Nombre:** Plan Autonomía - ALERGENU
+    *   **Añadir Precios a este producto:**
+        *   **Precio 1 (Early Adopter):**
+            *   **Importe:** 12€
+            *   **Divisa:** EUR
+            *   **Recurrente:** Sí, Mensual.
+            *   **ID del precio:** Cópialo, lo necesitaremos. Empezará por `price_...`. Anota este ID como `PRICE_ID_AUTONOMIA_EARLY`.
+        *   **Precio 2 (Estándar):**
+            *   **Importe:** 19€ (o el precio que definas)
+            *   **Divisa:** EUR
+            *   **Recurrente:** Sí, Mensual.
+            *   **ID del precio:** Cópialo. Anota este ID como `PRICE_ID_AUTONOMIA_STANDARD`.
+    *   **Producto 2:**
+        *   **Nombre:** Plan Premium - ALERGENU
+    *   **Añadir Precios a este producto:**
+        *   **Precio 1:**
+            *   **Importe:** 49€
+            *   **Divisa:** EUR
+            *   **Recurrente:** Sí, Mensual.
+            *   **ID del precio:** Cópialo. Anota este ID como `PRICE_ID_PREMIUM`.
+
+
+### FASE 2: IMPLEMENTACIÓN DEL BACKEND (FIREBASE FUNCTIONS)
+
+Esta es la parte más crítica. Usaremos Firebase Functions para comunicarnos de forma segura con Stripe.
+
+1.  **Función 1: `createCheckoutSession` (Función HTTP Invocable)**
+    *   **Propósito:** Crear una sesión de pago segura para un usuario.
+    *   **Trigger:** Se llama desde nuestro frontend.
+    *   **Lógica:**
+        1.  Recibe el `uid` del usuario y el `priceId` que desea contratar.
+        2.  Busca en Firestore un documento de cliente en una colección `stripe_customers` que corresponda a ese `uid`.
+        3.  **Si NO existe el cliente:**
+            *   Lo crea en Stripe: `await stripe.customers.create({ email: user.email, name: user.displayName })`.
+            *   Guarda el `stripeCustomerId` devuelto por Stripe en el documento del usuario en Firestore (`users/{uid}`) O en la nueva colección `stripe_customers/{uid}`. Esto es CRUCIAL para vincular a tu usuario con el cliente de Stripe.
+        4.  **Lógica de precios "Early Adopter":**
+            *   Antes de crear la sesión, consulta el número de documentos en la colección `restaurants`.
+            *   Si `count < 20`, sobrescribe el `priceId` recibido para usar el `PRICE_ID_AUTONOMIA_EARLY`.
+            *   Si `count >= 20`, usa el `PRICE_ID_AUTONOMIA_STANDARD`.
+        5.  Crea la sesión de Checkout de Stripe:
+            ```javascript
+            const session = await stripe.checkout.sessions.create({
+                customer: stripeCustomerId,
+                payment_method_types: ['card'],
+                line_items: [{ price: priceId, quantity: 1 }],
+                mode: 'subscription',
+                success_url: 'http://localhost:3000/dashboard?payment_success=true',
+                cancel_url: 'http://localhost:3000/register?payment_canceled=true',
+                // Metadata para el webhook:
+                metadata: {
+                    firebaseUID: uid 
+                }
+            });
+            ```
+        6.  Devuelve el `sessionId` de la sesión creada al frontend.
+
+2.  **Función 2: `stripeWebhook` (Función HTTP)**
+    *   **Propósito:** "Escuchar" los eventos que envía Stripe (pagos correctos, fallidos, cancelaciones).
+    *   **Trigger:** Es un endpoint HTTP público que configurarás en el Dashboard de Stripe.
+    *   **LÓGICA DE SEGURIDAD (VITAL):**
+        1.  Al principio de la función, DEBES verificar que la llamada viene de Stripe y no de un atacante.
+        2.  `const signature = request.headers['stripe-signature'];`
+        3.  `const event = stripe.webhooks.constructEvent(request.rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET);`
+        4.  Si la verificación falla, devuelve un error 400. Si tiene éxito, procede.
+    *   **Manejo de Eventos (switch sobre `event.type`):**
+        *   **`checkout.session.completed`:**
+            *   El pago inicial se ha completado.
+            *   Extrae el `firebaseUID` de `event.data.object.metadata`.
+            *   Extrae el ID de la suscripción (`subscription`) y el ID del cliente (`customer`).
+            *   Actualiza el documento del usuario en Firestore (`users/{firebaseUID}`):
+                *   `stripeCustomerId`: event.data.object.customer
+                *   `subscriptionId`: event.data.object.subscription
+                *   `subscriptionStatus`: 'active'
+                *   `priceId`: El ID del precio al que se ha suscrito (para saber si es Early Adopter).
+                *   `currentPeriodEnd`: La fecha de fin del periodo actual (para saber cuándo caduca).
+        *   **`invoice.payment_failed`:**
+            *   La renovación de la suscripción ha fallado.
+            *   Busca al usuario en Firestore por su `stripeCustomerId`.
+            *   Actualiza su estado: `subscriptionStatus: 'past_due'`.
+            *   (Opcional) Envía un email al usuario para que actualice su tarjeta.
+        *   **`customer.subscription.deleted`:**
+            *   La suscripción ha sido cancelada (sea por el usuario o por impago final).
+            *   Busca al usuario por su `stripeCustomerId`.
+            *   Actualiza su estado: `subscriptionStatus: 'canceled'`. Su acceso a las funciones de pago debe ser revocado.
+
+### FASE 3: IMPLEMENTACIÓN DEL FRONTEND (NEXT.JS)
+
+1.  **Modificar el Flujo de Registro (`/register/page.tsx`):**
+    *   Al hacer clic en "Crear Cuenta" para un plan de pago:
+        1.  Ejecuta la lógica actual: crear usuario en Firebase Auth y documento de restaurante en Firestore.
+        2.  **Si todo lo anterior tiene éxito:** Llama a la Firebase Function `createCheckoutSession` con el `uid` del nuevo usuario y el `priceId` del plan seleccionado.
+        3.  Recibe el `sessionId` del backend.
+        4.  Usa la librería de Stripe.js para redirigir al usuario al Checkout de Stripe:
+            ```javascript
+            import { loadStripe } from '@stripe/stripe-js';
+            const stripe = await loadStripe('pk_test_...'); // Tu clave publicable
+            await stripe.redirectToCheckout({ sessionId });
+            ```
+
+2.  **Página de Gestión de Suscripción (en `/dashboard/account`):**
+    *   Crea un "Portal de Cliente" de Stripe. Esto permite a los usuarios gestionar su suscripción (cambiar de tarjeta, cancelar) sin que tengas que programar esa interfaz.
+    *   Crea otra Firebase Function (`createCustomerPortal`) que genere y devuelva una URL para este portal.
+    *   Añade un botón en el frontend que llame a esta función y redirija al usuario.
+
+### FASE 4: POSIBLES PROBLEMAS DE SEGURIDAD Y CÓMO MITIGARLOS
+
+1.  **Exposición de Claves Secretas:**
+    *   **Riesgo:** Si la `sk_test_...` llega al navegador, un atacante puede controlar tu cuenta de Stripe.
+    *   **Mitigación:** NUNCA escribas la clave secreta en el código del frontend. Usa SIEMPRE variables de entorno de Firebase Functions.
+
+2.  **Webhooks Falsos (Ataque de Suplantación):**
+    *   **Riesgo:** Un atacante podría llamar a tu endpoint de webhook para darse una suscripción gratis o cancelar la de otros.
+    *   **Mitigación:** VERIFICAR SIEMPRE LA FIRMA DEL WEBHOOK (`stripe-signature`). Es la defensa más importante. No hay excusa para no hacerlo.
+
+3.  **Abuso del Precio "Early Adopter":**
+    *   **Riesgo (Bajo):** Dos usuarios se registran exactamente a la vez cuando el contador está en 19. Ambos podrían obtener el precio reducido.
+    *   **Mitigación:** Para tu escala, este riesgo es mínimo y aceptable. Una solución a gran escala implicaría usar Transacciones de Firestore para leer el contador y escribir el nuevo restaurante en una sola operación atómica, lo que asegura que solo uno pueda ser el número 20. Por ahora, no es necesario complicarlo.
+
+4.  **Desincronización de Datos:**
+    *   **Riesgo:** El usuario paga en Stripe, pero el webhook falla y tu base de datos no se actualiza. El usuario ha pagado pero no tiene el servicio.
+    *   **Mitigación:**
+        *   **Monitorización:** Configura alertas en Firebase/Stripe para los fallos de los webhooks.
+        *   **Panel de Admin:** Añade una sección a tu panel de admin donde puedas ver el estado de la suscripción de un usuario y un botón para "Sincronizar con Stripe" manualmente, que llame a la API de Stripe para obtener el estado actual y actualizar tu base de datos.

@@ -9,9 +9,65 @@ import { Button } from '@/components/ui/button';
 import { AllergenFilter } from './allergen-filter';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { AllergenIconDisplay } from './allergen-icon-display';
+import { AllergenLegend } from './allergen-legend';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Restaurant, Category, MenuItem, Allergen } from '@/lib/types';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/firebase';
+import { CategorySlider } from './category-slider';
+
+// --- TIPOS DE DATOS --- //
+
+interface DailyMenuDish {
+  name: string;
+  allergens: { [key: string]: 'yes' | 'traces' };
+}
+
+interface DailyMenuCourse {
+  title: string;
+  dishes: DailyMenuDish[];
+}
+
+interface DailyMenu {
+  courses: DailyMenuCourse[];
+  price: number;
+  note: string;
+  isPublished: boolean;
+  startTime: string;
+  endTime: string;
+}
+
+interface PublicMenuClientProps {
+  restaurant: Restaurant;
+  restaurantId: string;
+  initialCategories: Category[];
+  initialItems: MenuItem[];
+  customAllergens: Allergen[];
+}
+
+interface GroupedMenu {
+  [categoryName: string]: MenuItem[];
+}
+
+// --- HELPERS & TEXTOS --- //
+
+const generateSafeId = (name: string) => {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/ñ/g, 'n')
+    .replace(/[àáâãäå]/g, 'a')
+    .replace(/[èéêë]/g, 'e')
+    .replace(/[ìíîï]/g, 'i')
+    .replace(/[òóôõö]/g, 'o')
+    .replace(/[ùúûü]/g, 'u')
+    .replace(/ç/g, 'c')
+    .replace(/[^a-z0-9 -]/g, '') 
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
 
 const staticTexts = {
   welcome: { es: "Bienvenido a la carta digital de", en: "Welcome to the digital menu of" },
@@ -28,6 +84,8 @@ const staticTexts = {
   },
   uncategorized: { es: "Varios", en: "Miscellaneous" },
   restaurantFallback: { es: "Restaurante", en: "Restaurant" },
+  dailyMenuTitle: { es: "Menú del Día", en: "Daily Menu" },
+  dailyMenuToChoose: { es: "A elegir.", en: "To choose." },
 };
 
 const getTranslated = (i18nField: any, lang: string) => {
@@ -37,29 +95,121 @@ const getTranslated = (i18nField: any, lang: string) => {
   return i18nField || '';
 }
 
-interface PublicMenuClientProps {
-  restaurant: Restaurant;
-  restaurantId: string;
-  initialCategories: Category[];
-  initialItems: MenuItem[];
-  customAllergens: Allergen[];
-}
-
-interface GroupedMenu {
-  [categoryName: string]: MenuItem[];
-}
+// --- COMPONENTE PRINCIPAL --- //
 
 export function PublicMenuClient({ restaurant, restaurantId, initialCategories, initialItems, customAllergens }: PublicMenuClientProps) {
   const searchParams = useSearchParams();
   const [isFilterSheetOpen, setFilterSheetOpen] = useState(searchParams.get('alergico') === 'true');
   const [selectedAllergens, setSelectedAllergens] = useLocalStorage<string[]>('selectedAllergens', []);
   const [openIncompatible, setOpenIncompatible] = useState<{ [key: string]: boolean }>({});
+  const [openIncompatibleDaily, setOpenIncompatibleDaily] = useState<{ [key: string]: boolean }>({});
   const [hasMounted, setHasMounted] = useState(false);
   const [lang, setLang] = useLocalStorage<string>('selectedLang', 'es');
 
+  const [dailyMenu, setDailyMenu] = useState<DailyMenu | null>(null);
+  const [isLoadingDailyMenu, setIsLoadingDailyMenu] = useState(true);
+  const [currentDate, setCurrentDate] = useState('');
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = 'smooth';
+    return () => {
+      document.documentElement.style.scrollBehavior = 'auto';
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("TIMER: Setting up timer to refresh time every 30 seconds.");
+    const timer = setInterval(() => setNow(new Date()), 30000); // Actualiza cada 30s
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     setHasMounted(true);
-  }, []);
+    setCurrentDate(new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }));
+
+    const fetchDailyMenu = async () => {
+      try {
+        const dailyMenuRef = doc(db, 'restaurants', restaurantId, 'dailyMenus', 'current');
+        const docSnap = await getDoc(dailyMenuRef);
+        if (docSnap.exists()) {
+          console.log("TIMER: Daily menu data found:", docSnap.data());
+          setDailyMenu(docSnap.data() as DailyMenu);
+        } else {
+          console.log("TIMER: No daily menu document found.");
+        }
+      } catch (error) {
+        console.error("TIMER: Error fetching daily menu:", error);
+      } finally {
+        setIsLoadingDailyMenu(false);
+      }
+    };
+
+    fetchDailyMenu();
+  }, [restaurantId]);
+
+  // --- LÓGICA DE FILTRADO --- //
+
+  const processedDailyMenu = useMemo(() => {
+    if (!dailyMenu) return null;
+
+    const processedCourses = dailyMenu.courses.map(course => {
+        const compatibleDishes: DailyMenuDish[] = [];
+        const incompatibleDishes: DailyMenuDish[] = [];
+
+        course.dishes.forEach(dish => {
+            if (selectedAllergens.length === 0) {
+                compatibleDishes.push(dish);
+                return;
+            }
+            const dishAllergens = Object.keys(dish.allergens || {});
+            const isCompatible = !dishAllergens.some(allergen => selectedAllergens.includes(allergen));
+
+            if (isCompatible) {
+                compatibleDishes.push(dish);
+            } else {
+                incompatibleDishes.push(dish);
+            }
+        });
+
+        return { ...course, compatibleDishes, incompatibleDishes };
+    });
+
+    const hasAnyCompatibleDishes = processedCourses.some(c => c.compatibleDishes.length > 0);
+    const hasAnyIncompatibleDishes = processedCourses.some(c => c.incompatibleDishes.length > 0);
+
+    if (!hasAnyCompatibleDishes && !hasAnyIncompatibleDishes && selectedAllergens.length > 0) {
+        return null;
+    }
+
+    return { ...dailyMenu, courses: processedCourses };
+  }, [dailyMenu, selectedAllergens]);
+
+  const isDailyMenuVisible = useMemo(() => {
+    console.log("TIMER: Re-evaluating daily menu visibility...");
+
+    if (isLoadingDailyMenu) {
+      console.log("TIMER: isLoadingDailyMenu is true. Result: false.");
+      return false;
+    }
+    if (!processedDailyMenu) {
+      console.log("TIMER: processedDailyMenu is null. Result: false.");
+      return false;
+    }
+    if (!processedDailyMenu.isPublished) {
+      console.log("TIMER: processedDailyMenu.isPublished is false. Result: false.");
+      return false;
+    }
+
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const startTime = processedDailyMenu.startTime;
+    const endTime = processedDailyMenu.endTime;
+    const result = currentTime >= startTime && currentTime <= endTime;
+
+    console.log(`TIMER: Checking time... Now: ${currentTime}, Start: ${startTime}, End: ${endTime}. Is visible? ${result}`);
+
+    return result;
+  }, [processedDailyMenu, isLoadingDailyMenu, now]);
 
   const groupedMenu = useMemo(() => {
     return initialItems.reduce((acc: GroupedMenu, item: MenuItem) => {
@@ -174,17 +324,112 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
           </h1>
         </div>
 
+        <CategorySlider
+          orderedCategoryNames={orderedCategoryNames}
+          categoryTranslationMap={categoryTranslationMap}
+          isDailyMenuVisible={isDailyMenuVisible}
+          lang={lang}
+          getTranslated={getTranslated}
+          filteredGroupedMenu={filteredGroupedMenu}
+          generateSafeId={generateSafeId} 
+        />
+
+        {/* --- SECCIÓN MENÚ DEL DÍA --- */}
+        {isDailyMenuVisible && processedDailyMenu && (
+          <section id="daily-menu" className="mb-16 scroll-mt-28">
+            <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+                <header className="bg-blue-600 text-white flex items-center justify-between py-3 px-4 sm:px-6 lg:px-8">
+                  <h2 className="text-2xl font-bold" style={{ fontFamily: 'Manrope' }}>
+                    {staticTexts.dailyMenuTitle[lang]}
+                  </h2>
+                  <span className="font-semibold text-xl">{currentDate}</span>
+                </header>
+            </div>
+
+            <div className="py-10">
+                <div className="space-y-12">
+                  {processedDailyMenu.courses.map((course, courseIndex) => {
+                    if (course.compatibleDishes.length === 0 && course.incompatibleDishes.length === 0) return null;
+
+                    return (
+                      <div key={course.title}>
+                        <div className="flex items-baseline gap-3 mb-6">
+                          <h3 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Manrope' }}>{course.title}</h3>
+                          <span className="text-gray-500">{staticTexts.dailyMenuToChoose[lang]}</span>
+                        </div>
+                        
+                        <div className="space-y-8">
+                          {course.compatibleDishes.map((dish, dishIndex) => (
+                            <div key={dishIndex} className="flex items-start gap-4">
+                              <span className="font-mono text-lg text-gray-400 pt-1">{(dishIndex + 1).toString().padStart(2, '0')}.</span>
+                              <div className='flex-grow'>
+                                <h4 className="font-semibold text-[14pt] text-gray-800 tracking-normal" style={{ fontFamily: 'Manrope', lineHeight: '140%' }}>{dish.name}</h4>
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                  {Object.entries(dish.allergens).map(([id, status]) => (
+                                    <AllergenIconDisplay key={id} allergenId={id} type={status === 'yes' ? 'contains' : 'traces'} lang={lang} />
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {course.incompatibleDishes.length > 0 && (
+                          <Collapsible 
+                            open={openIncompatibleDaily[course.title] || false} 
+                            onOpenChange={(isOpen) => setOpenIncompatibleDaily(prev => ({ ...prev, [course.title]: isOpen }))}
+                            className="mt-6 pt-6 border-t"
+                          >
+                            <CollapsibleTrigger className="flex items-center justify-start text-sm font-semibold w-full py-2 text-[#EA3939]">
+                               {staticTexts.showIncompatible[lang](course.incompatibleDishes.length)}
+                              <ChevronDown className={`h-5 w-5 ml-1 transition-transform ${openIncompatibleDaily[course.title] ? 'rotate-180' : ''}`} />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="pt-4 space-y-8">
+                              {course.incompatibleDishes.map((dish, dishIndex) => (
+                                <div key={dishIndex} className="opacity-60 flex items-start gap-4">
+                                  <span className="font-mono text-lg text-gray-400 pt-1">{(course.compatibleDishes.length + dishIndex + 1).toString().padStart(2, '0')}.</span>
+                                  <div className='flex-grow'>
+                                    <h4 className="font-semibold text-[14pt] text-gray-800 tracking-normal" style={{ fontFamily: 'Manrope', lineHeight: '140%' }}>{dish.name}</h4>
+                                    <div className="flex flex-wrap items-center gap-3 mt-3">
+                                      <span className="bg-[#EA3939] text-white text-xs font-bold mr-2 px-2 py-1 rounded-full">{staticTexts.notSuitable[lang]}</span>
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        {Object.entries(dish.allergens).map(([id, status]) => (
+                                          <AllergenIconDisplay key={id} allergenId={id} type={status === 'yes' ? 'contains' : 'traces'} isHighlighted={selectedAllergens.includes(id)} lang={lang} />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </CollapsibleContent>
+                          </Collapsible>
+                        )}
+                      </div>
+                    )
+                })}
+                </div>
+            </div>
+            <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+                <footer className="bg-gray-900 text-white flex items-center justify-between p-5 px-4 sm:px-6 lg:px-8">
+                    <span className="text-3xl font-bold" style={{ fontFamily: 'Manrope' }}>{(processedDailyMenu.price / 100).toFixed(2).replace('.', ',')}€</span>
+                    {processedDailyMenu.note && <p className="text-base text-right font-light">{processedDailyMenu.note}</p>}
+                </footer>
+            </div>
+          </section>
+        )}
+
+        {/* --- SECCIÓN CARTA HABITUAL --- */}
         <div className="space-y-16 mt-10">
           {orderedCategoryNames.length > 0 ? (
               orderedCategoryNames.map(categoryName => {
                 const compatibleItems = filteredGroupedMenu[categoryName] || [];
                 const incompatibleItems = incompatibleItemsByCategory[categoryName] || [];
-                const sectionId = categoryName.replace(/\s+/g, '-');
+                const sectionId = generateSafeId(categoryName);
 
-                if (compatibleItems.length === 0 && incompatibleItems.length === 0) return null;
+                if (!sectionId || (compatibleItems.length === 0 && incompatibleItems.length === 0)) return null;
 
                 return (
-                  <section key={categoryName} id={sectionId}>
+                  <section key={categoryName} id={sectionId} className="scroll-mt-28">
                     <div className="-mx-4 sm:-mx-6 lg:-mx-8">
                       <h2 className="bg-blue-600 text-white text-2xl font-semibold px-4 sm:px-6 lg:px-4 py-4 tracking-normal">
                         {getTranslated(categoryTranslationMap.get(categoryName), lang) || categoryName}
@@ -251,6 +496,7 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
             </div>
           )}
         </div>
+        <AllergenLegend lang={lang} />
       </main>
     </div>
   );

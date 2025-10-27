@@ -39,7 +39,7 @@ const pricingPlans = [
     {
       id: 'autonomia',
       name: 'Plan Autonomía',
-      price: '19€',
+      price: '12€',
       details: 'Mensual, IVA inc.',
     },
     {
@@ -129,8 +129,10 @@ function RegisterForm() {
       const batch = writeBatch(db);
       const restaurantSlug = slugify(restaurantName);
       const restaurantRef = doc(db, 'restaurants', user.uid);
+      
+      // CORRECTED: Changed 'ownerId' to 'uid' for consistency.
       batch.set(restaurantRef, {
-        ownerId: user.uid,
+        uid: user.uid,
         restaurantName,
         slug: restaurantSlug, 
         ownerName,
