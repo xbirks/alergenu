@@ -132,7 +132,7 @@ const faqData = [
 export default function HomePage() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   
-  const videoUrl = "https://www.youtube.com/embed/z5GEeM1CD3M";
+  const videoUrl = "https://www.youtube.com/embed/yHWWIfl8vh4";
   const videoTitle = "Demostración de Alergenu";
 
   return (
@@ -259,7 +259,7 @@ export default function HomePage() {
         <section className="w-full max-w-sm mx-auto mt-12 container px-4">
           <div className="aspect-[9/16] rounded-2xl overflow-hidden shadow-lg">
             <iframe
-              src="https://www.youtube.com/embed/z5GEeM1CD3M"
+              src="https://www.youtube.com/embed/yHWWIfl8vh4"
               title="Demostración de Alergenu"
               width="100%"
               height="100%"
