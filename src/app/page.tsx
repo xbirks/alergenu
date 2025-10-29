@@ -259,7 +259,7 @@ export default function HomePage() {
         <section className="w-full max-w-sm mx-auto mt-12 container px-4">
           <div className="aspect-[9/16] rounded-2xl overflow-hidden shadow-lg">
             <iframe
-              src="https://www.youtube.com/embed/yHWWIfl8vh4"
+              src="https://www.youtube.com/embed/z5GEeM1CD3M"
               title="Demostración de Alergenu"
               width="100%"
               height="100%"

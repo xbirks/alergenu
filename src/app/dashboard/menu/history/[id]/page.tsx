@@ -8,7 +8,6 @@ import { db } from '@/lib/firebase/firebase';
 import { collection, query, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { Loader2, ArrowLeft, User, Clock, CheckCircle, AlertTriangle, VenetianMask } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineIcon, TimelineTitle, TimelineBody } from '@/components/ui/timeline';
 import { ALLERGENS } from '@/lib/allergens';
 import { I18nString } from '@/types/i18n';
 
@@ -98,8 +97,38 @@ export default function MenuItemHistoryPage() {
           <p className="text-lg text-muted-foreground">Para el plato: <span className="font-bold text-primary">{menuItemName}</span></p>
         </div>
       </div>
-      {history.length > 0 ? <Timeline>{history.map((entry, index) => <TimelineItem key={entry.id}><TimelineConnector /><TimelineHeader><TimelineIcon><Clock className="h-4 w-4" /></TimelineIcon><TimelineTitle className="text-lg font-semibold">Cambio #{history.length - index}: {new Date(entry.updatedAt.seconds * 1000).toLocaleString('es-ES')}</TimelineTitle></TimelineHeader><TimelineBody className="border rounded-xl p-6 mb-8 bg-card shadow-sm"><div className="space-y-4"><div className="flex justify-between items-center"><div className="flex items-center gap-2 text-sm text-muted-foreground"><User className="h-4 w-4" /><span>{userDisplayData[entry.lastUpdatedBy] || 'Cargando...'}</span></div><Badge variant={entry.isAvailable ? 'default' : 'destructive'}>{entry.isAvailable ? 'Disponible' : 'No Disponible'}</Badge></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm"><div><span className="font-bold">Nombre:</span> {entry.name_i18n?.es || '-'}</div><div><span className="font-bold">Precio:</span> {(entry.price / 100).toFixed(2)}€</div><div className="col-span-2"><span className="font-bold">Descripción:</span> {entry.description_i18n?.es || '-'}</div></div><div><h4 className="font-bold mb-2">Alérgenos Declarados:</h4><AllergenDisplay allergens={entry.allergens} /></div></div></TimelineBody></TimelineItem>)}</Timeline>
-       : <div className="text-center py-24 border-dashed border-2 rounded-lg bg-gray-50"><h3 className="text-2xl font-bold">Historial Vacío</h3><p className="text-muted-foreground mt-2">No se han registrado cambios para este plato todavía.</p></div>}
+      {history.length > 0 ? (
+        <div className="space-y-8">
+          {history.map((entry, index) => (
+            <div key={entry.id} className="border rounded-xl p-6 bg-card shadow-sm">
+                <div className="flex items-center gap-4 mb-4">
+                    <Clock className="h-5 w-5 text-gray-500" />
+                    <h3 className="text-lg font-semibold">Cambio #{history.length - index}: {new Date(entry.updatedAt.seconds * 1000).toLocaleString('es-ES')}</h3>
+                </div>
+                <div className="space-y-4 pl-9">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground"><User className="h-4 w-4" /><span>{userDisplayData[entry.lastUpdatedBy] || 'Cargando...'}</span></div>
+                        <Badge variant={entry.isAvailable ? 'default' : 'destructive'}>{entry.isAvailable ? 'Disponible' : 'No Disponible'}</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                        <div><span className="font-bold">Nombre:</span> {entry.name_i18n?.es || '-'}</div>
+                        <div><span className="font-bold">Precio:</span> {(entry.price / 100).toFixed(2)}€</div>
+                        <div className="col-span-2"><span className="font-bold">Descripción:</span> {entry.description_i18n?.es || '-'}</div>
+                    </div>
+                    <div>
+                        <h4 className="font-bold mb-2">Alérgenos Declarados:</h4>
+                        <AllergenDisplay allergens={entry.allergens} />
+                    </div>
+                </div>
+            </div>
+          ))}
+        </div>
+       ) : (
+        <div className="text-center py-24 border-dashed border-2 rounded-lg bg-gray-50">
+          <h3 className="text-2xl font-bold">Historial Vacío</h3>
+          <p className="text-muted-foreground mt-2">No se han registrado cambios para este plato todavía.</p>
+        </div>
+      )}
     </div>
   );
 }
