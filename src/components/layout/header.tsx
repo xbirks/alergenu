@@ -94,19 +94,19 @@ export function Header() {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
+            <DropdownMenuContent className="w-64 p-2" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal py-2 px-2">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-bold leading-none">{userName}</p>
+                  <p className="text-base font-bold leading-none text-gray-800">{userName}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/dashboard/preferences')}>
-                <Settings className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={() => router.push('/dashboard/preferences')} className="text-base py-3 px-2 cursor-pointer">
+                <Settings className="mr-3 h-5 w-5" />
                 <span>Preferencias</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={handleLogout} className="text-base py-3 px-2 cursor-pointer">
+                <LogOut className="mr-3 h-5 w-5" />
                 <span>Cerrar sesión</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

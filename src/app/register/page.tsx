@@ -11,7 +11,7 @@ import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { doc, collection, writeBatch } from 'firebase/firestore';
+import { doc, collection, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { PublicHeader } from '@/components/layout/PublicHeader';
 
 const slugify = (text: string) => {
@@ -62,6 +62,7 @@ function RegisterForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [userIp, setUserIp] = useState('');
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -75,6 +76,19 @@ function RegisterForm() {
     email: 'Ej: mariaperez@gmail.com',
   });
 
+  useEffect(() => {
+    // Fetch user IP on component mount
+    fetch('/api/get-ip')
+      .then(res => res.json())
+      .then(data => setUserIp(data.ip || 'IP not found'))
+      .catch(() => setUserIp('IP not found'));
+
+    const planFromUrl = searchParams.get('plan');
+    if (planFromUrl && ['gratuito', 'autonomia', 'premium'].includes(planFromUrl)) {
+      setSelectedPlan(planFromUrl);
+    }
+  }, [searchParams]);
+
   const handleFocus = (field: keyof typeof placeholders) => {
     setPlaceholders(prev => ({ ...prev, [field]: '' }));
   };
@@ -84,13 +98,6 @@ function RegisterForm() {
       setPlaceholders(prev => ({ ...prev, [field]: originalPlaceholder }));
     }
   };
-
-  useEffect(() => {
-    const planFromUrl = searchParams.get('plan');
-    if (planFromUrl && ['gratuito', 'autonomia', 'premium'].includes(planFromUrl)) {
-      setSelectedPlan(planFromUrl);
-    }
-  }, [searchParams]);
   
   const handlePlanSelection = (planId: string) => {
     setSelectedPlan(planId);
@@ -129,8 +136,9 @@ function RegisterForm() {
       const batch = writeBatch(db);
       const restaurantSlug = slugify(restaurantName);
       const restaurantRef = doc(db, 'restaurants', user.uid);
+      const acceptanceDate = serverTimestamp();
       
-      // CORRECTED: Changed 'ownerId' to 'uid' for consistency.
+      // 1. Create the main restaurant document
       batch.set(restaurantRef, {
         uid: user.uid,
         restaurantName,
@@ -138,10 +146,29 @@ function RegisterForm() {
         ownerName,
         email: user.email,
         selectedPlan: selectedPlan,
-        createdAt: new Date(),
-        termsAcceptedAt: new Date(),
+        createdAt: serverTimestamp(),
+        termsAcceptedAt: acceptanceDate,
+        hasSeenWelcomeVideo: false,
       });
 
+      // 2. Create the legal acceptance record (LA CORRECCIÓN)
+      const legalAcceptanceRef = doc(db, 'legalAcceptances', user.uid);
+      batch.set(legalAcceptanceRef, {
+        userId: user.uid,
+        version: '1.0.0', // Version of the terms accepted
+        acceptedAt: acceptanceDate,
+        ipAddress: userIp,
+      });
+
+      // 3. Create a document in the 'users' collection for easy lookup
+      const userRef = doc(db, 'users', user.uid);
+      batch.set(userRef, {
+        email: user.email,
+        displayName: ownerName, // We use the owner's name as the display name
+        createdAt: serverTimestamp(),
+      });
+
+      // 4. Create default categories for the new restaurant
       const categoriesCollectionRef = collection(db, 'restaurants', user.uid, 'categories');
       const defaultCategories = [
         { name_i18n: { es: 'Entrantes', en: 'Starters' }, order: 1 },

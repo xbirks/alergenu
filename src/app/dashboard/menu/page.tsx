@@ -119,7 +119,7 @@ export default function MenuPage() {
     const itemName = itemToDelete.name_i18n?.es || itemToDelete.name;
     try {
       await deleteDoc(doc(db, 'restaurants', user.uid, 'menuItems', itemToDelete.id));
-      toast({ title: 'Plato eliminado', description: `El plato "${itemName}" ha sido eliminado.` });
+      toast({ title: 'Plato eliminado', description: `El plato "${itemName}" ha sido eliminado permanentemente.` });
     } catch (error) {
       toast({ title: 'Error al eliminar', variant: 'destructive' });
     } finally {

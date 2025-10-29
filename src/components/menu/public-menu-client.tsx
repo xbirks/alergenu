@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AllergenFilter } from './allergen-filter';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -44,6 +44,7 @@ interface PublicMenuClientProps {
   initialCategories: Category[];
   initialItems: MenuItem[];
   customAllergens: Allergen[];
+  lastUpdatedAt: string | null;
 }
 
 interface GroupedMenu {
@@ -71,6 +72,7 @@ const generateSafeId = (name: string) => {
 
 const staticTexts = {
   welcome: { es: "Bienvenido a la carta digital de", en: "Welcome to the digital menu of" },
+  lastUpdated: { es: "Última actualización", en: "Last updated" },
   editAllergies: { es: "Editar alergias", en: "Edit allergies" },
   showIncompatible: { 
     es: (count: number) => `Mostrar ${count} plato(s) no compatible(s)`,
@@ -97,7 +99,7 @@ const getTranslated = (i18nField: any, lang: string) => {
 
 // --- COMPONENTE PRINCIPAL --- //
 
-export function PublicMenuClient({ restaurant, restaurantId, initialCategories, initialItems, customAllergens }: PublicMenuClientProps) {
+export function PublicMenuClient({ restaurant, restaurantId, initialCategories, initialItems, customAllergens, lastUpdatedAt }: PublicMenuClientProps) {
   const searchParams = useSearchParams();
   const [isFilterSheetOpen, setFilterSheetOpen] = useState(searchParams.get('alergico') === 'true');
   const [selectedAllergens, setSelectedAllergens] = useLocalStorage<string[]>('selectedAllergens', []);
@@ -282,6 +284,16 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
 
     return allKnownCategories;
   }, [initialCategories, groupedMenu]);
+
+  const formattedLastUpdate = useMemo(() => {
+    if (!lastUpdatedAt) return null;
+    const date = new Date(lastUpdatedAt);
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric', month: 'long', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    };
+    return date.toLocaleString(lang, options);
+  }, [lastUpdatedAt, lang]);
   
   return (
     <div className="bg-white min-h-screen font-sans">
@@ -322,6 +334,12 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
           <h1 className="text-[40pt] font-bold tracking-tight text-gray-900 mt-1" style={{ fontFamily: 'Manrope', lineHeight: '110%' }}>
             {restaurant.restaurantName || staticTexts.restaurantFallback[lang]}
           </h1>
+          {formattedLastUpdate && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+              <Clock className="h-4 w-4" />
+              <span>{staticTexts.lastUpdated[lang]} {formattedLastUpdate}</span>
+            </div>
+          )}
         </div>
 
         <CategorySlider

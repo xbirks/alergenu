@@ -2,11 +2,12 @@
 
 import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase/firebase';
 import { 
   collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, 
-  serverTimestamp, writeBatch, getDocs, where, updateDoc
+  serverTimestamp, writeBatch, getDocs, where
 } from 'firebase/firestore';
 import { I18nString } from '@/types/i18n';
 import { cn } from '@/lib/utils';
@@ -15,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { Loader2, Trash2, ArrowLeft, PlusCircle, FilePenLine, ArrowUp, ArrowDown, AlertTriangle, Languages } from 'lucide-react';
+import { Loader2, Trash2, ArrowLeft, PlusCircle, FilePenLine, ArrowUp, ArrowDown, AlertTriangle, Languages, History } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -48,6 +49,7 @@ async function translateText(text: string, targetLang: string = 'en'): Promise<s
 }
 
 export default function CategoriesPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -98,27 +100,32 @@ export default function CategoriesPage() {
     }
 
     setIsSubmitting(true);
+    const batch = writeBatch(db);
+    const newCategoryRef = doc(collection(db, 'restaurants', user.uid, 'categories'));
+
     try {
-      const categoriesCollection = collection(db, 'restaurants', user.uid, 'categories');
       const newOrder = categories.length > 0 ? Math.max(...categories.map(c => c.order || 0)) + 1 : 1;
-      
-      const newCategoryData = {
-        name_i18n: { es: newCategoryName.trim(), en: '' },
-        createdAt: serverTimestamp(),
+      const translatedName = await translateText(newCategoryName.trim());
+
+      const categoryData = {
+        name_i18n: { es: newCategoryName.trim(), en: translatedName },
         order: newOrder,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastUpdatedBy: user.uid,
       };
 
-      const docRef = await addDoc(categoriesCollection, newCategoryData);
-      toast({ title: 'Categoría añadida', description: 'Traduciendo al inglés...' });
+      // 1. Set Categoy Data
+      batch.set(newCategoryRef, categoryData);
+
+      // 2. Set History Record
+      const historyRef = doc(collection(newCategoryRef, 'history'));
+      batch.set(historyRef, categoryData);
+
+      await batch.commit();
+
+      toast({ title: 'Categoría añadida', description: translatedName ? `Traducida a: "${translatedName}"`: 'La traducción automática falló. Puedes añadirla manualmente.' });
       setNewCategoryName('');
-      
-      const translatedName = await translateText(newCategoryName.trim());
-      if (translatedName) {
-        await updateDoc(docRef, { 'name_i18n.en': translatedName });
-        toast({ title: 'Categoría añadida y traducida', description: `Español: ${newCategoryName.trim()}, Inglés: ${translatedName}` });
-      } else {
-        toast({ title: 'Categoría añadida', description: 'La traducción automática falló. Puedes añadirla manualmente.', variant: 'default' });
-      }
 
     } catch (error) {
       console.error("Error adding category: ", error);
@@ -150,10 +157,25 @@ export default function CategoriesPage() {
         es: categoryToEdit.name_es.trim(),
         en: categoryToEdit.name_en.trim(),
     };
+    
+    const categoryUpdateData = {
+        name_i18n: newNameI18n,
+        updatedAt: serverTimestamp(),
+        lastUpdatedBy: user.uid,
+    };
 
     try {
-        batch.update(categoryDocRef, { name_i18n: newNameI18n });
+        // 1. Update category itself
+        batch.update(categoryDocRef, categoryUpdateData);
 
+        // 2. Create history record for the category
+        const historyRef = doc(collection(categoryDocRef, 'history'));
+        // We get the full category object to save it in the history
+        const categoryToUpdate = categories.find(c => c.id === categoryToEdit.id);
+        const fullHistoryData = { ...categoryToUpdate, ...categoryUpdateData };
+        batch.set(historyRef, fullHistoryData);
+
+        // 3. Update all menu items that use this category
         const menuItemsQuery = query(
             collection(db, 'restaurants', user.uid, 'menuItems'), 
             where("categoryId", "==", categoryToEdit.id)
@@ -201,6 +223,8 @@ export default function CategoriesPage() {
     if (!user || !deleteConfirmation) return;
     setIsSubmitting(true);
     try {
+      // Before deleting, we could add a final record to the history.
+      // For now, we just delete.
       await deleteDoc(doc(db, 'restaurants', user.uid, 'categories', deleteConfirmation.id));
       toast({ title: 'Categoría eliminada' });
     } catch (error) {
@@ -219,11 +243,21 @@ export default function CategoriesPage() {
     const otherIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     const batch = writeBatch(db);
 
-    const docRefA = doc(db, 'restaurants', user.uid, 'categories', categories[currentIndex].id);
-    batch.update(docRefA, { order: categories[otherIndex].order });
+    // The two categories being swapped
+    const categoryA = categories[currentIndex];
+    const categoryB = categories[otherIndex];
 
-    const docRefB = doc(db, 'restaurants', user.uid, 'categories', categories[otherIndex].id);
-    batch.update(docRefB, { order: categories[currentIndex].order });
+    const docRefA = doc(db, 'restaurants', user.uid, 'categories', categoryA.id);
+    const updateA = { order: categoryB.order, updatedAt: serverTimestamp(), lastUpdatedBy: user.uid };
+    batch.update(docRefA, updateA);
+    const historyRefA = doc(collection(docRefA, 'history'));
+    batch.set(historyRefA, { ...categoryA, ...updateA });
+
+    const docRefB = doc(db, 'restaurants', user.uid, 'categories', categoryB.id);
+    const updateB = { order: categoryA.order, updatedAt: serverTimestamp(), lastUpdatedBy: user.uid };
+    batch.update(docRefB, updateB);
+    const historyRefB = doc(collection(docRefB, 'history'));
+    batch.set(historyRefB, { ...categoryB, ...updateB });
 
     try {
       await batch.commit();
@@ -285,6 +319,7 @@ export default function CategoriesPage() {
                     </div>
                 </div>
                 <div className='flex items-center space-x-1'>
+                    <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/menu/categories/history/${cat.id}`)} className='h-11 w-11 rounded-full text-muted-foreground'><History className="h-6 w-6" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => handleStartEdit(cat)} className='h-11 w-11 rounded-full text-muted-foreground'><FilePenLine className="h-6 w-6" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => confirmDeleteCategory(cat)} className='h-11 w-11 text-destructive rounded-full'><Trash2 className="h-6 w-6" /></Button>
                 </div>

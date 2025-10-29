@@ -41,6 +41,21 @@ export default async function PublicMenuPage({ params }: { params: { restaurantI
   try {
     const menuData = await getMenuData(restaurantId);
 
+    // Find the most recent update timestamp from all menu items
+    let lastUpdatedAt: string | null = null;
+    if (menuData.items && menuData.items.length > 0) {
+        const latestTimestamp = menuData.items.reduce((latest, item) => {
+            if (item.updatedAt && item.updatedAt.seconds > latest.seconds) {
+                return item.updatedAt;
+            }
+            return latest;
+        }, { seconds: 0, nanoseconds: 0 });
+
+        if (latestTimestamp.seconds > 0) {
+            lastUpdatedAt = new Date(latestTimestamp.seconds * 1000).toISOString();
+        }
+    }
+
     return (
       <PublicMenuClient 
         restaurant={menuData.restaurant}
@@ -48,6 +63,7 @@ export default async function PublicMenuPage({ params }: { params: { restaurantI
         initialCategories={menuData.categories}
         initialItems={menuData.items}
         customAllergens={menuData.customAllergens}
+        lastUpdatedAt={lastUpdatedAt}
       />
     );
   } catch (error) {

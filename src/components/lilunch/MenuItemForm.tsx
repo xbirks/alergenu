@@ -15,7 +15,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { CategoryCombobox } from '@/components/lilunch/CategoryCombobox';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase/firebase';
-import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { AllergenSelector } from '@/components/lilunch/AllergenSelector';
@@ -89,6 +89,7 @@ async function translateText(text: string): Promise<string> {
 
 export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -116,7 +117,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
     },
   });
 
-  const { formState } = form;
+  const { formState, reset } = form;
 
   useEffect(() => {
     if (isEditMode && existingMenuItem && user) {
@@ -137,7 +138,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
       const description_en = (description_i18n.en && typeof description_i18n.en === 'string') ? description_i18n.en : '';
       const priceString = (existingMenuItem.price / 100).toFixed(2).replace('.', ',');
 
-      form.reset({
+      reset({
         name_es: name_i18n.es || '',
         name_en: name_en,
         description_es: description_i18n.es || '',
@@ -153,58 +154,85 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
         fetchAndSetCategory(categoryId);
       }
     }
-  }, [isEditMode, existingMenuItem, user, form, defaultAllergens]);
+  }, [isEditMode, existingMenuItem, user, form, defaultAllergens, reset]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
       toast({ title: 'Error de autenticación', variant: 'destructive' });
       return;
     }
-    
+
     setIsSubmitting(true);
+    setShowSuccessMessage(false);
     try {
+      const batch = writeBatch(db);
+      
       const allergensToSave = Object.entries(values.allergens)
         .filter(([, value]) => value !== 'no')
         .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
       
       const priceInCents = Math.round(parseFloat(values.price.replace(',', '.')) * 100);
 
-      const dataToSave: any = {
+      const docRef = isEditMode && existingMenuItem
+        ? doc(db, 'restaurants', user.uid, 'menuItems', existingMenuItem.id)
+        : doc(collection(db, 'restaurants', user.uid, 'menuItems'));
+
+      // Objeto de datos principal para el documento del plato
+      let mainData: any = {
+        name_i18n: { es: values.name_es, en: values.name_en || '' },
+        description_i18n: { es: values.description_es || '', en: values.description_en || '' },
         price: priceInCents,
         allergens: allergensToSave,
         categoryId: values.category.id,
         category_i18n: values.category.name_i18n,
         isAvailable: values.isAvailable,
         updatedAt: serverTimestamp(),
+        lastUpdatedBy: user.uid,
+        lastUpdatedByDisplayName: user.displayName || user.email,
       };
 
-      if (isEditMode && existingMenuItem) {
-        dataToSave.name_i18n = { es: values.name_es, en: values.name_en || '' };
-        dataToSave.description_i18n = { es: values.description_es || '', en: values.description_en || '' };
-        
-        const docRef = doc(db, 'restaurants', user.uid, 'menuItems', existingMenuItem.id);
-        await updateDoc(docRef, dataToSave);
+      // Objeto de datos COMPLETO y EXPLÍCITO para el historial
+      const historyData = {
+        name_i18n: { es: values.name_es, en: values.name_en || '' },
+        description_i18n: { es: values.description_es || '', en: values.description_en || '' },
+        category_i18n: values.category.name_i18n,
+        price: priceInCents,
+        isAvailable: values.isAvailable,
+        allergens: allergensToSave,
+        updatedAt: serverTimestamp(),
+        lastUpdatedBy: user.uid,
+        lastUpdatedByDisplayName: user.displayName || user.email,
+      };
+
+      if (isEditMode) {
+        batch.update(docRef, mainData);
         toast({ title: '¡Plato actualizado!', description: `El plato '${values.name_es}' ha sido guardado.` });
       } else {
+        mainData.createdAt = serverTimestamp();
         toast({ title: 'Traduciendo plato...', description: 'Por favor, espera un momento.'});
         const [translatedName, translatedDescription] = await Promise.all([
           translateText(values.name_es),
           translateText(values.description_es || '')
         ]);
+        mainData.name_i18n.en = translatedName;
+        historyData.name_i18n.en = translatedName;
+        mainData.description_i18n.en = translatedDescription;
+        historyData.description_i18n.en = translatedDescription;
 
-        dataToSave.name_i18n = { es: values.name_es, en: translatedName };
-        dataToSave.description_i18n = { es: values.description_es || '', en: translatedDescription };
-        dataToSave.createdAt = serverTimestamp();
-
-        const collectionRef = collection(db, 'restaurants', user.uid, 'menuItems');
-        await addDoc(collectionRef, dataToSave);
+        batch.set(docRef, mainData);
         toast({ title: '¡Plato añadido!', description: `El plato '${values.name_es}' se ha guardado y traducido.` });
       }
+
+      const historyRef = doc(collection(docRef, 'history'));
+      batch.set(historyRef, historyData);
+
+      await batch.commit();
       
+      setShowSuccessMessage(true);
       router.push('/dashboard/menu');
 
     } catch (error) {
-      console.error("Error saving item: ", error);
+      console.error("Error saving item with history: ", error);
       toast({ title: 'Error al guardar', description: 'Ha ocurrido un problema. Por favor, inténtalo de nuevo.', variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
@@ -295,7 +323,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
                 {isSubmitting ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : null}
                 {isSubmitting ? (isEditMode ? 'Guardando...' : 'Traduciendo y guardando...') : (isEditMode ? 'Guardar cambios' : 'Añadir plato')}
             </Button>
-            {formState.isSubmitted && !formState.isValid && (
+            {formState.isSubmitted && !formState.isValid && !showSuccessMessage && (
                 <p className="text-center text-sm text-destructive mt-4 font-semibold">
                     Faltan campos obligatorios por completar.
                 </p>
