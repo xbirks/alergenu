@@ -60,6 +60,8 @@ export interface MenuItem {
     description_i18n?: I18nString;
     allergens?: { [key: string]: 'no' | 'traces' | 'yes' };
     isAvailable: boolean;
+    order?: number;
+    createdAt?: any;
 }
 
 interface MenuItemFormProps {
@@ -209,6 +211,8 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
         toast({ title: '¡Plato actualizado!', description: `El plato '${values.name_es}' ha sido guardado.` });
       } else {
         mainData.createdAt = serverTimestamp();
+        mainData.order = Date.now(); // <-- 🔥 CAMBIO: Asigna un orden inicial
+
         toast({ title: 'Traduciendo plato...', description: 'Por favor, espera un momento.'});
         const [translatedName, translatedDescription] = await Promise.all([
           translateText(values.name_es),

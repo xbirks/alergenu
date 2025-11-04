@@ -11,7 +11,7 @@ import Image from 'next/image';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { doc, collection, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, writeBatch, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { PublicHeader } from '@/components/layout/PublicHeader';
 
 const slugify = (text: string) => {
@@ -28,6 +28,26 @@ const slugify = (text: string) => {
     .replace(/^-+/, '')
     .replace(/-+$/, '');
 }
+
+// Función para encontrar un slug único
+const findUniqueSlug = async (db: any, baseSlug: string): Promise<string> => {
+    const restaurantsRef = collection(db, 'restaurants');
+    let currentSlug = baseSlug;
+    let counter = 2;
+    let isUnique = false;
+
+    while (!isUnique) {
+        const q = query(restaurantsRef, where("slug", "==", currentSlug));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            isUnique = true;
+        } else {
+            currentSlug = `${baseSlug}-${counter}`;
+            counter++;
+        }
+    }
+    return currentSlug;
+};
 
 const pricingPlans = [
     {
@@ -128,21 +148,23 @@ function RegisterForm() {
     setLoading(true);
 
     try {
+      const baseSlug = slugify(restaurantName);
+      const uniqueSlug = await findUniqueSlug(db, baseSlug);
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       await sendEmailVerification(user);
 
       const batch = writeBatch(db);
-      const restaurantSlug = slugify(restaurantName);
       const restaurantRef = doc(db, 'restaurants', user.uid);
       const acceptanceDate = serverTimestamp();
       
-      // 1. Create the main restaurant document
+      // 1. Create the main restaurant document with the unique slug
       batch.set(restaurantRef, {
         uid: user.uid,
         restaurantName,
-        slug: restaurantSlug, 
+        slug: uniqueSlug, 
         ownerName,
         email: user.email,
         selectedPlan: selectedPlan,
@@ -151,7 +173,7 @@ function RegisterForm() {
         hasSeenWelcomeVideo: false,
       });
 
-      // 2. Create the legal acceptance record (LA CORRECCIÓN)
+      // 2. Create the legal acceptance record
       const legalAcceptanceRef = doc(db, 'legalAcceptances', user.uid);
       batch.set(legalAcceptanceRef, {
         userId: user.uid,

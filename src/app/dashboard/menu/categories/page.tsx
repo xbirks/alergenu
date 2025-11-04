@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { Loader2, Trash2, ArrowLeft, PlusCircle, FilePenLine, ArrowUp, ArrowDown, AlertTriangle, Languages, History } from 'lucide-react';
+import { Loader2, Trash2, ArrowLeft, PlusCircle, FilePenLine, ArrowUp, ArrowDown, AlertTriangle, Languages } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -100,29 +100,18 @@ export default function CategoriesPage() {
     }
 
     setIsSubmitting(true);
-    const batch = writeBatch(db);
-    const newCategoryRef = doc(collection(db, 'restaurants', user.uid, 'categories'));
 
     try {
       const newOrder = categories.length > 0 ? Math.max(...categories.map(c => c.order || 0)) + 1 : 1;
       const translatedName = await translateText(newCategoryName.trim());
 
-      const categoryData = {
+      await addDoc(collection(db, 'restaurants', user.uid, 'categories'), {
         name_i18n: { es: newCategoryName.trim(), en: translatedName },
         order: newOrder,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         lastUpdatedBy: user.uid,
-      };
-
-      // 1. Set Categoy Data
-      batch.set(newCategoryRef, categoryData);
-
-      // 2. Set History Record
-      const historyRef = doc(collection(newCategoryRef, 'history'));
-      batch.set(historyRef, categoryData);
-
-      await batch.commit();
+      });
 
       toast({ title: 'Categoría añadida', description: translatedName ? `Traducida a: "${translatedName}"`: 'La traducción automática falló. Puedes añadirla manualmente.' });
       setNewCategoryName('');
@@ -165,17 +154,8 @@ export default function CategoriesPage() {
     };
 
     try {
-        // 1. Update category itself
         batch.update(categoryDocRef, categoryUpdateData);
 
-        // 2. Create history record for the category
-        const historyRef = doc(collection(categoryDocRef, 'history'));
-        // We get the full category object to save it in the history
-        const categoryToUpdate = categories.find(c => c.id === categoryToEdit.id);
-        const fullHistoryData = { ...categoryToUpdate, ...categoryUpdateData };
-        batch.set(historyRef, fullHistoryData);
-
-        // 3. Update all menu items that use this category
         const menuItemsQuery = query(
             collection(db, 'restaurants', user.uid, 'menuItems'), 
             where("categoryId", "==", categoryToEdit.id)
@@ -223,8 +203,6 @@ export default function CategoriesPage() {
     if (!user || !deleteConfirmation) return;
     setIsSubmitting(true);
     try {
-      // Before deleting, we could add a final record to the history.
-      // For now, we just delete.
       await deleteDoc(doc(db, 'restaurants', user.uid, 'categories', deleteConfirmation.id));
       toast({ title: 'Categoría eliminada' });
     } catch (error) {
@@ -234,8 +212,8 @@ export default function CategoriesPage() {
       setIsSubmitting(false);
       setDeleteConfirmation(null);
     }
-  };
-  
+  };  
+
   const handleReorder = async (currentIndex: number, direction: 'up' | 'down') => {
     if (!user) return;
     if ((direction === 'up' && currentIndex === 0) || (direction === 'down' && currentIndex === categories.length - 1)) return;
@@ -243,21 +221,14 @@ export default function CategoriesPage() {
     const otherIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     const batch = writeBatch(db);
 
-    // The two categories being swapped
     const categoryA = categories[currentIndex];
     const categoryB = categories[otherIndex];
 
     const docRefA = doc(db, 'restaurants', user.uid, 'categories', categoryA.id);
-    const updateA = { order: categoryB.order, updatedAt: serverTimestamp(), lastUpdatedBy: user.uid };
-    batch.update(docRefA, updateA);
-    const historyRefA = doc(collection(docRefA, 'history'));
-    batch.set(historyRefA, { ...categoryA, ...updateA });
+    batch.update(docRefA, { order: categoryB.order });
 
     const docRefB = doc(db, 'restaurants', user.uid, 'categories', categoryB.id);
-    const updateB = { order: categoryA.order, updatedAt: serverTimestamp(), lastUpdatedBy: user.uid };
-    batch.update(docRefB, updateB);
-    const historyRefB = doc(collection(docRefB, 'history'));
-    batch.set(historyRefB, { ...categoryB, ...updateB });
+    batch.update(docRefB, { order: categoryA.order });
 
     try {
       await batch.commit();
@@ -266,7 +237,6 @@ export default function CategoriesPage() {
       toast({ title: 'Error', description: 'No se pudo actualizar el orden.', variant: 'destructive' });
     }
   };
-
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen"><Loader2 className="h-16 w-16 animate-spin" /></div>;
@@ -294,20 +264,18 @@ export default function CategoriesPage() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Categorías existentes ({categories.length})</h2>
         {categories.length > 0 ? (
-          <ul className="border rounded-2xl overflow-hidden bg-white shadow-sm">
+          <ul className="border rounded-2xl overflow-hidden bg-white shadow-sm divide-y">
             {categories.map((cat, index) => (
-              <li key={cat.id} className={`flex items-center justify-between p-3 ${index > 0 ? 'border-t' : ''}`}>
-                <div className="flex items-center">
-                    <div className="flex flex-col mr-4 text-muted-foreground">
-                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleReorder(index, 'up')} disabled={index === 0}><ArrowUp className="h-6 w-6" /></Button>
-                        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleReorder(index, 'down')} disabled={index === categories.length - 1}><ArrowDown className="h-6 w-6" /></Button>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="font-medium text-lg">{cat.name_i18n.es}</span>
+              <li key={cat.id} className="p-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start space-x-4">
+                    <div className="flex-1 min-w-0">
+                      <div className='flex items-center'>
+                        <h3 className="font-medium text-lg truncate">{cat.name_i18n.es}</h3>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="ml-2">
+                              <div className="ml-2 flex-shrink-0">
                                 <Languages className={cn("h-5 w-5", cat.name_i18n.en ? 'text-blue-600' : 'text-gray-300')} />
                               </div>
                             </TooltipTrigger>
@@ -316,12 +284,23 @@ export default function CategoriesPage() {
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
+                      </div>
                     </div>
-                </div>
-                <div className='flex items-center space-x-1'>
-                    <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/menu/categories/history/${cat.id}`)} className='h-11 w-11 rounded-full text-muted-foreground'><History className="h-6 w-6" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleStartEdit(cat)} className='h-11 w-11 rounded-full text-muted-foreground'><FilePenLine className="h-6 w-6" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => confirmDeleteCategory(cat)} className='h-11 w-11 text-destructive rounded-full'><Trash2 className="h-6 w-6" /></Button>
+                    
+                    <div className='flex items-center space-x-2 flex-shrink-0'>
+                        <Button variant="ghost" size="icon" onClick={() => handleStartEdit(cat)} className='h-10 w-10 rounded-full text-muted-foreground'><FilePenLine className="h-6 w-6" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => confirmDeleteCategory(cat)} className='h-10 w-10 text-destructive rounded-full'><Trash2 className="h-6 w-6" /></Button>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex items-center">
+                      <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(index, 'up')} disabled={index === 0}>
+                          <ArrowUp className="h-6 w-6 text-muted-foreground" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(index, 'down')} disabled={index === categories.length - 1}>
+                          <ArrowDown className="h-6 w-6 text-muted-foreground" />
+                      </Button>
+                  </div>
                 </div>
               </li>
             ))}

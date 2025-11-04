@@ -3,8 +3,8 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase/firebase';
-import { collection, onSnapshot, orderBy, query, doc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
-import { Loader2, PlusCircle, MoreHorizontal, FilePenLine, Trash2, Eye, LayoutGrid, Languages } from 'lucide-react';
+import { collection, onSnapshot, orderBy, query, doc, deleteDoc, updateDoc, getDoc, writeBatch } from 'firebase/firestore';
+import { Loader2, PlusCircle, MoreHorizontal, FilePenLine, Trash2, Eye, LayoutGrid, Languages, ArrowUp, ArrowDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
@@ -79,7 +79,7 @@ export default function MenuPage() {
     const unsubscribeCategories = onSnapshot(categoriesQuery, snapshot => {
       const cats = snapshot.docs.map(doc => ({
         id: doc.id,
-        name_i18n: doc.data().name_i18n || { es: doc.data().name, en: '' }, // Backwards compatibility
+        name_i18n: doc.data().name_i18n || { es: doc.data().name, en: '' },
         order: doc.data().order,
       } as Category));
       setCategories(cats);
@@ -88,15 +88,15 @@ export default function MenuPage() {
       setError('No se pudieron cargar las categorías.');
     });
 
-    const menuItemsQuery = query(collection(db, 'restaurants', user.uid, 'menuItems'), orderBy('createdAt', 'desc'));
+    const menuItemsQuery = query(collection(db, 'restaurants', user.uid, 'menuItems'));
     const unsubscribeMenuItems = onSnapshot(menuItemsQuery, snapshot => {
       const items = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
           isAvailable: data.isAvailable !== false,
-          name_i18n: data.name_i18n || { es: data.name, en: '' }, // Backwards compatibility
-          description_i18n: data.description_i18n || { es: data.description, en: '' }, // Backwards compatibility
+          name_i18n: data.name_i18n || { es: data.name, en: '' },
+          description_i18n: data.description_i18n || { es: data.description, en: '' },
           ...data,
         } as MenuItem;
       });
@@ -113,6 +113,62 @@ export default function MenuPage() {
       unsubscribeMenuItems();
     };
   }, [user, authLoading]);
+
+  useEffect(() => {
+    if (!user || menuItems.length === 0) return;
+
+    const itemsToMigrate = menuItems.filter(item => typeof item.order !== 'number');
+
+    if (itemsToMigrate.length === 0) {
+      return;
+    }
+
+    const migrateOrders = async () => {
+      console.log(`Initializing order for ${itemsToMigrate.length} existing items...`);
+      const batch = writeBatch(db);
+      
+      itemsToMigrate.forEach(item => {
+        const docRef = doc(db, 'restaurants', user.uid, 'menuItems', item.id);
+        const orderValue = item.createdAt?.toMillis ? item.createdAt.toMillis() : Date.now();
+        batch.update(docRef, { order: orderValue });
+      });
+
+      try {
+        await batch.commit();
+        toast({ title: 'Orden de platos inicializado', description: 'Hemos asignado un orden inicial a tus platos existentes.' });
+      } catch (error) {
+        console.error("Error migrating item orders: ", error);
+      }
+    };
+
+    migrateOrders();
+
+  }, [menuItems, user, toast]);
+
+  const handleReorder = async (categoryItems: MenuItem[], currentIndex: number, direction: 'up' | 'down') => {
+    if (!user) return;
+    if ((direction === 'up' && currentIndex === 0) || (direction === 'down' && currentIndex === categoryItems.length - 1)) return;
+
+    const batch = writeBatch(db);
+    const itemsToUpdate = [...categoryItems];
+
+    const otherIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const itemA = itemsToUpdate[currentIndex];
+    const itemB = itemsToUpdate[otherIndex];
+
+    const docRefA = doc(db, 'restaurants', user.uid, 'menuItems', itemA.id);
+    batch.update(docRefA, { order: itemB.order });
+
+    const docRefB = doc(db, 'restaurants', user.uid, 'menuItems', itemB.id);
+    batch.update(docRefB, { order: itemA.order });
+
+    try {
+      await batch.commit();
+    } catch (error) {
+      console.error("Error reordering items: ", error);
+      toast({ title: 'Error', description: 'No se pudo actualizar el orden.', variant: 'destructive' });
+    }
+  };
 
   const handleDelete = async () => {
     if (!itemToDelete || !user) return;
@@ -148,7 +204,18 @@ export default function MenuPage() {
   };
 
   const menuByCategory = useMemo(() => {
-    return menuItems.reduce((acc, item) => {
+    const sortedItems = [...menuItems].sort((a, b) => {
+      const orderA = typeof a.order === 'number' ? a.order : Infinity;
+      const orderB = typeof b.order === 'number' ? b.order : Infinity;
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeA - timeB;
+    });
+
+    return sortedItems.reduce((acc, item) => {
       const categoryId = item.categoryId || item.category || 'uncategorized';
       if (!acc[categoryId]) acc[categoryId] = [];
       acc[categoryId].push(item);
@@ -174,56 +241,69 @@ export default function MenuPage() {
               </AccordionTrigger>
               <AccordionContent className="px-6">
                 <ul className="-mx-6 divide-y">
-                  {items.map((item) => {
+                  {items.map((item, index) => {
                     const itemAllergens = Object.keys(item.allergens || {}).map(id => allergensMap.get(id)).filter(Boolean) as Allergen[];
                     const name_i18n = item.name_i18n || { es: item.name || '' };
                     const description_i18n = item.description_i18n || { es: item.description || '' };
 
                     return (
-                      <li key={item.id} className={cn("flex flex-col sm:flex-row sm:items-start justify-between px-6 py-4", !item.isAvailable && "opacity-50")}>
-                        <div className="flex-1 min-w-0 mr-6">
-                          <div className='flex items-center'>
-                             <h3 className="font-bold text-lg">{name_i18n.es}</h3>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="ml-2">
-                                       <Languages className={cn("h-5 w-5", name_i18n.en ? 'text-blue-600' : 'text-gray-300')} />
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>{name_i18n.en ? 'Traducido al inglés' : 'Traducción automática pendiente'}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                          </div>
-                          {description_i18n.es && <p className="text-muted-foreground text-sm mt-1">{description_i18n.es}</p>}
-                          {itemAllergens.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-2 mt-3">
-                              {itemAllergens.map(allergen => (
-                                <TooltipProvider key={allergen.id}><Tooltip><TooltipTrigger>
-                                  <div className="h-5 w-5 rounded-full flex items-center justify-center" style={{ backgroundColor: allergen.color }}>
-                                    <AllergenIcon allergenId={allergen.id} className="h-3 w-3 text-white" />
-                                  </div>
-                                </TooltipTrigger><TooltipContent><p>{allergen.name}</p></TooltipContent></Tooltip></TooltipProvider>
-                              ))}
+                      <li key={item.id} className={cn("px-6 py-4", !item.isAvailable && "opacity-40")}>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start space-x-4">
+                            {/* Información del plato */}
+                            <div className="flex-1 min-w-0">
+                               <h3 className="font-bold text-lg">{name_i18n.es}</h3>
+                               {description_i18n.es && <p className="text-muted-foreground text-sm mt-1">{description_i18n.es}</p>}
+                               {itemAllergens.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                  {itemAllergens.map(allergen => (
+                                    <TooltipProvider key={allergen.id}><Tooltip><TooltipTrigger>
+                                      <div className="h-5 w-5 rounded-full flex items-center justify-center" style={{ backgroundColor: allergen.color }}>
+                                        <AllergenIcon allergenId={allergen.id} className="h-3 w-3 text-white" />
+                                      </div>
+                                    </TooltipTrigger><TooltipContent><p>{allergen.name}</p></TooltipContent></Tooltip></TooltipProvider>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between flex-shrink-0 mt-4 sm:mt-0 w-full sm:w-auto space-x-4">
-                          <div className="flex items-center space-x-2">
-                            <Switch id={`available-${item.id}`} checked={item.isAvailable} onCheckedChange={(c) => handleAvailabilityToggle(item, c)} />
-                            <Label htmlFor={`available-${item.id}`} className="text-sm">{item.isAvailable ? 'Disponible' : 'Agotado'}</Label>
+                            
+                            {/* Precio y menú de acciones */}
+                            <div className='flex flex-col items-end flex-shrink-0'>
+                              <span className="font-bold text-lg">{(item.price / 100).toFixed(2).replace('.', ',')}€</span>
+                              <div className='flex items-center'>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="p-1">
+                                        <Languages className={cn("h-5 w-5", name_i18n.en ? 'text-blue-600' : 'text-gray-300')} />
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{name_i18n.en ? 'Traducido al inglés' : 'Traducción automática pendiente'}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-10 w-10"><MoreHorizontal className="h-6 w-6"/></Button></DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => router.push(`/dashboard/menu/edit/${item.id}`)}><FilePenLine className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Eliminar</DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
                           </div>
-                          <div className='flex items-center space-x-2'>
-                            <span className="font-bold text-lg">{(item.price / 100).toFixed(2).replace('.', ',')}€</span>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal /></Button></DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => router.push(`/dashboard/menu/edit/${item.id}`)}><FilePenLine className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Eliminar</DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                          
+                          {/* Controles inferiores: Flechas y Disponibilidad */}
+                          <div className="mt-4 flex items-center justify-between">
+                            <div className="flex items-center">
+                                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(items, index, 'up')} disabled={index === 0}><ArrowUp className="h-6 w-6 text-muted-foreground" /></Button>
+                                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(items, index, 'down')} disabled={index === items.length - 1}><ArrowDown className="h-6 w-6 text-muted-foreground" /></Button>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Label htmlFor={`available-${item.id}`} className="text-sm font-medium">{item.isAvailable ? 'Disponible' : 'Agotado'}</Label>
+                                <Switch id={`available-${item.id}`} checked={item.isAvailable} onCheckedChange={(c) => handleAvailabilityToggle(item, c)} />
+                            </div>
                           </div>
                         </div>
                       </li>
