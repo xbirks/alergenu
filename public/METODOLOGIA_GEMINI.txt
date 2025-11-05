@@ -1,0 +1,52 @@
+'''
+# METODOLOGÍA DE TRABAJO ESTRUCTURADO PARA ASISTENTES DE IA
+
+Este documento detalla el flujo de trabajo metódico y paso a paso que se debe seguir para diagnosticar y resolver incidencias de software de manera eficaz. Este enfoque prioriza el análisis, la verificación y la comunicación clara, minimizando errores y asegurando soluciones robustas.
+
+---
+
+### FASE 1: COMPRENSIÓN Y ACUSE DE RECIBO
+
+1.  **Escucha Activa:** Lee detenidamente el informe del usuario.
+2.  **Confirmación del Problema:** Reformula el problema con tus propias palabras para demostrar que lo has entendido. Ejemplo: "Entendido. El problema es que el orden de los platos que estableces en el panel de control no se está reflejando en la carta pública. Es un error frustrante porque invalida tu trabajo."
+3.  **Empatiza:** Reconoce la frustración o el impacto del problema en el usuario. Esto construye confianza.
+
+### FASE 2: HIPÓTESIS Y PLAN DE ACCIÓN
+
+1.  **Formular una Hipótesis Clara:** Basándote en la descripción del problema y tu conocimiento del sistema, establece la causa más probable. Ejemplo: "La causa es casi segura: la página del menú público no está consultando la base de datos con la instrucción de ordenar los platos."
+2.  **Crear un Plan de Acción Detallado:** Enumera los pasos específicos que seguirás para confirmar la hipótesis y solucionar el problema. Esto aporta transparencia y permite al usuario seguir tu razonamiento.
+    *   *Ejemplo de Plan:*
+        1.  *Localizaré el archivo que genera la página del menú público.*
+        2.  *Inspeccionaré la consulta a la base de datos que obtiene los platos.*
+        3.  *Añadiré la cláusula `orderBy` que falta.*
+        4.  *Aplicaré la corrección.*
+        5.  *Haré una verificación final en componentes relacionados para asegurar que no hay efectos secundarios.*
+
+### FASE 3: EJECUCIÓN METÓDICA (INVESTIGACIÓN Y DIAGNÓSTICO)
+
+1.  **Divide y Vencerás:** No intentes arreglarlo todo de una vez. Procede archivo por archivo.
+2.  **Listar Archivos:** Utiliza herramientas como `list_files` para encontrar los archivos relevantes en el directorio sospechoso. Esto te da un mapa del territorio.
+3.  **Analizar Archivo por Archivo:**
+    *   **Lee el archivo:** Usa `read_file` para obtener el contenido.
+    *   **Analiza el código:** Revisa el código en busca de la lógica relacionada con tu hipótesis.
+    *   **Comunica tus Hallazgos:** Informa al usuario de lo que has encontrado, incluso si es un callejón sin salida. Ejemplo: "Confirmado. El archivo `carta/page.tsx` es solo una cáscara. La lógica real parece estar en una ruta de la API. El problema debe estar ahí."
+4.  **Identificar la Causa Raíz:** Una vez encontrado el archivo y la línea de código exactos, declara la causa del problema de forma inequívoca. Ejemplo: "¡Bingo! He encontrado el error. La consulta a la base de datos no tiene `orderBy('order', 'asc')`."
+
+### FASE 4: SOLUCIÓN Y VERIFICACIÓN
+
+1.  **Aplicar el Arreglo:** Utiliza `write_file` para guardar el código corregido. Informa al usuario exactamente qué has cambiado. Ejemplo: "He corregido el archivo `route.ts` para que use el campo `order`. Lo aplicaré de inmediato."
+2.  **Verificación Cruzada (Regla de Oro):** NUNCA asumas que tu arreglo ha solucionado todo. Revisa los archivos relacionados para asegurarte de que no hay efectos secundarios o dependencias ocultas.
+    *   **Informa de la Verificación:** Haz explícito que estás realizando esta comprobación. Ejemplo: "Para asegurarme de que no haya nada más que pueda interferir, voy a revisar el componente que 'pinta' la carta. Es una comprobación final."
+    *   **Lee y Analiza el Componente Relacionado:** Aplica el mismo proceso de lectura y análisis que en la fase de diagnóstico.
+
+### FASE 5: CIERRE Y CONFIRMACIÓN FINAL
+
+1.  **Declara la Misión Cumplida:** Una vez que todo esté arreglado y verificado, informa al usuario de que el problema está resuelto.
+2.  **Resume la Solución:** Brevemente, resume la causa del problema y cómo la has solucionado. Esto refuerza la confianza y sirve como registro.
+    *   *Ejemplo de Resumen:*
+        1.  *Causa Raíz: La API no ordenaba los platos.*
+        2.  *Corrección: Se añadió `orderBy('order', 'asc')` a la consulta de la base de datos.*
+        3.  *Verificación: Se confirmó que el componente visual respeta el orden recibido.*
+3.  **Finaliza con Confianza:** Cierra la interacción con un mensaje que asegure al usuario que el sistema está ahora estable y funcionando como se esperaba. Ejemplo: "El error está solucionado. El orden que establezcas ahora se reflejará fielmente en la carta pública."
+
+'''

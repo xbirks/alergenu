@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/firebase-admin';
-import { FieldValue, FieldPath } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 import { Restaurant, Category, MenuItem, Allergen } from '@/lib/types';
 
 export async function GET(
@@ -33,21 +33,20 @@ export async function GET(
 
     const [categoriesSnapshot, menuItemsSnapshot, allergensSnapshot] = await Promise.all([
       restaurantDocRef.collection('categories').orderBy('order', 'asc').get(),
-      restaurantDocRef.collection('menuItems').orderBy(FieldPath.documentId(), 'asc').get(),
+      restaurantDocRef.collection('menuItems').orderBy('order', 'asc').get(),
       restaurantDocRef.collection('allergens').get(),
     ]);
 
     const categories = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
         const name_i18n = data.name_i18n || {};
-        // The primary `name` should be the Spanish one, as a reliable fallback.
         const name = name_i18n.es || data.name || '';
 
         return { 
           id: doc.id, 
           order: data.order,
-          name: name, // Default name (Spanish)
-          name_i18n: name_i18n, // Full translation object
+          name: name,
+          name_i18n: name_i18n,
         } as Category;
     });
     
@@ -76,9 +75,13 @@ export async function GET(
             allergens: contains,
             traces: traces,
             createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            order: data.order,
+            categoryId: data.categoryId,
             category: categoryNameForGrouping,
             name_i18n: name_i18n,
             description_i18n: description_i18n,
+            extras: data.extras || [],
         } as MenuItem;
     }).filter(item => item.isAvailable);
 

@@ -88,6 +88,7 @@ const staticTexts = {
   restaurantFallback: { es: "Restaurante", en: "Restaurant" },
   dailyMenuTitle: { es: "Menú del Día", en: "Daily Menu" },
   dailyMenuToChoose: { es: "A elegir.", en: "To choose." },
+  extrasTitle: { es: "Suplementos", en: "Extras" },
 };
 
 const getTranslated = (i18nField: any, lang: string) => {
@@ -113,6 +114,22 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
   const [currentDate, setCurrentDate] = useState('');
   const [now, setNow] = useState(new Date());
 
+  const processedItems = useMemo(() => {
+    return initialItems.map(item => {
+      const processedExtras = (item.extras || []).map((extra: any) => {
+        if (extra.name && !extra.name_i18n) {
+          return {
+            price: extra.price,
+            name_i18n: { es: extra.name, en: '' }
+          };
+        }
+        return extra;
+      });
+      return { ...item, extras: processedExtras };
+    });
+  }, [initialItems]);
+
+
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
     return () => {
@@ -121,8 +138,7 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
   }, []);
 
   useEffect(() => {
-    console.log("TIMER: Setting up timer to refresh time every 30 seconds.");
-    const timer = setInterval(() => setNow(new Date()), 30000); // Actualiza cada 30s
+    const timer = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(timer);
   }, []);
 
@@ -135,13 +151,10 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
         const dailyMenuRef = doc(db, 'restaurants', restaurantId, 'dailyMenus', 'current');
         const docSnap = await getDoc(dailyMenuRef);
         if (docSnap.exists()) {
-          console.log("TIMER: Daily menu data found:", docSnap.data());
           setDailyMenu(docSnap.data() as DailyMenu);
-        } else {
-          console.log("TIMER: No daily menu document found.");
-        }
+        } 
       } catch (error) {
-        console.error("TIMER: Error fetching daily menu:", error);
+        console.error("Error fetching daily menu:", error);
       } finally {
         setIsLoadingDailyMenu(false);
       }
@@ -149,8 +162,6 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
 
     fetchDailyMenu();
   }, [restaurantId]);
-
-  // --- LÓGICA DE FILTRADO --- //
 
   const processedDailyMenu = useMemo(() => {
     if (!dailyMenu) return null;
@@ -188,33 +199,15 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
   }, [dailyMenu, selectedAllergens]);
 
   const isDailyMenuVisible = useMemo(() => {
-    console.log("TIMER: Re-evaluating daily menu visibility...");
-
-    if (isLoadingDailyMenu) {
-      console.log("TIMER: isLoadingDailyMenu is true. Result: false.");
-      return false;
-    }
-    if (!processedDailyMenu) {
-      console.log("TIMER: processedDailyMenu is null. Result: false.");
-      return false;
-    }
-    if (!processedDailyMenu.isPublished) {
-      console.log("TIMER: processedDailyMenu.isPublished is false. Result: false.");
-      return false;
-    }
+    if (isLoadingDailyMenu) return false;
+    if (!processedDailyMenu || !processedDailyMenu.isPublished) return false;
 
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    const startTime = processedDailyMenu.startTime;
-    const endTime = processedDailyMenu.endTime;
-    const result = currentTime >= startTime && currentTime <= endTime;
-
-    console.log(`TIMER: Checking time... Now: ${currentTime}, Start: ${startTime}, End: ${endTime}. Is visible? ${result}`);
-
-    return result;
+    return currentTime >= processedDailyMenu.startTime && currentTime <= processedDailyMenu.endTime;
   }, [processedDailyMenu, isLoadingDailyMenu, now]);
 
   const groupedMenu = useMemo(() => {
-    return initialItems.reduce((acc: GroupedMenu, item: MenuItem) => {
+    return processedItems.reduce((acc: GroupedMenu, item: MenuItem) => {
       const categoryName = item.category || 'Varios';
       if (!acc[categoryName]) {
         acc[categoryName] = [];
@@ -222,7 +215,7 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
       acc[categoryName].push(item);
       return acc;
     }, {} as GroupedMenu);
-  }, [initialItems]);
+  }, [processedItems]);
 
   const { filteredGroupedMenu, incompatibleItemsByCategory } = useMemo(() => {
     if (selectedAllergens.length === 0) {
@@ -270,15 +263,9 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
         const orderA = officialOrderMap.get(a);
         const orderB = officialOrderMap.get(b);
 
-        if (orderA !== undefined && orderB !== undefined) {
-            return orderA - orderB;
-        }
-        if (orderA !== undefined) {
-            return -1;
-        }
-        if (orderB !== undefined) {
-            return 1;
-        }
+        if (orderA !== undefined && orderB !== undefined) return orderA - orderB;
+        if (orderA !== undefined) return -1;
+        if (orderB !== undefined) return 1;
         return a.localeCompare(b);
     });
 
@@ -352,7 +339,6 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
           generateSafeId={generateSafeId} 
         />
 
-        {/* --- SECCIÓN MENÚ DEL DÍA --- */}
         {isDailyMenuVisible && processedDailyMenu && (
           <section id="daily-menu" className="mb-16 scroll-mt-28">
             <div className="-mx-4 sm:-mx-6 lg:-mx-8">
@@ -366,16 +352,14 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
 
             <div className="py-10">
                 <div className="space-y-12">
-                  {processedDailyMenu.courses.map((course, courseIndex) => {
+                  {processedDailyMenu.courses.map((course) => {
                     if (course.compatibleDishes.length === 0 && course.incompatibleDishes.length === 0) return null;
-
                     return (
                       <div key={course.title}>
                         <div className="flex items-baseline gap-3 mb-6">
                           <h3 className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'Manrope' }}>{course.title}</h3>
                           <span className="text-gray-500">{staticTexts.dailyMenuToChoose[lang]}</span>
                         </div>
-                        
                         <div className="space-y-8">
                           {course.compatibleDishes.map((dish, dishIndex) => (
                             <div key={dishIndex} className="flex items-start gap-4">
@@ -436,7 +420,6 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
           </section>
         )}
 
-        {/* --- SECCIÓN CARTA HABITUAL --- */}
         <div className="space-y-16 mt-10">
           {orderedCategoryNames.length > 0 ? (
               orderedCategoryNames.map(categoryName => {
@@ -463,6 +446,24 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
                             </div>
                             <p className="font-semibold text-[14pt] text-gray-800 whitespace-nowrap" style={{ fontFamily: 'Manrope', lineHeight: '140%' }}>{(item.price / 100).toFixed(2).replace('.', ',')}€</p>
                           </div>
+
+                          {/* EXTRAS START */}
+                          {item.extras && item.extras.length > 0 && (
+                            <div className="pl-4 mt-3 space-y-2">
+                              {item.extras.map((extra, index) => (
+                                <div key={index} className="flex justify-between items-start gap-4">
+                                  <p className="font-regular text-[12pt] text-gray-500 tracking-regular" style={{ fontFamily: 'Manrope', lineHeight: '130%' }}>
+                                    {getTranslated(extra.name_i18n, lang)}
+                                  </p>
+                                  <p className="font-regular text-[12pt] text-gray-500 whitespace-nowrap" style={{ fontFamily: 'Manrope', lineHeight: '130%' }}>
+                                    +{(extra.price / 100).toFixed(2).replace('.', ',')}€
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {/* EXTRAS END */}
+                          
                           <div className="flex flex-wrap gap-2 mt-3">
                             {item.allergens?.map((id: string) => <AllergenIconDisplay key={`${id}-contains`} allergenId={id} type="contains" lang={lang} />)}
                             {item.traces?.map((id: string) => <AllergenIconDisplay key={`${id}-traces`} allergenId={id} type="traces" lang={lang} />)}
@@ -491,6 +492,22 @@ export function PublicMenuClient({ restaurant, restaurantId, initialCategories, 
                                 </div>
                                 <p className="font-semibold text-[14pt] text-gray-800 whitespace-nowrap" style={{ fontFamily: 'Manrope', lineHeight: '140%' }}>{(item.price / 100).toFixed(2).replace('.', ',')}€</p>
                               </div>
+                               {/* INCOMPATIBLE EXTRAS START */}
+                              {item.extras && item.extras.length > 0 && (
+                                <div className="pl-4 mt-3 space-y-2">
+                                  {item.extras.map((extra, index) => (
+                                    <div key={index} className="flex justify-between items-start gap-4">
+                                      <p className="font-regular text-[12pt] text-gray-500 tracking-regular" style={{ fontFamily: 'Manrope', lineHeight: '130%' }}>
+                                        {getTranslated(extra.name_i18n, lang)}
+                                      </p>
+                                      <p className="font-regular text-[12pt] text-gray-500 whitespace-nowrap" style={{ fontFamily: 'Manrope', lineHeight: '130%' }}>
+                                        +{(extra.price / 100).toFixed(2).replace('.', ',')}€
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {/* INCOMPATIBLE EXTRAS END */}
                               <div className="flex flex-wrap items-center gap-3 mt-3">
                                 <span className="bg-[#EA3939] text-white text-xs font-bold mr-2 px-2 py-1 rounded-full">{staticTexts.notSuitable[lang]}</span>
                                 <div className="flex flex-wrap items-center gap-2">

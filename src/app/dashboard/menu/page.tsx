@@ -92,12 +92,23 @@ export default function MenuPage() {
     const unsubscribeMenuItems = onSnapshot(menuItemsQuery, snapshot => {
       const items = snapshot.docs.map(doc => {
         const data = doc.data();
+        const processedExtras = (data.extras || []).map((extra: any) => {
+            if (extra.name && !extra.name_i18n) {
+              return {
+                price: extra.price,
+                name_i18n: { es: extra.name, en: '' }
+              };
+            }
+            return extra;
+        });
+
         return {
+          ...data,
           id: doc.id,
           isAvailable: data.isAvailable !== false,
           name_i18n: data.name_i18n || { es: data.name, en: '' },
           description_i18n: data.description_i18n || { es: data.description, en: '' },
-          ...data,
+          extras: processedExtras,
         } as MenuItem;
       });
       setMenuItems(items);
@@ -135,7 +146,6 @@ export default function MenuPage() {
 
       try {
         await batch.commit();
-        toast({ title: 'Orden de platos inicializado', description: 'Hemos asignado un orden inicial a tus platos existentes.' });
       } catch (error) {
         console.error("Error migrating item orders: ", error);
       }
@@ -250,10 +260,29 @@ export default function MenuPage() {
                       <li key={item.id} className={cn("px-6 py-4", !item.isAvailable && "opacity-40")}>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start space-x-4">
-                            {/* Información del plato */}
                             <div className="flex-1 min-w-0">
                                <h3 className="font-bold text-lg">{name_i18n.es}</h3>
                                {description_i18n.es && <p className="text-muted-foreground text-sm mt-1">{description_i18n.es}</p>}
+                               
+                               {item.extras && item.extras.length > 0 && (
+                                <div className="mt-3 pl-4 border-l-2 border-gray-200">
+                                    <h4 className="text-sm font-semibold text-gray-600">Suplementos:</h4>
+                                    <ul className="list-disc list-inside mt-1 space-y-1">
+                                        {item.extras.map((extra, extraIndex) => (
+                                            <li key={extraIndex} className="text-sm text-gray-500 flex justify-between">
+                                                <span>
+                                                    {extra.name_i18n?.es || ''}
+                                                    {extra.name_i18n?.en && <span className="text-gray-400"> / {extra.name_i18n.en}</span>}
+                                                </span>
+                                                <span className="font-medium">
+                                                    +{(extra.price / 100).toFixed(2).replace('.', ',')}€
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                )}
+
                                {itemAllergens.length > 0 && (
                                 <div className="flex flex-wrap items-center gap-2 mt-3">
                                   {itemAllergens.map(allergen => (
@@ -267,7 +296,6 @@ export default function MenuPage() {
                               )}
                             </div>
                             
-                            {/* Precio y menú de acciones */}
                             <div className='flex flex-col items-end flex-shrink-0'>
                               <span className="font-bold text-lg">{(item.price / 100).toFixed(2).replace('.', ',')}€</span>
                               <div className='flex items-center'>
@@ -294,7 +322,6 @@ export default function MenuPage() {
                             </div>
                           </div>
                           
-                          {/* Controles inferiores: Flechas y Disponibilidad */}
                           <div className="mt-4 flex items-center justify-between">
                             <div className="flex items-center">
                                 <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(items, index, 'up')} disabled={index === 0}><ArrowUp className="h-6 w-6 text-muted-foreground" /></Button>

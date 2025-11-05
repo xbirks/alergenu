@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ALLERGENS } from '@/lib/allergens';
-import { Loader2 } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2 } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { CategoryCombobox } from '@/components/lilunch/CategoryCombobox';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,6 +44,15 @@ const formSchema = z.object({
     .refine(val => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) >= 0, {
       message: 'Introduce un precio válido (ej: 12,50).'
     }),
+  extras: z.array(
+    z.object({
+      name_es: z.string().min(1, 'El nombre no puede estar vacío.'),
+      name_en: z.string().optional(),
+      price: z.string().refine(val => !isNaN(parseFloat(val.replace(',', '.'))), {
+        message: 'Precio inválido.'
+      }),
+    })
+  ).optional(),
   allergens: z.record(allergenStatus),
   isAvailable: z.boolean(),
 });
@@ -59,6 +68,7 @@ export interface MenuItem {
     description?: string;
     description_i18n?: I18nString;
     allergens?: { [key: string]: 'no' | 'traces' | 'yes' };
+    extras?: { name_i18n: I18nString; price: number }[];
     isAvailable: boolean;
     order?: number;
     createdAt?: any;
@@ -114,9 +124,15 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
       description_es: '',
       description_en: '',
       price: '',
+      extras: [],
       allergens: defaultAllergens,
       isAvailable: true, 
     },
+  });
+  
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "extras"
   });
 
   const { formState, reset } = form;
@@ -139,6 +155,14 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
       const name_en = (name_i18n.en && typeof name_i18n.en === 'string') ? name_i18n.en : '';
       const description_en = (description_i18n.en && typeof description_i18n.en === 'string') ? description_i18n.en : '';
       const priceString = (existingMenuItem.price / 100).toFixed(2).replace('.', ',');
+      
+      const existingExtras = existingMenuItem.extras
+        ? existingMenuItem.extras.map(extra => ({
+            name_es: extra.name_i18n?.es || '',
+            name_en: extra.name_i18n?.en || '',
+            price: (extra.price / 100).toFixed(2).replace('.', ',')
+          }))
+        : [];
 
       reset({
         name_es: name_i18n.es || '',
@@ -146,6 +170,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
         description_es: description_i18n.es || '',
         description_en: description_en,
         price: priceString,
+        extras: existingExtras,
         allergens: { ...defaultAllergens, ...existingMenuItem.allergens },
         isAvailable: existingMenuItem.isAvailable !== false,
         category: null,
@@ -175,15 +200,35 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
       
       const priceInCents = Math.round(parseFloat(values.price.replace(',', '.')) * 100);
 
+      const extrasToSave = await Promise.all(
+        (values.extras || []).map(async (extra) => {
+          const extraPriceInCents = Math.round(parseFloat(extra.price.replace(',', '.')) * 100);
+          let name_en = extra.name_en || '';
+          
+          if (extra.name_es && !extra.name_en) { // Translate if ES exists and EN doesn't
+            toast({ title: 'Traduciendo extras...', description: `Traduciendo '${extra.name_es}'...` });
+            name_en = await translateText(extra.name_es);
+          }
+
+          return {
+            name_i18n: {
+              es: extra.name_es,
+              en: name_en,
+            },
+            price: extraPriceInCents,
+          };
+        })
+      );
+
       const docRef = isEditMode && existingMenuItem
         ? doc(db, 'restaurants', user.uid, 'menuItems', existingMenuItem.id)
         : doc(collection(db, 'restaurants', user.uid, 'menuItems'));
 
-      // Objeto de datos principal para el documento del plato
       let mainData: any = {
         name_i18n: { es: values.name_es, en: values.name_en || '' },
         description_i18n: { es: values.description_es || '', en: values.description_en || '' },
         price: priceInCents,
+        extras: extrasToSave,
         allergens: allergensToSave,
         categoryId: values.category.id,
         category_i18n: values.category.name_i18n,
@@ -193,17 +238,8 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
         lastUpdatedByDisplayName: user.displayName || user.email,
       };
 
-      // Objeto de datos COMPLETO y EXPLÍCITO para el historial
       const historyData = {
-        name_i18n: { es: values.name_es, en: values.name_en || '' },
-        description_i18n: { es: values.description_es || '', en: values.description_en || '' },
-        category_i18n: values.category.name_i18n,
-        price: priceInCents,
-        isAvailable: values.isAvailable,
-        allergens: allergensToSave,
-        updatedAt: serverTimestamp(),
-        lastUpdatedBy: user.uid,
-        lastUpdatedByDisplayName: user.displayName || user.email,
+        ...mainData,
       };
 
       if (isEditMode) {
@@ -211,17 +247,23 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
         toast({ title: '¡Plato actualizado!', description: `El plato '${values.name_es}' ha sido guardado.` });
       } else {
         mainData.createdAt = serverTimestamp();
-        mainData.order = Date.now(); // <-- 🔥 CAMBIO: Asigna un orden inicial
+        mainData.order = Date.now();
+        
+        let name_en_main = values.name_en || '';
+        let description_en_main = values.description_en || '';
 
-        toast({ title: 'Traduciendo plato...', description: 'Por favor, espera un momento.'});
-        const [translatedName, translatedDescription] = await Promise.all([
-          translateText(values.name_es),
-          translateText(values.description_es || '')
-        ]);
-        mainData.name_i18n.en = translatedName;
-        historyData.name_i18n.en = translatedName;
-        mainData.description_i18n.en = translatedDescription;
-        historyData.description_i18n.en = translatedDescription;
+        if (values.name_es && !name_en_main) {
+            toast({ title: 'Traduciendo plato...', description: 'Por favor, espera un momento.'});
+            name_en_main = await translateText(values.name_es);
+        }
+        if (values.description_es && !description_en_main) {
+            description_en_main = await translateText(values.description_es);
+        }
+
+        mainData.name_i18n.en = name_en_main;
+        historyData.name_i18n.en = name_en_main;
+        mainData.description_i18n.en = description_en_main;
+        historyData.description_i18n.en = description_en_main;
 
         batch.set(docRef, mainData);
         toast({ title: '¡Plato añadido!', description: `El plato '${values.name_es}' se ha guardado y traducido.` });
@@ -246,35 +288,101 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {isEditMode ? (
-          <Tabs defaultValue="es" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="es">Español</TabsTrigger>
-              <TabsTrigger value="en">Inglés</TabsTrigger>
-            </TabsList>
-            <TabsContent value="es" className="pt-6">
-              <div className='space-y-8'>
-                <FormField control={form.control} name="name_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Nombre del plato (ES)</FormLabel><FormControl><Input placeholder="Ej: Paella Valenciana" {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
-                <FormField control={form.control} name="description_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Descripción (ES)</FormLabel><FormControl><Textarea placeholder="(Opcional) Una breve descripción del plato." {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
-              </div>
-            </TabsContent>
-            <TabsContent value="en" className="pt-6">
-              <div className='space-y-8'>
-                <FormField control={form.control} name="name_en" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Nombre del plato (EN)</FormLabel><FormControl><Input placeholder="Ej: Valencian Paella" {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
-                <FormField control={form.control} name="description_en" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Descripción (EN)</FormLabel><FormControl><Textarea placeholder="(Optional) A brief description of the dish." {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
-              </div>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <>
-            <FormField control={form.control} name="name_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Nombre del plato</FormLabel><FormControl><Input placeholder="Ej: Paella Valenciana" {...field} className={cn("h-14 px-5 text-base rounded-full", field.value && "text-blue-600 font-bold")} /></FormControl><FormMessage /></FormItem>} />
-            <FormField control={form.control} name="description_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Descripción</FormLabel><FormControl><Textarea placeholder="(Opcional) Una breve descripción del plato." {...field} className={cn("text-base rounded-2xl px-5 py-4 h-28", field.value && "text-blue-600 font-bold")} /></FormControl><FormMessage /></FormItem>} />
-          </>
-        )}
+        <Tabs defaultValue="es" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="es">Español</TabsTrigger>
+            <TabsTrigger value="en">Inglés</TabsTrigger>
+          </TabsList>
+          <TabsContent value="es" className="pt-6">
+            <div className='space-y-8'>
+              <FormField control={form.control} name="name_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Nombre del plato (ES)</FormLabel><FormControl><Input placeholder="Ej: Paella Valenciana" {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="description_es" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Descripción (ES)</FormLabel><FormControl><Textarea placeholder="(Opcional) Una breve descripción del plato." {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
+            </div>
+          </TabsContent>
+          <TabsContent value="en" className="pt-6">
+            <div className='space-y-8'>
+              <FormField control={form.control} name="name_en" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Nombre del plato (EN)</FormLabel><FormControl><Input placeholder="Ej: Valencian Paella" {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="description_en" render={({ field }) => <FormItem><FormLabel className='text-lg font-bold text-gray-800'>Descripción (EN)</FormLabel><FormControl><Textarea placeholder="(Optional) A brief description of the dish." {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl><FormMessage /></FormItem>} />
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <FormField control={form.control} name="category" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel className='text-lg font-bold text-gray-800'>Categoría</FormLabel><CategoryCombobox value={field.value} onChange={field.onChange} /><FormMessage /></FormItem>)} />
         <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel className='text-lg font-bold text-gray-800'>Precio</FormLabel><div className="relative"><FormControl><Input type="text" inputMode="decimal" placeholder="Ej: 12,50" {...field} className="h-14 px-5 text-base rounded-full pr-12" /></FormControl><div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none"><span className="text-muted-foreground text-lg">€</span></div></div><FormMessage /></FormItem>)} />
         
+        <div className="space-y-4 rounded-2xl border p-6 bg-gray-50/50">
+          <h3 className="text-xl font-bold text-gray-800">Extras / Suplementos</h3>
+          <p className="text-sm text-muted-foreground">Añade opciones para este plato. Si dejas el campo inglés en blanco se traducirá automáticamente.</p>
+          <div className="space-y-4 pt-2">
+            {fields.map((field, index) => (
+              <div key={field.id} className="space-y-4 rounded-lg border p-4 bg-white">
+                <div className='flex justify-end'>
+                   <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className='text-destructive hover:bg-destructive/10 h-8 w-8'>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Tabs defaultValue="es" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="es">Extra (ES)</TabsTrigger>
+                    <TabsTrigger value="en">Extra (EN)</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="es" className="pt-4">
+                    <FormField
+                      control={form.control}
+                      name={`extras.${index}.name_es`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nombre del extra (ES)</FormLabel>
+                          <FormControl><Input placeholder="Ej: Atún" {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+                  <TabsContent value="en" className="pt-4">
+                    <FormField
+                      control={form.control}
+                      name={`extras.${index}.name_en`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nombre del extra (EN)</FormLabel>
+                          <FormControl><Input placeholder="(Automático) Ej: Tuna" {...field} className={cn(field.value && 'text-blue-600 font-semibold')} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+                </Tabs>
+                
+                <FormField
+                  control={form.control}
+                  name={`extras.${index}.price`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Precio del extra</FormLabel>
+                      <div className="relative">
+                        <FormControl><Input type="text" inputMode="decimal" placeholder="1,50" {...field} className='pr-8'/></FormControl>
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span className="text-muted-foreground text-sm">€</span></div>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            ))}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size='sm'
+            className="mt-4 gap-2 rounded-full"
+            onClick={() => append({ name_es: '', name_en: '', price: '' })}
+          >
+            <PlusCircle className='h-4 w-4'/>
+            Añadir Extra
+          </Button>
+        </div>
+
         <FormField
           control={form.control}
           name="allergens"
