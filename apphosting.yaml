@@ -71,3 +71,9 @@ env:
     availability:
       - BUILD
       - RUNTIME
+    - variable: GOOGLE_API_KEY
+    secret: GEMINI_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+

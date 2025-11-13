@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, Clock, Loader2, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AllergenModal, { AllergenRecord } from '@/components/dashboard/allergen-modal';
 import { ALLERGENS } from '@/lib/allergens';
@@ -55,37 +55,66 @@ function CourseSection({
     dishes,
     onDishAdd,
     onDishChange,
-    onAllergenClick
+    onAllergenClick,
+    onDetectAllergens,
+    analyzingDishId,
+    analyzedDishIds,
 }: {
     title: string;
     dishes: Dish[];
     onDishAdd: () => void;
     onDishChange: (id: number, name: string) => void;
     onAllergenClick: (dish: Dish) => void;
+    onDetectAllergens: (dishId: number, dishName: string) => void;
+    analyzingDishId: number | null;
+    analyzedDishIds: Set<number>;
 }) {
   return (
     <div className="space-y-4">
       <h3 className="text-2xl font-bold">{title}</h3>
       <div className="space-y-3">
-        {dishes.map((dish) => (
-          <div key={dish.id} className="flex items-center gap-2">
-            <Input
-              type="text"
-              placeholder={`Ej: Paella Valenciana`}
-              value={dish.name}
-              onChange={(e) => onDishChange(dish.id, e.target.value)}
-              className={`h-14 rounded-full text-lg ${dish.name ? 'font-bold text-blue-600' : ''}`}
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onAllergenClick(dish)}
-              disabled={!dish.name}
-              className={`rounded-full w-14 h-14 flex-shrink-0 transition-colors ${Object.values(dish.allergens).some(v => v !== 'no') ? 'bg-blue-800 hover:bg-blue-900' : 'bg-gray-300'} disabled:bg-gray-200 disabled:cursor-not-allowed`}>
-              <AllergenIcon />
-            </Button>
-          </div>
-        ))}
+        {dishes.map((dish) => {
+          const isAnalyzed = analyzedDishIds.has(dish.id);
+          const isAnalyzing = analyzingDishId === dish.id;
+          return (
+            <div key={dish.id} className="flex items-start gap-2">
+              <div className="flex-grow">
+                <Input
+                  type="text"
+                  placeholder={`Ej: Paella Valenciana`}
+                  value={dish.name}
+                  onChange={(e) => onDishChange(dish.id, e.target.value)}
+                  className={`h-14 rounded-full text-lg ${dish.name ? 'font-bold text-blue-600' : ''}`}
+                />
+                {isAnalyzing && (
+                  <p className="text-xs text-blue-600 mt-1 animate-pulse text-center">
+                    Analizando alérgenos con IA...
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => isAnalyzed ? onAllergenClick(dish) : onDetectAllergens(dish.id, dish.name)}
+                disabled={!dish.name || isAnalyzing}
+                className={`rounded-full w-14 h-14 flex-shrink-0 transition-all duration-300 ease-in-out 
+                  ${isAnalyzing ? 'bg-orange-500 cursor-not-allowed' : 
+                    !dish.name ? 'bg-gray-200 cursor-not-allowed' : 
+                    isAnalyzed ? (Object.values(dish.allergens).some(v => v !== 'no') ? 'bg-blue-800 hover:bg-blue-900' : 'bg-gray-400 hover:bg-gray-500') : 
+                    'bg-cyan-500 hover:bg-cyan-600'
+                  }`}
+              >
+                {isAnalyzing ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-white" />
+                ) : isAnalyzed ? (
+                  <AllergenIcon />
+                ) : (
+                  <Sparkles className="h-6 w-6 text-white" />
+                )}
+              </Button>
+            </div>
+          );
+        })}
       </div>
       <Button variant="secondary" onClick={onDishAdd} className="w-full h-12 rounded-full text-md font-semibold">
         Añadir plato
@@ -114,6 +143,10 @@ export default function DailyMenuPage() {
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
 
+  // --- Estados para el Análisis de Alérgenos con IA --- //
+  const [analyzingDishId, setAnalyzingDishId] = useState<number | null>(null);
+  const [analyzedDishIds, setAnalyzedDishIds] = useState<Set<number>>(new Set());
+
   useEffect(() => {
     const fetchMenuData = async () => {
       if (!user) {
@@ -132,21 +165,30 @@ export default function DailyMenuPage() {
           setStartTime(data.startTime || '12:30');
           setEndTime(data.endTime || '15:45');
 
+          const tempAnalyzedIds = new Set<number>();
           const loadedCourses = initialCourses.map(initialCourse => {
               const savedCourse = data.courses.find((c: Course) => c.title === initialCourse.title);
               if (savedCourse && savedCourse.dishes.length > 0) {
                   return {
                       ...initialCourse,
-                      dishes: savedCourse.dishes.map((dish: any, index: number) => ({
-                          id: Date.now() + Math.random() * 1000 + index,
-                          name: dish.name,
-                          allergens: { ...defaultAllergens, ...dish.allergens }
-                      }))
+                      dishes: savedCourse.dishes.map((dish: any, index: number) => {
+                          const newId = Date.now() + Math.random() * 1000 + index;
+                          // Si el plato guardado tiene alérgenos, lo consideramos "analizado" y permitimos editar directamente
+                          if (dish.allergens && Object.keys(dish.allergens).length > 0) {
+                              tempAnalyzedIds.add(newId);
+                          }
+                          return {
+                              id: newId,
+                              name: dish.name,
+                              allergens: { ...defaultAllergens, ...dish.allergens }
+                          };
+                      })
                   };
               }
-              return initialCourse; // Retorna el curso inicial con un plato vacío si no hay datos guardados
+              return initialCourse;
           });
           setCourses(loadedCourses);
+          setAnalyzedDishIds(tempAnalyzedIds);
         }
       } catch (error) {
         console.error("Error fetching daily menu data:", error);
@@ -158,6 +200,50 @@ export default function DailyMenuPage() {
 
     fetchMenuData();
   }, [user, toast]);
+
+  const handleAllergenDetect = async (dishId: number, dishName: string) => {
+    setAnalyzingDishId(dishId);
+    try {
+      const response = await fetch('/api/detect-allergens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dishName }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const { allergens: detectedAllergenIds } = await response.json();
+
+      setCourses(currentCourses => currentCourses.map(course => ({
+        ...course,
+        dishes: course.dishes.map(dish => {
+          if (dish.id === dishId) {
+            const newAllergens = { ...dish.allergens };
+            detectedAllergenIds.forEach((allergenId: string) => {
+              if (allergenId in newAllergens) {
+                newAllergens[allergenId] = 'yes'; // Marcar como 'yes'
+              }
+            });
+            return { ...dish, allergens: newAllergens };
+          }
+          return dish;
+        }),
+      })));
+
+      setAnalyzedDishIds(prev => new Set(prev).add(dishId));
+      toast({ title: '¡Análisis completado!', description: `Se encontraron ${detectedAllergenIds.length} alérgenos. Puedes revisar y ajustar el resultado.` });
+
+    } catch (error) {
+      console.error("Error detecting allergens:", error);
+      toast({ title: 'Error en el análisis', description: 'No se pudo detectar los alérgenos. Por favor, añádelos manually.', variant: 'destructive' });
+      // Marcamos como analizado igualmente para no bloquear al usuario y permitir edición manual
+      setAnalyzedDishIds(prev => new Set(prev).add(dishId));
+    } finally {
+      setAnalyzingDishId(null);
+    }
+  };
 
   const handleDishAdd = (courseTitle: string) => {
     setCourses(courses.map(course => {
@@ -176,6 +262,14 @@ export default function DailyMenuPage() {
         }
         return course;
     }));
+    // Si el nombre cambia, reseteamos el estado de "analizado" para permitir un nuevo análisis
+    if (analyzedDishIds.has(id)) {
+      setAnalyzedDishIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    }
   };
 
   const handleAllergenClick = (dish: Dish, courseTitle: string) => {
@@ -280,6 +374,9 @@ export default function DailyMenuPage() {
                     onDishAdd={() => handleDishAdd(course.title)}
                     onDishChange={(id, name) => handleDishChange(course.title, id, name)}
                     onAllergenClick={(dish) => handleAllergenClick(dish, course.title)}
+                    onDetectAllergens={handleAllergenDetect}
+                    analyzingDishId={analyzingDishId}
+                    analyzedDishIds={analyzedDishIds}
                 />
             ))}
 
@@ -320,7 +417,8 @@ export default function DailyMenuPage() {
                         </div>
                     </div>
                     <div className="flex items-center justify-between gap-4 py-2">
-                        <label htmlFor="end-time" className="text-xl font-semibold">Hasta:</label>
+                        <label htmlFor="end-time" className="text-xl font-semibold">Hasta:
+                        </label>
                         <div className="relative w-[180px]">
                             <Input id="end-time" type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="rounded-full h-14 pl-4 pr-10 text-center font-bold text-xl" disabled={!isPublished}/>
                             <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
