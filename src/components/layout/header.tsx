@@ -34,17 +34,25 @@ export function Header() {
         const docRef = doc(db, 'restaurants', currentUser.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          const ownerName = docSnap.data().ownerName || '';
+          const ownerName = docSnap.data().ownerName || ''; // Asegura que ownerName es una cadena
           setUserName(ownerName);
-          const nameParts = ownerName.split(' ');
-          const initials =
-            nameParts.length > 1
-              ? `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`
-              : nameParts[0]?.substring(0, 2) || '';
-          setInitials(initials.toUpperCase());
+          const trimmedName = ownerName.trim(); // Eliminar espacios al inicio/final
+          const nameParts = trimmedName.split(/\s+/).filter(Boolean); // Dividir por uno o más espacios y eliminar vacíos
+
+          let generatedInitials = '';
+
+          if (nameParts.length > 1) {
+            generatedInitials = `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`;
+          } else if (nameParts.length === 1) {
+            generatedInitials = nameParts[0].substring(0, 2);
+          } else {
+            generatedInitials = 'AU'; // Valor por defecto si no hay nombre
+          }
+
+          setInitials(generatedInitials.toUpperCase());
         } else {
           setUserName(currentUser.email || 'Usuario');
-          setInitials('?');
+          setInitials('AU'); // Cambiado de '?' a 'AU' como valor por defecto
         }
       } else {
         setInitials('');
@@ -89,7 +97,7 @@ export function Header() {
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                 <Avatar className="h-10 w-10 border">
                   <AvatarFallback className="bg-secondary text-primary font-semibold">
-                    {initials || <UserIcon />}
+                    {initials || 'AU'}
                   </AvatarFallback>
                 </Avatar>
               </Button>

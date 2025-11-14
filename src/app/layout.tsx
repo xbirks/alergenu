@@ -89,6 +89,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID; // Use environment variable
+
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -122,23 +124,27 @@ export default function RootLayout({
         />
 
         {/* Google Analytics (opcional, si usas GA4) */}
-        <Script
-          id="gtag-src"
-          src={`https://www.googletagmanager.com/gtag/js?id=__TU_GOOGLE_ANALYTICS_ID__`} // LÍNEA 135
-          strategy="afterInteractive"
-        />
-        <Script
-          id="gtag-init"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '__TU_GOOGLE_ANALYTICS_ID__'); // LÍNEA 146
-            `,
-          }}
-        />
+        {gaMeasurementId && (
+          <>
+            <Script
+              id="gtag-src"
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+              strategy="afterInteractive"
+            />
+            <Script
+              id="gtag-init"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${gaMeasurementId}');
+                `,
+              }}
+            />
+          </>
+        )}
       </head>
 
       <body className={`flex flex-col min-h-screen bg-white ${manrope.className}`}>

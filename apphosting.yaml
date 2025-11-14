@@ -76,3 +76,23 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  - variable: STRIPE_SECRET_KEY
+    secret: STRIPE_SK_API
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+    secret: STRIPE_PK_API
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: STRIPE_WEBHOOK_SECRET
+    secret: STRIPE_WEBHOOK_API
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_GOOGLE_ANALYTICS_ID
+    secret: GOOGLE_ANALYTICS_ID # Asumiendo que crearás un secreto con este nombre
+    availability:
+    - BUILD
+    - RUNTIME

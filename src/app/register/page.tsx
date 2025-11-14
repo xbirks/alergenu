@@ -13,6 +13,9 @@ import { auth, db } from '@/lib/firebase/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, collection, writeBatch, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { PublicHeader } from '@/components/layout/PublicHeader';
+// La importación de loadStripe y stripePromise ya no es necesaria aquí
+// import { loadStripe } from '@stripe/stripe-js';
+// const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 const slugify = (text: string) => {
   const a = 'àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;';
@@ -29,7 +32,7 @@ const slugify = (text: string) => {
     .replace(/-+$/, '');
 }
 
-// Función para encontrar un slug único
+// Function to find a unique slug
 const findUniqueSlug = async (db: any, baseSlug: string): Promise<string> => {
     const restaurantsRef = collection(db, 'restaurants');
     let currentSlug = baseSlug;
@@ -55,18 +58,23 @@ const pricingPlans = [
       name: 'Plan gratuito',
       price: null,
       details: '3 meses gratis',
+      priceId: null,
     },
     {
       id: 'autonomia',
       name: 'Plan Autonomía',
       price: '12€',
       details: 'Mensual, IVA inc.',
+      // ¡IMPORTANTE!: Asegúrate de que este Price ID sea de tu MODO DE PRUEBA de Stripe
+      // O bien, cámbialo a tu price_live_ID cuando vayas a producción.
+      priceId: 'price_1STO8NH4esVSm5sUhD9EWIlh', 
     },
     {
       id: 'premium',
       name: 'Plan Premium',
       price: '49€',
       details: 'Mensual, IVA inc.',
+      priceId: null, // To be added later
     },
 ];
 
@@ -90,53 +98,24 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [submissionAttempted, setSubmissionAttempted] = useState(false);
 
-  const [placeholders, setPlaceholders] = useState({
-    restaurantName: 'Ej: Restaurante Pepe',
-    ownerName: 'Ej: María Pérez Fernández',
-    email: 'Ej: mariaperez@gmail.com',
-  });
-
   useEffect(() => {
-    // Fetch user IP on component mount
-    fetch('/api/get-ip')
-      .then(res => res.json())
-      .then(data => setUserIp(data.ip || 'IP not found'))
-      .catch(() => setUserIp('IP not found'));
-
+    fetch('/api/get-ip').then(res => res.json()).then(data => setUserIp(data.ip || 'IP not found'));
     const planFromUrl = searchParams.get('plan');
     if (planFromUrl && ['gratuito', 'autonomia', 'premium'].includes(planFromUrl)) {
       setSelectedPlan(planFromUrl);
     }
   }, [searchParams]);
 
-  const handleFocus = (field: keyof typeof placeholders) => {
-    setPlaceholders(prev => ({ ...prev, [field]: '' }));
-  };
-
-  const handleBlur = (field: keyof typeof placeholders, originalPlaceholder: string, value: string) => {
-    if (!value) {
-      setPlaceholders(prev => ({ ...prev, [field]: originalPlaceholder }));
-    }
-  };
-  
   const handlePlanSelection = (planId: string) => {
     setSelectedPlan(planId);
-    if (planId === 'gratuito' && restaurantNameRef.current) {
-      restaurantNameRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    }
   };
-
-  const isFormComplete = restaurantName && ownerName && email && password && confirmPassword;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmissionAttempted(true);
     setError('');
 
-    if (!isFormComplete || !termsAccepted) {
+    if (!restaurantName || !ownerName || !email || !password || !confirmPassword || !termsAccepted) {
         setError('Por favor, rellena todos los campos obligatorios y acepta los términos.');
         return;
     }
@@ -148,49 +127,50 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      const baseSlug = slugify(restaurantName);
-      const uniqueSlug = await findUniqueSlug(db, baseSlug);
-
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       await sendEmailVerification(user);
 
+      const baseSlug = slugify(restaurantName);
+      const uniqueSlug = await findUniqueSlug(db, baseSlug);
+      
       const batch = writeBatch(db);
       const restaurantRef = doc(db, 'restaurants', user.uid);
-      const acceptanceDate = serverTimestamp();
-      
-      // 1. Create the main restaurant document with the unique slug
+      const userRef = doc(db, 'users', user.uid);
+      const legalRef = doc(db, 'legalAcceptances', user.uid);
+
+      const initialStatus = selectedPlan === 'gratuito' ? 'trialing' : 'incomplete';
+      const trialEndDate = selectedPlan === 'gratuito' ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) : null;
+
+      // 1. Restaurant Document
       batch.set(restaurantRef, {
         uid: user.uid,
         restaurantName,
-        slug: uniqueSlug, 
+        slug: uniqueSlug,
         ownerName,
         email: user.email,
-        selectedPlan: selectedPlan,
+        selectedPlan,
+        subscriptionStatus: initialStatus,
+        trialEndsAt: trialEndDate,
         createdAt: serverTimestamp(),
-        termsAcceptedAt: acceptanceDate,
+        termsAcceptedAt: serverTimestamp(),
         hasSeenWelcomeVideo: false,
       });
 
-      // 2. Create the legal acceptance record
-      const legalAcceptanceRef = doc(db, 'legalAcceptances', user.uid);
-      batch.set(legalAcceptanceRef, {
-        userId: user.uid,
-        version: '1.0.0', // Version of the terms accepted
-        acceptedAt: acceptanceDate,
-        ipAddress: userIp,
-      });
-
-      // 3. Create a document in the 'users' collection for easy lookup
-      const userRef = doc(db, 'users', user.uid);
+      // 2. User Document
       batch.set(userRef, {
         email: user.email,
-        displayName: ownerName, // We use the owner's name as the display name
+        displayName: ownerName,
         createdAt: serverTimestamp(),
       });
 
-      // 4. Create default categories for the new restaurant
+      // 3. Legal Acceptance Document
+      batch.set(legalRef, {
+        userId: user.uid, version: '1.0.0', acceptedAt: serverTimestamp(), ipAddress: userIp,
+      });
+
+      // 4. Default Categories
       const categoriesCollectionRef = collection(db, 'restaurants', user.uid, 'categories');
       const defaultCategories = [
         { name_i18n: { es: 'Entrantes', en: 'Starters' }, order: 1 },
@@ -198,32 +178,48 @@ function RegisterForm() {
         { name_i18n: { es: 'Postres', en: 'Desserts' }, order: 3 },
         { name_i18n: { es: 'Bebidas', en: 'Drinks' }, order: 4 },
       ];
-
-      for (const category of defaultCategories) {
-        const categoryRef = doc(categoriesCollectionRef); 
-        batch.set(categoryRef, category);
-      }
+      defaultCategories.forEach(cat => batch.set(doc(categoriesCollectionRef), cat));
 
       await batch.commit();
 
-      router.push('/auth/verify-email');
+      // --- Plan-specific redirection ---
+      const planDetails = pricingPlans.find(p => p.id === selectedPlan);
+
+      if (planDetails && planDetails.priceId) {
+        // Paid plan: Redirect to Stripe Checkout
+        const res = await fetch('/api/stripe/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                userId: user.uid, 
+                userEmail: user.email, 
+                userName: ownerName, 
+                priceId: planDetails.priceId 
+            }),
+        });
+
+        const { url, error: apiError } = await res.json(); // Ahora esperamos 'url' en lugar de 'sessionId'
+
+        if (apiError) throw new Error(apiError);
+        if (!url) throw new Error('Could not retrieve a checkout session URL.');
+
+        // Redirigir directamente a la URL proporcionada por el backend
+        window.location.href = url;
+
+      } else {
+        // Free plan: Redirect to email verification page
+        router.push('/auth/verify-email');
+      }
 
     } catch (error: any) {
-      console.error("Error detallado en registro:", error); 
+      console.error("Registration or Checkout Error:", error);
       let errorMessage = 'Ocurrió un error al crear la cuenta.';
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'Este correo electrónico ya está en uso.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'El formato del correo electrónico no es válido.';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'La contraseña es demasiado débil. Revisa los requisitos de seguridad.';
-      } else if (error.code === 'permission-denied') {
-        errorMessage = 'Error de permisos. Contacta con soporte.';
-      }
+      if (error.code === 'auth/email-already-in-use') errorMessage = 'Este correo electrónico ya está en uso.';
+      else if (error.message) errorMessage = error.message;
       setError(errorMessage);
-    } finally {
       setLoading(false);
     }
+    // Note: setLoading(false) is not called on successful paid plan redirection because the page unloads.
   };
 
   return (
@@ -232,16 +228,14 @@ function RegisterForm() {
       <main className="flex items-start justify-center pt-2 pb-10 px-4">
         <div className="w-full max-w-md mx-auto">
             <div className="bg-white">
-                <div className="text-center">
+                 <div className="text-center">
                     <Image src='/alergenu.png' alt='Alergenu Logo' width={180} height={48} className="mx-auto mt-16 mb-10" />
                     <h1 className="text-2xl font-bold tracking-tight mb-1">Crea tu cuenta</h1>
-                    <p className="text-muted-foreground text-sm">
-                        Introduce tus datos y en menos de 2 minutos estarás creando tu carta.
-                    </p>
+                    <p className="text-muted-foreground text-sm">Elige tu plan y empieza a crear tu carta digital.</p>
                 </div>
                 
                 <form onSubmit={handleSubmit} className="space-y-5 mt-10">
-                    {/* ...el resto del formulario JSX permanece igual... */}
+                    {/* Pricing Plans Selection */}
                     <div>
                         <div className="space-y-4">
                             {pricingPlans.map((plan) => {
@@ -251,141 +245,99 @@ function RegisterForm() {
                                     type="button"
                                     key={plan.id}
                                     onClick={() => handlePlanSelection(plan.id)}
-                                    className={`w-full flex justify-between items-center px-6 rounded-full transition-all duration-200 h-16`}
-                                    style={isSelected ? { backgroundColor: '#959595' } : { backgroundColor: '#f3f4f6' }}
-                                >
-                                    <span className={`font-semibold text-base ${isSelected ? 'text-white' : 'text-gray-800'}`}>{plan.name}</span>
+                                    className={`w-full flex justify-between items-center px-6 rounded-full transition-all duration-200 h-16 ${isSelected ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800'}`}>
+                                    <span className={`font-semibold text-base`}>{plan.name}</span>
                                     <div className="flex items-center gap-x-4">
-                                        {plan.price && (
+                                        {plan.price ? (
                                             <div className="text-right">
-                                                <p className={`font-bold text-lg ${isSelected ? 'text-white' : 'text-gray-900'}`}>{plan.price}</p>
-                                                <p className={`text-xs ${isSelected ? 'text-gray-200' : 'text-muted-foreground'} -mt-1`}>{plan.details}</p>
+                                                <p className={`font-bold text-lg`}>{plan.price}</p>
+                                                <p className={`text-xs ${isSelected ? 'text-gray-300' : 'text-muted-foreground'} -mt-1`}>{plan.details}</p>
                                             </div>
-                                        )}
-                                        {isSelected && (
-                                            <span className="bg-gray-800 text-white text-sm font-semibold px-4 py-2 rounded-full">
-                                                Seleccionado
-                                            </span>
-                                        )}
+                                        ) : <div className='text-lg font-bold'>Gratis</div>}
+                                        {isSelected && <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Seleccionado</span>}
                                     </div>
                                 </button>
                                 );
                             })}
                         </div>
-
-                        <div className="flex justify-start items-center gap-2 pt-4 px-2">
-                            <p className="text-sm text-gray-600">Tus pagos seguros con</p>
+                         <div className="flex justify-start items-center gap-2 pt-4 px-2">
+                            <p className="text-sm text-gray-600">Pagos seguros gestionados por</p>
                             <Image src="/icons/web_icons/stripe.svg" alt="Stripe Logo" width={48} height={20} />
                         </div>
                     </div>
                     
-                    <hr className="!my-12 border-gray-200" />
+                    <hr className="!my-10 border-gray-200" />
 
+                    {/* Form Inputs */}
                     <div className="space-y-5">
                         <div>
                             <Label htmlFor='restaurant-name' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Nombre del restaurante*</Label>
                             <Input
                                 ref={restaurantNameRef}
                                 id='restaurant-name'
-                                placeholder={placeholders.restaurantName}
-                                onFocus={() => handleFocus('restaurantName')}
-                                onBlur={() => handleBlur('restaurantName', 'Ej: Restaurante Pepe', restaurantName)}
                                 required value={restaurantName}
                                 onChange={(e) => setRestaurantName(e.target.value)}
-                                className={`h-12 px-5 text-base rounded-full text-blue-600 ${submissionAttempted && !restaurantName ? 'border-2 border-red-500' : ''}`}
+                                className={`h-12 px-5 text-base rounded-full ${submissionAttempted && !restaurantName ? 'border-red-500' : ''}`}
                                 disabled={loading}
                             />
-                            <p className="text-xs text-muted-foreground mt-2 px-4">
-                            *Asegúrate que el nombre es correcto, más adelante no se podrá modificar. Va relacionado con tu QR.
-                            </p>
-                        </div>
-                        <div>
-                            <Label htmlFor='owner-name' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Tu nombre y apellidos</Label>
-                            <Input
-                                id='owner-name'
-                                placeholder={placeholders.ownerName}
-                                onFocus={() => handleFocus('ownerName')}
-                                onBlur={() => handleBlur('ownerName', 'Ej: María Pérez Fernández', ownerName)}
-                                required value={ownerName}
-                                onChange={(e) => setOwnerName(e.target.value)}
-                                className={`h-12 px-5 text-base rounded-full text-blue-600 ${submissionAttempted && !ownerName ? 'border-2 border-red-500' : ''}`}
-                                disabled={loading}
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor='email' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Correo electrónico</Label>
-                            <Input
-                                id='email'
-                                type='email'
-                                placeholder={placeholders.email}
-                                onFocus={() => handleFocus('email')}
-                                onBlur={() => handleBlur('email', 'Ej: mariaperez@gmail.com', email)}
-                                required value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className={`h-12 px-5 text-base rounded-full text-blue-600 ${submissionAttempted && !email ? 'border-2 border-red-500' : ''}`}
-                                disabled={loading}
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor='password' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Contraseña</Label>
-                            <div className="relative flex items-center">
-                                <Input
-                                    id='password'
-                                    type={showPassword ? 'text' : 'password'}
-                                    required value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className={`h-12 px-5 text-base rounded-full pr-12 text-blue-600 ${submissionAttempted && !password ? 'border-2 border-red-500' : ''}`}
-                                    disabled={loading}
-                                />
-                                <button type='button' onClick={() => setShowPassword(p => !p)} className="absolute right-1 h-10 w-10 flex items-center justify-center text-muted-foreground bg-white rounded-full">
-                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                </button>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-2 px-4">
-                                Mínimo 8 caracteres, una mayúscula, un número y un caracter especial.
-                            </p>
                         </div>
                          <div>
-                            <Label htmlFor='confirm-password' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Repite tu contraseña</Label>
-                            <div className="relative flex items-center">
-                                <Input
-                                    id='confirm-password'
-                                    type={showConfirmPassword ? 'text' : 'password'}
-                                    required value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className={`h-12 px-5 text-base rounded-full pr-12 text-blue-600 ${submissionAttempted && !confirmPassword ? 'border-2 border-red-500' : ''}`}
-                                    disabled={loading}
-                                />
-                                <button type='button' onClick={() => setShowConfirmPassword(p => !p)} className="absolute right-1 h-10 w-10 flex items-center justify-center text-muted-foreground bg-white rounded-full">
-                                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                </button>
-                            </div>
+                            <Label htmlFor='owner-name' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Tu nombre y apellidos*</Label>
+                            <Input
+                                id='owner-name'
+                                required value={ownerName}
+                                onChange={(e) => setOwnerName(e.target.value)}
+                                className={`h-12 px-5 text-base rounded-full ${submissionAttempted && !ownerName ? 'border-red-500' : ''}`}
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor='email' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Correo electrónico*</Label>
+                            <Input
+                                id='email' type='email' required value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className={`h-12 px-5 text-base rounded-full ${submissionAttempted && !email ? 'border-red-500' : ''}`}
+                                disabled={loading}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor='password' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Contraseña*</Label>
+                            <div className="relative"><Input
+                                id='password' type={showPassword ? 'text' : 'password'} required value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className={`h-12 px-5 text-base rounded-full pr-12 ${submissionAttempted && !password ? 'border-red-500' : ''}`}
+                                disabled={loading}
+                            /><button type='button' onClick={() => setShowPassword(p => !p)} className="absolute right-1 top-1 h-10 w-10 flex items-center justify-center text-muted-foreground bg-white rounded-full"><EyeOff className="h-5 w-5"/></button></div>
+                        </div>
+                        <div>
+                            <Label htmlFor='confirm-password' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Repite tu contraseña*</Label>
+                            <div className="relative"><Input
+                                id='confirm-password' type={showConfirmPassword ? 'text' : 'password'} required value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className={`h-12 px-5 text-base rounded-full pr-12 ${submissionAttempted && !confirmPassword ? 'border-red-500' : ''}`}
+                                disabled={loading}
+                            /><button type='button' onClick={() => setShowConfirmPassword(p => !p)} className="absolute right-1 top-1 h-10 w-10 flex items-center justify-center text-muted-foreground bg-white rounded-full"><EyeOff className="h-5 w-5"/></button></div>
                         </div>
                     </div>
 
+                    {/* Terms and Conditions */}
                     <div className={`pt-4 space-y-4 rounded-lg ${submissionAttempted && !termsAccepted ? 'ring-2 ring-red-500' : ''}`}>
-                        <div className="flex justify-between items-center px-2">
-                            <Label htmlFor="terms" className="text-sm font-normal leading-relaxed peer-disabled:cursor-not-allowed peer-disabled:opacity-70 max-w-[85%]">
-                                Por favor, lee nuestros <Link href="/legal/terms-of-service" className="text-blue-600 underline">términos y condiciones</Link> y luego haz click para aceptarlas.*
-                            </Label>
+                        <div className="flex items-center gap-4 px-2">
                              <Switch id="terms" checked={termsAccepted} onCheckedChange={setTermsAccepted} disabled={loading} />
+                             <Label htmlFor="terms" className="text-sm font-normal leading-relaxed">
+                                Acepto los <Link href="/legal/terms-of-service" className="underline">términos y condiciones</Link>.* 
+                            </Label>
                         </div>
-                         <p className="text-xs text-muted-foreground px-4">
-                            *¡Importante! NO recibirás publicidad de ningún tipo ni se compartirán tus datos sensibles con empresas externas.
-                        </p>
                     </div>
                     
                     {error && (
-                        <p className='text-center text-sm text-red-600 bg-red-50 p-3 rounded-full mt-4'>{error}</p>
+                        <p className='text-center text-sm text-red-600 bg-red-50 p-3 rounded-md mt-4'>{error}</p>
                     )}
                     
+                    {/* Submit Button */}
                     <div className="pt-4">
-                        <Button type='submit' size="lg" className="w-full rounded-full h-14 text-lg font-bold flex items-center justify-center" style={{ backgroundColor: '#2563EB' }} disabled={loading}>
-                           {loading ? (
-                                <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Creando cuenta...</>
-                            ) : (
-                                'Crear cuenta'
-                            )}
+                        <Button type='submit' size="lg" className="w-full rounded-full h-14 text-lg font-bold" disabled={loading}>
+                           {loading ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : 'Crear cuenta y continuar'}
                         </Button>
                     </div>
                 </form>

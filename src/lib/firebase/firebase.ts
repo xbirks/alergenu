@@ -7,6 +7,7 @@ import {
     IdTokenResult 
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getAnalytics } from "firebase/analytics"; // Import getAnalytics
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,13 +15,20 @@ const firebaseConfig = {
     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID // Add measurementId from env
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Initialize Analytics only in the browser environment
+let analytics: any; // Use 'any' type to allow conditional assignment
+if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID) {
+  analytics = getAnalytics(app);
+}
 
 /**
  * This is the core of the client-side authentication management.
@@ -63,4 +71,4 @@ onIdTokenChanged(auth, async (user) => {
     }
 });
 
-export { app, auth, db };
+export { app, auth, db, analytics }; // Export analytics

@@ -1,47 +1,45 @@
-// src/app/admin/page.tsx
+
+import { redirect } from 'next/navigation';
+import AdminBackButton from '@/components/admin/AdminBackButton';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users, CheckCircle, Clock } from 'lucide-react';
+// Imports específicos para Server Components (Firebase Admin)
 import { getAdminDb } from '@/lib/firebase/firebase-admin';
 import { getAuthenticatedAppForUser } from '@/lib/firebase/firebase-auth';
-import { redirect } from 'next/navigation';
-import ImpersonationButton from './ImpersonationButton';
+import { Timestamp } from 'firebase-admin/firestore';
 
-// Import UI components from dashboard style
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+// Importamos el componente cliente que ahora renderizará la lista de restaurantes
+import { RestaurantListClient } from '@/components/admin/RestaurantListClient';
 
-// Import the new Client Component for the back button
-import AdminBackButton from '@/components/admin/AdminBackButton';
-
+// Movemos la definición de Restaurant fuera de los componentes de cliente
+// Esto asegura que el tipo sea consistente entre server y client components.
 type Restaurant = {
     id: string;
     name: string;
     slug: string;
-    ownerUid: string; 
+    email: string;
+    ownerUid: string;
+    plan: 'gratuito' | 'autonomia' | 'premium' | 'desconocido';
+    status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'unknown' | 'trial_expired';
+    endDate: Date | null;
+    dishCount: number;
+    categoryCount: number;
 };
 
-// Refactored RestaurantCard to use Tailwind and Card component
-const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
-    return (
-        <Card className="flex flex-col h-full rounded-2xl shadow-sm">
-            <CardHeader className="flex-grow">
-                <CardTitle className="text-xl font-semibold mb-2 text-gray-900">{restaurant.name}</CardTitle>
-                <p className="text-sm text-muted-foreground font-regular font-mono">Slug: {restaurant.slug}</p>
-            </CardHeader>
-            <CardContent className="pt-0 flex flex-col justify-end">
-                {restaurant.ownerUid ? (
-                    <div className="mt-4">
-                        <ImpersonationButton uid={restaurant.ownerUid} />
-                    </div>
-                ) : (
-                    <div className="bg-yellow-100 text-yellow-800 p-3 rounded-md text-sm italic text-center mt-4">
-                        (Usuario propietario no vinculado)
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-    );
-};
+// Componente para las tarjetas de estadísticas, ya que no son interactivas, pueden permanecer aquí (o ser movidas a un componente de server separado)
+const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
+    <Card className="rounded-2xl shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+        </CardContent>
+    </Card>
+);
 
+// AdminPage es ahora un Server Component puro
 export default async function AdminPage() {
     const { currentUser, token } = await getAuthenticatedAppForUser();
     if (!currentUser || !token?.admin) {
@@ -49,45 +47,80 @@ export default async function AdminPage() {
     }
 
     let restaurants: Restaurant[] = [];
+    let activeSubscriptions = 0;
+    let trialingUsers = 0;
+
     try {
         const adminDb = getAdminDb();
         const restaurantsSnapshot = await adminDb.collection('restaurants').orderBy('restaurantName', 'asc').get();
-        
-        restaurants = restaurantsSnapshot.docs.map(doc => {
+
+        const restaurantDataPromises = restaurantsSnapshot.docs.map(async (doc) => {
             const data = doc.data();
+
+            const categoriesPromise = adminDb.collection('restaurants').doc(doc.id).collection('categories').count().get();
+            const dishesPromise = adminDb.collection('restaurants').doc(doc.id).collection('menuItems').count().get();
+            
+            const [categoriesSnapshot, dishesSnapshot] = await Promise.all([categoriesPromise, dishesPromise]);
+
+            const status = data.subscriptionStatus || (data.trialEndsAt ? 'trialing' : 'unknown');
+            const trialEndsAtDate = data.trialEndsAt instanceof Timestamp ? data.trialEndsAt.toDate() : null;
+            let finalStatus = status;
+            if (status === 'trialing' && trialEndsAtDate && new Date() > trialEndsAtDate) {
+                finalStatus = 'trial_expired';
+            }
+
+            if (finalStatus === 'active') activeSubscriptions++;
+            if (finalStatus === 'trialing') trialingUsers++;
+
+            let endDate: Date | null = null;
+            if (data.currentPeriodEnd && data.currentPeriodEnd instanceof Timestamp) {
+                endDate = data.currentPeriodEnd.toDate();
+            } else if (data.trialEndsAt && data.trialEndsAt instanceof Timestamp) {
+                endDate = data.trialEndsAt.toDate();
+            }
+
             return {
                 id: doc.id,
                 name: data.restaurantName || 'Nombre no definido',
                 slug: data.slug || 'slug-no-definido',
-                ownerUid: data.ownerId || data.uid || '' 
+                email: data.email || 'Email no registrado',
+                ownerUid: data.ownerId || data.uid || '',
+                plan: data.selectedPlan || 'desconocido',
+                status: finalStatus, 
+                endDate,
+                categoryCount: categoriesSnapshot.data().count,
+                dishCount: dishesSnapshot.data().count,
             };
         });
+
+        restaurants = await Promise.all(restaurantDataPromises);
+
     } catch (error) {
         console.error('[Admin Page] Error fetching restaurants:', error);
     }
 
     return (
-        <div className="flex flex-col gap-8 p-8 min-h-screen bg-gray-50">
+        <div className="flex flex-col gap-8 p-4 sm:p-8 min-h-screen bg-white"> {/* Cambiado bg-gray-50 a bg-white */}
             <AdminBackButton />
 
-            <header className="mb-8 pb-4 border-b border-gray-200">
-                <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 mb-2">Panel de Administración</h1>
-                <p className="text-lg text-muted-foreground font-regular">
-                    Bienvenido, {currentUser.email}. Aquí puedes gestionar tus restaurantes clientes.
+            <header className="pb-4 border-b border-gray-200">
+                <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 mb-2">Panel de Administración</h1>
+                <p className="text-md sm:text-lg text-muted-foreground font-regular">
+                    Bienvenido de vuelta, Andrés. Gestiona tus restaurantes clientes.
                 </p>
             </header>
             
             <main className="w-full">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Restaurantes Registrados ({restaurants.length})</h2>
-                {restaurants.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {restaurants.map(restaurant => (
-                            <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-muted-foreground">No se encontraron restaurantes.</p>
-                )}
+                {/* Summary Cards */}
+                <div className="grid gap-4 md:grid-cols-3 mb-8">
+                    <StatCard title="Total Restaurantes" value={restaurants.length} icon={Users} />
+                    <StatCard title="Suscripciones Activas" value={activeSubscriptions} icon={CheckCircle} />
+                    <StatCard title="Usuarios en Prueba" value={trialingUsers} icon={Clock} />
+                </div>
+                
+                {/* Restaurants List - Now rendered by the Client Component */}
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Restaurantes Registrados</h2>
+                <RestaurantListClient restaurants={restaurants} />
             </main>
         </div>
     );

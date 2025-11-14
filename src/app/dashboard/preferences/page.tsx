@@ -27,6 +27,10 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { ALLERGENS } from '@/lib/allergens';
 
+// Custom Hooks and Components
+import { useSubscription } from '@/hooks/useSubscription';
+import ManageSubscriptionButton from '@/components/dashboard/ManageSubscriptionButton';
+
 // Types
 interface LegalAcceptance {
   userId: string;
@@ -57,10 +61,12 @@ export default function PreferencesPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { subscriptionStatus, isLoading: subscriptionLoading } = useSubscription();
   
   // State for Preferences Form
   const [restaurantName, setRestaurantName] = useState('');
   const [ownerName, setOwnerName] = useState('');
+  const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -73,7 +79,7 @@ export default function PreferencesPage() {
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || subscriptionLoading) return; // Wait for both auth and subscription to load
     if (!user) {
       router.push('/login');
       return;
@@ -91,6 +97,7 @@ export default function PreferencesPage() {
           const data = restaurantDoc.data();
           setRestaurantName(data.restaurantName || '');
           setOwnerName(data.ownerName || '');
+          setStripeCustomerId(data.stripeCustomerId || null); // Fetch Stripe Customer ID
         } else {
           setError('No se encontraron datos del restaurante.');
         }
@@ -111,7 +118,7 @@ export default function PreferencesPage() {
     };
 
     fetchData();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, subscriptionLoading]); // Add subscriptionLoading to dependencies
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -294,9 +301,12 @@ export default function PreferencesPage() {
     docPdf.save(`justificante-legal-${user.uid.substring(0,5)}.pdf`);
   };
 
-  if (loading || authLoading) {
+  if (loading || authLoading || subscriptionLoading) {
     return <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
+
+  // Determine if the user has a relevant subscription state for showing the Stripe button
+  const hasPaidOrIsPaying = stripeCustomerId && subscriptionStatus !== 'trialing' && subscriptionStatus !== null;
 
   return (
     <div className="space-y-12">
@@ -390,6 +400,10 @@ export default function PreferencesPage() {
                 </Card>
             </div>
         </section>
+
+        {user && stripeCustomerId && hasPaidOrIsPaying && (
+            <ManageSubscriptionButton userId={user.uid} isSubscribed={hasPaidOrIsPaying} />
+        )}
     </div>
   );
 }
