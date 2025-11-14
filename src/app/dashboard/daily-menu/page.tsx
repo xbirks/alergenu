@@ -220,7 +220,8 @@ export default function DailyMenuPage() {
         ...course,
         dishes: course.dishes.map(dish => {
           if (dish.id === dishId) {
-            const newAllergens = { ...dish.allergens };
+            // Resetear todos los alérgenos a 'no' antes de aplicar los nuevos
+            const newAllergens = { ...defaultAllergens };
             detectedAllergenIds.forEach((allergenId: string) => {
               if (allergenId in newAllergens) {
                 newAllergens[allergenId] = 'yes'; // Marcar como 'yes'

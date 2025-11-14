@@ -6,6 +6,8 @@ import { auth } from "@/lib/firebase/firebase"; // Client-side auth
 import { createImpersonationToken } from "./actions"; // Server action
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button"; // Import Button component
+import { Loader2 } from "lucide-react"; // Import Loader2 icon
 
 export default function ImpersonationButton({ uid }: { uid: string }) {
     const router = useRouter();
@@ -47,48 +49,20 @@ export default function ImpersonationButton({ uid }: { uid: string }) {
     };
 
     return (
-        <div>
-            <button 
+        <div className="w-full">
+            <Button 
                 onClick={handleImpersonation} 
                 disabled={isLoading || !uid}
-                style={isLoading || !uid ? styles.buttonLoading : styles.button}
-                title={!uid ? "No se puede suplantar: falta el UID del propietario" : "Iniciar sesión como propietario de este restaurante"}
+                className="w-full h-10 rounded-full font-bold transition-colors
+                  bg-blue-800 text-white hover:bg-blue-900
+                  disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
             >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
                 {isLoading ? "Iniciando sesión..." : "Iniciar sesión como este usuario"}
-            </button>
-            {error && <p style={styles.errorText}>{error}</p>}
+            </Button>
+            {error && <p className="text-red-500 text-xs mt-2 text-center">{error}</p>}
         </div>
     );
 }
-
-
-const styles: { [key: string]: React.CSSProperties } = {
-    button: {
-        backgroundColor: '#4a90e2',
-        color: 'white',
-        padding: '10px 15px',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        fontSize: '0.9rem',
-        fontWeight: 500,
-        width: '100%',
-        transition: 'background-color 0.2s',
-    },
-    buttonLoading: {
-        backgroundColor: '#a0aec0', // greyed out
-        color: 'white',
-        padding: '10px 15px',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'not-allowed',
-        fontSize: '0.9rem',
-        fontWeight: 500,
-        width: '100%',
-    },
-    errorText: {
-        color: '#d9534f', // red
-        fontSize: '0.8rem',
-        marginTop: '5px',
-    }
-};
