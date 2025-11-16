@@ -92,7 +92,11 @@ env:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_GOOGLE_ANALYTICS_ID
-    secret: GOOGLE_ANALYTICS_ID # Asumiendo que crearás un secreto con este nombre
+    secret: GOOGLE_ANALYTICS_ID
     availability:
     - BUILD
     - RUNTIME
+  - variable: NODE_ENV
+    value: production
+    availability:
+      - BUILD
