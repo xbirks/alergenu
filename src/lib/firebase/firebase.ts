@@ -35,7 +35,7 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID
  * It listens for changes in the user's sign-in state (sign-in, sign-out, token refresh)
  * and synchronizes the ID token with a server-side session cookie.
  */
-onIdTokenChanged(auth, async (user) => {
+onIdTokenChanged(auth, async (user)  => {
     if (user) {
         // User is signed in or token has been refreshed.
         console.log('[Auth State] User is signed in. Refreshing token and setting session cookie...');
