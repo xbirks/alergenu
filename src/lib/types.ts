@@ -19,6 +19,13 @@ export interface Category {
   endTime?: string;
 }
 
+// The new structure for a menu item's extra/supplement
+export interface MenuItemExtra {
+  name_i18n: I18nString;
+  price: number;
+  allergens?: string[]; // Array of allergen IDs for the extra
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -26,15 +33,15 @@ export interface MenuItem {
   description?: string;
   description_i18n?: I18nString;
   price: number;
-  category: string; // This is the category name for display
-  categoryId: string; // This is the category ID for filtering
-  allergens: string[];
+  category: string; 
+  categoryId: string; 
+  allergens: string[]; // Allergens for the main dish
   traces: string[];
   isAvailable: boolean;
   createdAt?: any; // Firebase Timestamp
   updatedAt?: any; // Firebase Timestamp
   order?: number;
-  extras?: any[];
+  extras?: MenuItemExtra[]; // Use the new, structured type for extras
 }
 
 export interface Restaurant {

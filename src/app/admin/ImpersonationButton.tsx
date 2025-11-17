@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button"; // Import Button component
 import { Loader2 } from "lucide-react"; // Import Loader2 icon
+import { cn } from "@/lib/utils"; // Import cn for conditional classnames
 
 export default function ImpersonationButton({ uid }: { uid: string }) {
     const router = useRouter();
@@ -53,16 +54,18 @@ export default function ImpersonationButton({ uid }: { uid: string }) {
             <Button 
                 onClick={handleImpersonation} 
                 disabled={isLoading || !uid}
-                className="w-full h-10 rounded-full font-bold transition-colors
-                  bg-blue-800 text-white hover:bg-blue-900
-                  disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+                size="lg" // Use lg size
+                className={cn(
+                    "w-full font-bold rounded-full h-14 text-lg", // Apply dashboard button styling
+                    isLoading ? "cursor-not-allowed opacity-70" : ""
+                )}
             >
                 {isLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                {isLoading ? "Iniciando sesión..." : "Iniciar sesión como este usuario"}
+                {isLoading ? "Impersonando..." : "Impersonar"}
             </Button>
-            {error && <p className="text-red-500 text-xs mt-2 text-center">{error}</p>}
+            {error && <p className="text-red-500 text-xs mt-2 text-center">¡Error: {error}</p>}
         </div>
     );
 }

@@ -4,12 +4,14 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { List, UtensilsCrossed, Mail, MoreVertical, Award } from 'lucide-react';
+import { List, UtensilsCrossed, Mail, MoreVertical, Award, Eye, HeartHandshake, Hourglass } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { assignSubscriptionPlan } from '@/app/admin/actions';
+import { assignSubscriptionPlan, startFreeTrial } from '@/app/admin/actions';
 import ImpersonationButton from '@/app/admin/ImpersonationButton';
+import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 // Define the Restaurant type for client-side usage
 type Restaurant = {
@@ -23,6 +25,8 @@ type Restaurant = {
     endDate: Date | null;
     dishCount: number;
     categoryCount: number;
+    allergensHelpedCount: number; // New field
+    visitsCount: number;         // New field
 };
 
 // Helper to format plan names
@@ -40,19 +44,6 @@ const formatDate = (date: Date | null) => {
     if (!date) return 'N/A';
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
-
-// A component for statistics cards at the top
-const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
-    <Card className="rounded-2xl shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-            <Icon className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
-        </CardContent>
-    </Card>
-);
 
 // A component for the status badge with colors
 const StatusBadge = ({ status }: { status: Restaurant['status'] }) => {
@@ -79,10 +70,11 @@ const StatusBadge = ({ status }: { status: Restaurant['status'] }) => {
 const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
     const { toast } = useToast();
     const [assigning, setAssigning] = useState<boolean>(false);
+    const router = useRouter();
 
     const endDateText = restaurant.status === 'trialing' ? 'Prueba termina el' : 'Renueva el';
 
-    const handleAssignPlan = async (plan: 'gratuito' | 'autonomia' | 'premium') => {
+    const handleAssignPlan = async (plan: 'autonomia' | 'premium') => {
         setAssigning(true);
         const { success, message } = await assignSubscriptionPlan(restaurant.id, plan);
         if (success) {
@@ -92,6 +84,26 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
         }
         setAssigning(false);
         window.location.reload(); // Force a refresh to show updated data
+    };
+
+    const handleStartTrial = async () => {
+        setAssigning(true);
+        const { success, message } = await startFreeTrial(restaurant.id);
+        if (success) {
+            toast({ title: "Prueba Gratuita Iniciada", description: message, variant: "success" });
+        } else {
+            toast({ title: "Error al iniciar prueba", description: message, variant: "destructive" });
+        }
+        setAssigning(false);
+        window.location.reload(); // Force a refresh to show updated data
+    };
+
+    const handleViewPublicMenu = () => {
+        if (restaurant.slug) {
+            window.open(`/menu/${restaurant.slug}`, '_blank');
+        } else {
+            toast({ title: 'Generando enlace', description: 'Espera un segundo y vuelve a intentarlo.', variant: 'destructive' });
+        }
     };
 
     return (
@@ -135,26 +147,52 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
                         </div>
                         <span className="font-bold">{restaurant.dishCount}</span>
                     </div>
+                    <div className="flex items-center justify-between text-sm text-gray-700">
+                        <div className="flex items-center gap-2">
+                           <HeartHandshake className="h-4 w-4 text-muted-foreground" />
+                           <span>Alérgicos Ayudados</span>
+                        </div>
+                        <span className="font-bold">{restaurant.allergensHelpedCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-700">
+                        <div className="flex items-center gap-2">
+                           <Eye className="h-4 w-4 text-muted-foreground" />
+                           <span>Visitas</span>
+                        </div>
+                        <span className="font-bold">{restaurant.visitsCount}</span>
+                    </div>
                 </div>
             </CardContent>
-            <CardContent className="pt-0 flex justify-end items-center gap-2">
+            <CardContent className="pt-0 flex flex-col gap-3">
                 {restaurant.ownerUid && <ImpersonationButton uid={restaurant.ownerUid} />}
+                <Button 
+                    onClick={handleViewPublicMenu} 
+                    disabled={!restaurant.slug}
+                    size="lg" 
+                    variant="outline"
+                    className={cn("w-full font-bold rounded-full h-14 text-lg", !restaurant.slug && "opacity-50 cursor-not-allowed")}
+                >
+                    <Eye className="mr-2 h-4 w-4" />Ver Carta Pública
+                </Button>
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={assigning}><MoreVertical className="h-5 w-5" /></Button>
+                        <Button variant="outline" size="lg" className="w-full font-bold rounded-full h-14 text-lg" disabled={assigning}>
+                            <MoreVertical className="mr-2 h-4 w-4" />Otras Acciones
+                        </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel className="px-4 py-2 font-semibold">Asignar Plan (Manual)</DropdownMenuLabel>
+                    <DropdownMenuContent align="end" className="w-60">
+                        <DropdownMenuLabel className="px-4 py-2 font-semibold">Gestionar Plan</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleAssignPlan('gratuito')} disabled={assigning} className="flex items-center gap-2">
-                            <Award className="h-4 w-4 text-green-500" /> Plan Gratuito (Forever)
+                        <DropdownMenuItem onClick={handleStartTrial} disabled={assigning || restaurant.status === 'trialing'} className="flex items-center gap-2">
+                            <Hourglass className="h-4 w-4 text-orange-500" /> Iniciar Prueba Gratuita (3 meses)
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleAssignPlan('autonomia')} disabled={assigning} className="flex items-center gap-2">
-                            <Award className="h-4 w-4 text-blue-500" /> Plan Autonomía (Forever)
+                            <Award className="h-4 w-4 text-blue-500" /> Asignar Plan Autonomía (Manual)
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleAssignPlan('premium')} disabled={assigning} className="flex items-center gap-2">
-                            <Award className="h-4 w-4 text-purple-500" /> Plan Premium (Forever)
+                            <Award className="h-4 w-4 text-purple-500" /> Asignar Plan Premium (Manual)
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

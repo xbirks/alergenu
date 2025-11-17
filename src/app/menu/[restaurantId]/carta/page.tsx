@@ -13,7 +13,6 @@ interface MenuData {
 
 async function getMenuData(slug: string): Promise<MenuData> {
   try {
-    // We create a dummy request object as the API route handler expects it.
     const request = new Request(`http://dummyurl/api/menu/${slug}`);
     const response = await getMenuApi(request, { params: { restaurantSlug: slug } });
 
@@ -22,15 +21,18 @@ async function getMenuData(slug: string): Promise<MenuData> {
     }
 
     if (!response.ok) {
-      console.error(`[PublicPage] API responded with status ${response.status}`);
-      throw new Error('Failed to fetch menu data');
+      const errorBody = await response.text();
+      console.error(`[DIAGNOSIS] API route returned an error. Status: ${response.status}, Body: ${errorBody}`);
+      throw new Error(`API route failed with status ${response.status}`);
     }
 
     return response.json();
 
   } catch (error) {
-    console.error('[PublicPage] Critical error in getMenuData:', error);
-    throw error; // Let Next.js handle the final error boundary
+    console.error('\n', '* '.repeat(20));
+    console.error('[DIAGNOSIS] CRITICAL ERROR IN getMenuData:', error);
+    console.error('* '.repeat(20), '\n');
+    throw error;
   }
 }
 
@@ -39,40 +41,10 @@ export default async function PublicMenuPage({ params }: { params: { restaurantI
   try {
     const menuData = await getMenuData(restaurantId);
 
-    // --- Time-based Category Filtering --- //
-    const now = new Date();
-    const timeInMadrid = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Madrid' }));
-    const currentHours = timeInMadrid.getHours().toString().padStart(2, '0');
-    const currentMinutes = timeInMadrid.getMinutes().toString().padStart(2, '0');
-    const currentTime = `${currentHours}:${currentMinutes}`;
-
-    const hiddenCategoryIds = new Set(
-      menuData.categories
-        .filter(category => {
-          const { startTime, endTime } = category;
-          if (!startTime || !endTime) {
-            return false; // NOT hidden if no schedule is set
-          }
-          // Handle overnight schedule (e.g., 22:00 to 05:00)
-          if (startTime > endTime) {
-            // Hidden if current time is NOT in the active overnight period
-            return !(currentTime >= startTime || currentTime <= endTime);
-          }
-          // Handle normal schedule (e.g., 12:00 to 16:00)
-          // Hidden if current time is outside the active period
-          return !(currentTime >= startTime && currentTime <= endTime);
-        })
-        .map(c => c.id)
-    );
-
-    // Filter categories and items based on the hidden IDs
-    const visibleCategories = menuData.categories.filter(category => !hiddenCategoryIds.has(category.id));
-    const visibleItems = menuData.items.filter(item => !hiddenCategoryIds.has(item.categoryId));
-
-    // --- Last Updated Timestamp Calculation --- //
+    // Find the most recent update timestamp from all menu items
     let lastUpdatedAt: string | null = null;
     if (menuData.items && menuData.items.length > 0) {
-        // @ts-ignore - Firestore Timestamp can be tricky, this handles it safely
+        // @ts-ignore
         const latestTimestamp = menuData.items.reduce((latest, item) => {
             if (item.updatedAt && item.updatedAt.seconds > latest.seconds) {
                 return item.updatedAt;
@@ -89,19 +61,18 @@ export default async function PublicMenuPage({ params }: { params: { restaurantI
       <PublicMenuClient 
         restaurant={menuData.restaurant}
         restaurantId={menuData.restaurantId}
-        initialCategories={visibleCategories}
-        initialItems={visibleItems}
+        initialCategories={menuData.categories}
+        initialItems={menuData.items}
         customAllergens={menuData.customAllergens}
         lastUpdatedAt={lastUpdatedAt}
       />
     );
   } catch (error) {
-    // This is a top-level error boundary for the page.
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center p-8">
           <h2 className="text-xl font-bold text-destructive">Error de Carga</h2>
-          <p className="text-muted-foreground mt-2">No se pudo cargar la información del menú. Por favor, inténtalo más tarde.</p>
+          <p className="text-muted-foreground mt-2">No se pudo cargar la información. Por favor, inténtalo más tarde.</p>
         </div>
       </div>
     );

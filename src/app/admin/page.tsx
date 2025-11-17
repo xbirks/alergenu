@@ -1,8 +1,7 @@
-
 import { redirect } from 'next/navigation';
 import AdminBackButton from '@/components/admin/AdminBackButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, CheckCircle, Clock } from 'lucide-react';
+import { Users, CheckCircle, Clock, HeartHandshake, Eye } from 'lucide-react'; // Added HeartHandshake and Eye icons
 // Imports específicos para Server Components (Firebase Admin)
 import { getAdminDb } from '@/lib/firebase/firebase-admin';
 import { getAuthenticatedAppForUser } from '@/lib/firebase/firebase-auth';
@@ -24,6 +23,8 @@ type Restaurant = {
     endDate: Date | null;
     dishCount: number;
     categoryCount: number;
+    allergensHelpedCount: number; // New field
+    visitsCount: number;         // New field
 };
 
 // Componente para las tarjetas de estadísticas, ya que no son interactivas, pueden permanecer aquí (o ser movidas a un componente de server separado)
@@ -90,6 +91,8 @@ export default async function AdminPage() {
                 endDate,
                 categoryCount: categoriesSnapshot.data().count,
                 dishCount: dishesSnapshot.data().count,
+                allergensHelpedCount: data.allergicSaves || 0, // Corrected field name
+                visitsCount: data.qrScans || 0,                 // Corrected field name
             };
         });
 
