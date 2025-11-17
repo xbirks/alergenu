@@ -16,20 +16,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { Loader2, Trash2, ArrowLeft, PlusCircle, FilePenLine, ArrowUp, ArrowDown, AlertTriangle, Languages } from 'lucide-react';
+import { Loader2, Trash2, ArrowLeft, PlusCircle, FilePenLine, ArrowUp, ArrowDown, AlertTriangle, Languages, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Switch } from '@/components/ui/switch';
 
 interface Category {
   id: string;
   name_i18n: I18nString;
   order: number;
+  startTime?: string;
+  endTime?: string;
 }
 
 interface EditCategoryState {
   id: string;
   name_es: string;
   name_en: string;
+  hasTimer: boolean;
+  startTime: string;
+  endTime: string;
 }
 
 async function translateText(text: string, targetLang: string = 'en'): Promise<string> {
@@ -44,7 +50,7 @@ async function translateText(text: string, targetLang: string = 'en'): Promise<s
     return data.translatedText || '';
   } catch (error) {
     console.error('Error during translation:', error);
-    return ''; // Return empty string on failure
+    return '';
   }
 }
 
@@ -59,7 +65,6 @@ export default function CategoriesPage() {
   const [categoryToEdit, setCategoryToEdit] = useState<EditCategoryState | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<Category | null>(null);
 
-
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -73,8 +78,10 @@ export default function CategoriesPage() {
       (snapshot) => {
         const fetchedCategories = snapshot.docs.map(doc => ({
           id: doc.id,
-          name_i18n: doc.data().name_i18n || { es: doc.data().name, en: '' }, // Fallback for safety
+          name_i18n: doc.data().name_i18n || { es: doc.data().name, en: '' },
           order: doc.data().order,
+          startTime: doc.data().startTime,
+          endTime: doc.data().endTime,
         }));
         setCategories(fetchedCategories as Category[]);
         setLoading(false);
@@ -95,12 +102,11 @@ export default function CategoriesPage() {
 
     const categoryExists = categories.some(cat => cat.name_i18n.es.toLowerCase() === newCategoryName.trim().toLowerCase());
     if (categoryExists) {
-      toast({ title: 'Categoría duplicada', description: 'Ya existe una categoría con este nombre en español.', variant: 'destructive' });
+      toast({ title: 'Categoría duplicada', description: 'Ya existe una categoría con este nombre.', variant: 'destructive' });
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       const newOrder = categories.length > 0 ? Math.max(...categories.map(c => c.order || 0)) + 1 : 1;
       const translatedName = await translateText(newCategoryName.trim());
@@ -113,9 +119,8 @@ export default function CategoriesPage() {
         lastUpdatedBy: user.uid,
       });
 
-      toast({ title: 'Categoría añadida', description: translatedName ? `Traducida a: "${translatedName}"`: 'La traducción automática falló. Puedes añadirla manualmente.' });
+      toast({ title: 'Categoría añadida', description: translatedName ? `Traducida a: "${translatedName}"`: 'La traducción falló.' });
       setNewCategoryName('');
-
     } catch (error) {
       console.error("Error adding category: ", error);
       toast({ title: 'Error', description: 'No se pudo añadir la categoría.', variant: 'destructive' });
@@ -129,12 +134,15 @@ export default function CategoriesPage() {
       id: category.id,
       name_es: category.name_i18n.es,
       name_en: category.name_i18n.en || '',
+      hasTimer: !!(category.startTime && category.endTime),
+      startTime: category.startTime || '08:00',
+      endTime: category.endTime || '11:30',
     });
   };
 
   const handleUpdateCategory = async () => {
     if (!user || !categoryToEdit || !categoryToEdit.name_es.trim()) {
-        toast({ title: 'Error de validación', description: 'El nombre en español no puede estar vacío.', variant: 'destructive' });
+        toast({ title: 'Error de validación', description: 'El nombre no puede estar vacío.', variant: 'destructive' });
         return;
     }
 
@@ -147,11 +155,19 @@ export default function CategoriesPage() {
         en: categoryToEdit.name_en.trim(),
     };
     
-    const categoryUpdateData = {
+    const categoryUpdateData: any = {
         name_i18n: newNameI18n,
         updatedAt: serverTimestamp(),
         lastUpdatedBy: user.uid,
     };
+
+    if (categoryToEdit.hasTimer) {
+      categoryUpdateData.startTime = categoryToEdit.startTime;
+      categoryUpdateData.endTime = categoryToEdit.endTime;
+    } else {
+      categoryUpdateData.startTime = null;
+      categoryUpdateData.endTime = null;
+    }
 
     try {
         batch.update(categoryDocRef, categoryUpdateData);
@@ -168,10 +184,10 @@ export default function CategoriesPage() {
         });
 
         await batch.commit();
-        toast({ title: 'Categoría actualizada', description: `${menuItemsSnapshot.size} platos han sido actualizados.` });
+        toast({ title: 'Categoría actualizada' });
     } catch (error) {
-        console.error("Error updating category and related items: ", error);
-        toast({ title: 'Error de actualización', description: 'No se pudo guardar la categoría y actualizar los platos.', variant: 'destructive' });
+        console.error("Error updating category: ", error);
+        toast({ title: 'Error', description: 'No se pudo guardar la categoría.', variant: 'destructive' });
     } finally {
         setIsSubmitting(false);
         setCategoryToEdit(null);
@@ -189,8 +205,8 @@ export default function CategoriesPage() {
 
     if (!menuItemsSnapshot.empty) {
         toast({ 
-            title: 'Borrado denegado', 
-            description: `No se puede borrar. La categoría "${category.name_i18n.es}" está siendo usada por ${menuItemsSnapshot.size} plato(s).`,
+            title: 'Borrado denegado',
+            description: `La categoría "${category.name_i18n.es}" está siendo usada por ${menuItemsSnapshot.size} plato(s).`,
             variant: 'destructive',
             duration: 7000,
         });
@@ -280,25 +296,39 @@ export default function CategoriesPage() {
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>{cat.name_i18n.en ? `Traducido: "${cat.name_i18n.en}"` : 'Traducción al inglés pendiente'}</p>
+                              <p>{cat.name_i18n.en ? `Traducido: "${cat.name_i18n.en}"` : 'Pendiente de traducción'}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
+                        {cat.startTime && cat.endTime && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <div className="ml-2 flex-shrink-0">
+                                            <Clock className="h-5 w-5 text-amber-500" />
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Visible de {cat.startTime} a {cat.endTime}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
                       </div>
                     </div>
                     
                     <div className='flex items-center space-x-2 flex-shrink-0'>
-                        <Button variant="ghost" size="icon" onClick={() => handleStartEdit(cat)} className='h-10 w-10 rounded-full text-muted-foreground'><FilePenLine className="h-6 w-6" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleStartEdit(cat)} className='h-10 w-10 rounded-full'><FilePenLine className="h-6 w-6" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => confirmDeleteCategory(cat)} className='h-10 w-10 text-destructive rounded-full'><Trash2 className="h-6 w-6" /></Button>
                     </div>
                   </div>
                   
                   <div className="mt-4 flex items-center">
                       <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(index, 'up')} disabled={index === 0}>
-                          <ArrowUp className="h-6 w-6 text-muted-foreground" />
+                          <ArrowUp className="h-6 w-6" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(index, 'down')} disabled={index === categories.length - 1}>
-                          <ArrowDown className="h-6 w-6 text-muted-foreground" />
+                          <ArrowDown className="h-6 w-6" />
                       </Button>
                   </div>
                 </div>
@@ -315,22 +345,45 @@ export default function CategoriesPage() {
         <DialogContent>
             <DialogHeader>
               <DialogTitle>Editar Categoría</DialogTitle>
-              <DialogDescription>Modifica los nombres de la categoría para los diferentes idiomas.</DialogDescription>
+              <DialogDescription>Modifica los nombres y, si quieres, establece un horario de visibilidad.</DialogDescription>
             </DialogHeader>
-            <div className="py-4 space-y-4">
-              <div>
-                <Label htmlFor="name_es">Nombre en Español</Label>
-                <Input id="name_es" value={categoryToEdit?.name_es || ''} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, name_es: e.target.value} : null)} />
+            {categoryToEdit && (
+              <div className="py-4 space-y-6">
+                <div className='space-y-4'>
+                  <div>
+                    <Label htmlFor="name_es">Nombre en Español</Label>
+                    <Input id="name_es" value={categoryToEdit.name_es} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, name_es: e.target.value} : null)} />
+                  </div>
+                  <div>
+                    <Label htmlFor="name_en">Nombre en Inglés</Label>
+                    <Input id="name_en" value={categoryToEdit.name_en} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, name_en: e.target.value} : null)} placeholder='(Opcional)' />
+                  </div>
+                </div>
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                            <Label htmlFor="timer-switch" className="text-lg font-semibold">Activar horario</Label>
+                            <p className="text-sm text-muted-foreground">Define una franja horaria para esta categoría.</p>
+                        </div>
+                        <Switch id="timer-switch" checked={categoryToEdit.hasTimer} onCheckedChange={(checked) => setCategoryToEdit(prev => prev ? {...prev, hasTimer: checked} : null)} />
+                    </div>
+                    <div className={`space-y-4 transition-opacity ${!categoryToEdit.hasTimer ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                        <div className="flex items-center justify-between gap-4">
+                            <Label htmlFor="start-time" className="text-lg font-semibold">Desde:</Label>
+                            <Input id="start-time" type="time" value={categoryToEdit.startTime} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, startTime: e.target.value} : null)} className="w-[150px]" disabled={!categoryToEdit.hasTimer}/>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                            <Label htmlFor="end-time" className="text-lg font-semibold">Hasta:</Label>
+                            <Input id="end-time" type="time" value={categoryToEdit.endTime} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, endTime: e.target.value} : null)} className="w-[150px]" disabled={!categoryToEdit.hasTimer}/>
+                        </div>
+                    </div>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="name_en">Nombre en Inglés</Label>
-                <Input id="name_en" value={categoryToEdit?.name_en || ''} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, name_en: e.target.value} : null)} placeholder='(Opcional)' />
-              </div>
-            </div>
+            )}
             <DialogFooter className="gap-2">
-              <DialogClose asChild><Button variant="outline" className='rounded-full'>Cancelar</Button></DialogClose>
-              <Button onClick={handleUpdateCategory} disabled={isSubmitting} className='rounded-full'>
-                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Guardar Cambios
+              <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+              <Button onClick={handleUpdateCategory} disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Guardar
               </Button>
             </DialogFooter>
         </DialogContent>
@@ -342,12 +395,12 @@ export default function CategoriesPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center"><AlertTriangle className="h-6 w-6 text-destructive mr-2"/>Confirmar eliminación</DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de que quieres eliminar la categoría "<strong>{deleteConfirmation?.name_i18n.es}</strong>"? Esta acción no se puede deshacer.
+              ¿Estás seguro de que quieres eliminar "<strong>{deleteConfirmation?.name_i18n.es}</strong>"? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <DialogClose asChild><Button variant="outline" className='rounded-full'>Cancelar</Button></DialogClose>
-            <Button variant="destructive" onClick={handleDeleteCategory} disabled={isSubmitting} className='rounded-full'>
+            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+            <Button variant="destructive" onClick={handleDeleteCategory} disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Sí, eliminar
             </Button>
           </DialogFooter>

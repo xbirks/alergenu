@@ -37,16 +37,21 @@ export async function GET(
       restaurantDocRef.collection('allergens').get(),
     ]);
 
+    const categoryNameToIdMap = new Map<string, string>();
     const categories = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
         const name_i18n = data.name_i18n || {};
         const name = name_i18n.es || data.name || '';
+        
+        categoryNameToIdMap.set(name, doc.id);
 
         return { 
           id: doc.id, 
           order: data.order,
           name: name,
           name_i18n: name_i18n,
+          startTime: data.startTime || null,
+          endTime: data.endTime || null,
         } as Category;
     });
     
@@ -68,6 +73,11 @@ export async function GET(
             ? data.category_i18n.es 
             : (data.category || 'Varios');
 
+        let categoryId = data.categoryId;
+        if (!categoryId) {
+          categoryId = categoryNameToIdMap.get(categoryNameForGrouping);
+        }
+
         return {
             id: doc.id,
             price: data.price,
@@ -77,7 +87,7 @@ export async function GET(
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
             order: data.order,
-            categoryId: data.categoryId,
+            categoryId: categoryId,
             category: categoryNameForGrouping,
             name_i18n: name_i18n,
             description_i18n: description_i18n,
