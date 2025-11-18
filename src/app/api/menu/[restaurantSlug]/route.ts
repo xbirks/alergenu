@@ -38,7 +38,7 @@ export async function GET(
     ]);
 
     const categoryNameToIdMap = new Map<string, string>();
-    const categories = categoriesSnapshot.docs.map(doc => {
+    let categories = categoriesSnapshot.docs.map(doc => {
         const data = doc.data();
         const name_i18n = data.name_i18n || {};
         const name = name_i18n.es || data.name || '';
@@ -54,6 +54,34 @@ export async function GET(
           endTime: data.endTime || null,
         } as Category;
     });
+
+    // === Lógica de filtrado por temporizador ===
+    const now = new Date();
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const currentTimeInMinutes = currentHours * 60 + currentMinutes;
+
+    categories = categories.filter(category => {
+      // Si no hay temporizador, la categoría siempre es visible
+      if (!category.startTime || !category.endTime) {
+        return true;
+      }
+
+      const [startH, startM] = category.startTime.split(':').map(Number);
+      const [endH, endM] = category.endTime.split(':').map(Number);
+
+      const startTimeInMinutes = startH * 60 + startM;
+      const endTimeInMinutes = endH * 60 + endM;
+
+      // Caso normal: el temporizador no cruza la medianoche (ej: 08:00 - 11:30)
+      if (startTimeInMinutes <= endTimeInMinutes) {
+        return currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes <= endTimeInMinutes;
+      } else {
+        // Caso en que el temporizador cruza la medianoche (ej: 22:00 - 02:00)
+        return currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes <= endTimeInMinutes;
+      }
+    });
+    // ===========================================
     
     const menuItems = menuItemsSnapshot.docs.map(doc => {
         const data = doc.data();
