@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription'; // Import useSubscription
 import { db } from '@/lib/firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ function DashboardComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const { subscriptionStatus, isLoading: subscriptionLoading } = useSubscription(); // Use useSubscription
   const [restaurantData, setRestaurantData] = useState<RestaurantData | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -44,7 +46,8 @@ function DashboardComponent() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || subscriptionLoading) return; // Wait for both auth and subscription to load
+
     if (!user) {
       router.push('/login');
       return;
@@ -57,16 +60,30 @@ function DashboardComponent() {
       if (docSnap.exists()) {
         const data = docSnap.data() as RestaurantData;
         setRestaurantData(data);
+
+        // **LÓGICA DE REDIRECCIÓN CORREGIDA**
+        // Solo redirigir si la prueba ha expirado explícitamente
+        if (subscriptionStatus === 'trial_expired' && !subscriptionLoading && data.slug) {
+          router.push(`/trial-expired/${data.slug}`);
+          return;
+        }
+
       } else {
         console.error('No restaurant data found for this user!');
+        // Si no hay datos del restaurante Y la suscripción no es 'active' ni 'trialing',
+        // podría ser un caso de error o un estado incompleto.
+        if (subscriptionStatus !== 'active' && subscriptionStatus !== 'trialing' && !subscriptionLoading) {
+          router.push('/login'); // Redirigir a login como fallback seguro
+          return;
+        }
       }
       setLoading(false);
     };
 
     fetchRestaurantData();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, subscriptionStatus, subscriptionLoading]);
 
-  if (loading || authLoading || !restaurantData) {
+  if (loading || authLoading || subscriptionLoading || !restaurantData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-16 w-16 animate-spin" />

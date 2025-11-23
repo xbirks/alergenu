@@ -1,17 +1,13 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import AdminBackButton from '@/components/admin/AdminBackButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, CheckCircle, Clock, HeartHandshake, Eye } from 'lucide-react'; // Added HeartHandshake and Eye icons
-// Imports específicos para Server Components (Firebase Admin)
+import { Users, CheckCircle, Clock, QrCode } from 'lucide-react';
 import { getAdminDb } from '@/lib/firebase/firebase-admin';
 import { getAuthenticatedAppForUser } from '@/lib/firebase/firebase-auth';
 import { Timestamp } from 'firebase-admin/firestore';
-
-// Importamos el componente cliente que ahora renderizará la lista de restaurantes
 import { RestaurantListClient } from '@/components/admin/RestaurantListClient';
 
-// Movemos la definición de Restaurant fuera de los componentes de cliente
-// Esto asegura que el tipo sea consistente entre server y client components.
 type Restaurant = {
     id: string;
     name: string;
@@ -23,24 +19,30 @@ type Restaurant = {
     endDate: Date | null;
     dishCount: number;
     categoryCount: number;
-    allergensHelpedCount: number; // New field
-    visitsCount: number;         // New field
+    allergensHelpedCount: number;
+    visitsCount: number;
 };
 
-// Componente para las tarjetas de estadísticas, ya que no son interactivas, pueden permanecer aquí (o ser movidas a un componente de server separado)
-const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
-    <Card className="rounded-2xl shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-            <Icon className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
-        </CardContent>
-    </Card>
-);
+const StatCard = ({ title, value, icon: Icon, href }: { title: string, value: string | number, icon: React.ElementType, href?: string }) => {
+    const cardContent = (
+        <Card className="rounded-2xl shadow-sm transition-transform transform hover:scale-105">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+            </CardContent>
+        </Card>
+    );
 
-// AdminPage es ahora un Server Component puro
+    if (href) {
+        return <Link href={href} className="block">{cardContent}</Link>;
+    }
+
+    return cardContent;
+};
+
 export default async function AdminPage() {
     const { currentUser, token } = await getAuthenticatedAppForUser();
     if (!currentUser || !token?.admin) {
@@ -91,8 +93,8 @@ export default async function AdminPage() {
                 endDate,
                 categoryCount: categoriesSnapshot.data().count,
                 dishCount: dishesSnapshot.data().count,
-                allergensHelpedCount: data.allergicSaves || 0, // Corrected field name
-                visitsCount: data.qrScans || 0,                 // Corrected field name
+                allergensHelpedCount: data.allergicSaves || 0,
+                visitsCount: data.qrScans || 0,
             };
         });
 
@@ -103,7 +105,7 @@ export default async function AdminPage() {
     }
 
     return (
-        <div className="flex flex-col gap-8 p-4 sm:p-8 min-h-screen bg-white"> {/* Cambiado bg-gray-50 a bg-white */}
+        <div className="flex flex-col gap-8 p-4 sm:p-8 min-h-screen bg-white">
             <AdminBackButton />
 
             <header className="pb-4 border-b border-gray-200">
@@ -114,14 +116,13 @@ export default async function AdminPage() {
             </header>
             
             <main className="w-full">
-                {/* Summary Cards */}
-                <div className="grid gap-4 md:grid-cols-3 mb-8">
+                <div className="grid gap-4 md:grid-cols-4 mb-8">
                     <StatCard title="Total Restaurantes" value={restaurants.length} icon={Users} />
                     <StatCard title="Suscripciones Activas" value={activeSubscriptions} icon={CheckCircle} />
                     <StatCard title="Usuarios en Prueba" value={trialingUsers} icon={Clock} />
+                    <StatCard title="QR Redirects" value="Gestionar" icon={QrCode} href="/admin/qr-redirects" />
                 </div>
                 
-                {/* Restaurants List - Now rendered by the Client Component */}
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Restaurantes Registrados</h2>
                 <RestaurantListClient restaurants={restaurants} />
             </main>

@@ -1,0 +1,61 @@
+PLAN DE TESTING PARA ALERGENU
+
+---
+
+### ¿Por qué hacemos esto?
+
+Este documento define la "red de seguridad" para nuestra aplicación. El objetivo es crear una serie de pruebas automáticas que vigilen el código por nosotros.
+
+Cada vez que hagamos un cambio o añadamos una función, estas pruebas se ejecutarán para confirmar que nada de lo que ya funcionaba se ha roto.
+
+Esto nos liberará del trabajo manual y agotador de tener que revisar todo a mano, y nos dará la confianza para publicar nuevas versiones sin miedo a introducir errores inesperados (como los que ya hemos sufrido con las traducciones).
+
+---
+
+### Lista de Pruebas Críticas
+
+Aquí está la lista de las funcionalidades y archivos clave que vamos a proteger con tests.
+
+#### Parte 1: Flujos de Usuario Esenciales (Simulan a un cliente real)
+
+1.  **Autenticación y Registro:**
+    *   Archivos clave: `src/app/login/page.tsx`, `src/app/register/page.tsx`, `src/hooks/useAuth.ts`
+    *   Prueba: Un usuario puede registrarse, salir y volver a entrar.
+
+2.  **Gestión del Menú Carta:**
+    *   Archivos clave: `src/app/dashboard/menu/new/page.tsx`, `src/app/dashboard/menu/edit/[id]/page.tsx`
+    *   Prueba: Un restaurante puede crear, ver y editar un plato de su carta.
+
+3.  **Gestión del Menú del Día:**
+    *   Archivos clave: `src/app/dashboard/daily-menu/page.tsx`
+    *   Prueba: Un restaurante puede añadir y modificar los platos de su menú del día.
+
+4.  **Visualización Pública del Menú (Carta y Menú del Día):**
+    *   Archivos clave: `src/app/menu/[restaurantId]/page.tsx`, `src/components/lilunch/PublicMenuClient.tsx`
+    *   Prueba: Un comensal puede ver la carta y el menú del día, y usar los filtros de alérgenos.
+
+5.  **Gestión de Suscripción (Pagos):**
+    *   Archivos clave: `src/app/dashboard/billing/page.tsx`, `src/app/api/stripe/create-checkout-session/route.ts`
+    *   Prueba: Un restaurante es redirigido correctamente al portal de pagos.
+
+#### Parte 2: Funciones y Componentes Clave (Pruebas de piezas internas)
+
+1.  **Detección de Alérgenos con IA:**
+    *   Archivos clave: `src/ai/allergenDetection.ts`, `src/app/api/detect-allergens/route.ts`
+    *   Prueba: La IA identifica correctamente los alérgenos a partir de la descripción de un plato.
+
+2.  **Traducciones Automáticas:**
+    *   Archivos clave: `src/app/api/translate/route.ts`, `src/components/language-switcher.tsx`
+    *   Prueba: La API de traducción funciona y los componentes muestran el idioma correcto.
+
+3.  **Selector de Alérgenos Manual:**
+    *   Archivo clave: `src/components/lilunch/AllergenSelector.tsx`
+    *   Prueba: El componente responde correctamente al hacer clic en un alérgeno.
+
+4.  **Lógica de Perfil de Alérgenos del Usuario:**
+    *   Archivo clave: `src/hooks/use-allergen-profile.ts`
+    *   Prueba: Las preferencias de alérgenos de un usuario se guardan y recuperan bien.
+
+5.  **Base de Datos y Lógica de Servidor:**
+    *   Archivo clave: `src/lib/firebase/firebase-admin.ts`
+    *   Prueba: La conexión principal a la base de datos es estable.

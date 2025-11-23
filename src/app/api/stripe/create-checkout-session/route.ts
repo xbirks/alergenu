@@ -1,49 +1,54 @@
-
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getAdminDb } from '@/lib/firebase/firebase-admin';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
-// Log the secret key value to debug environment variable loading
-console.log('[Stripe Checkout API] STRIPE_SECRET_KEY from env:', process.env.STRIPE_SECRET_KEY ? '*****' + process.env.STRIPE_SECRET_KEY.slice(-4) : 'NOT_SET');
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-04-10',
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: '2023-10-16',
 });
 
-async function handler(req: NextRequest) {
-  if (req.method !== 'POST') {
-    return NextResponse.json({ error: 'Method Not Allowed' }, { status: 405 });
-  }
-
+export async function POST(req: Request) {
   try {
-    const { userId, userEmail, priceId, userName } = await req.json();
+    const { userId, userEmail, userName, priceId } = await req.json();
 
-    if (!userId || !userEmail || !priceId) {
-      return NextResponse.json({ error: 'Missing required parameters: userId, userEmail, or priceId' }, { status: 400 });
+    console.log('[Stripe Checkout API] Received request with:', { userId, userEmail, userName, priceId });
+
+    if (!userId || !userEmail || !userName || !priceId) {
+      console.error('[Stripe Checkout API] Missing required fields:', { userId, userEmail, userName, priceId });
+      return NextResponse.json({ error: 'Missing required fields for checkout session' }, { status: 400 });
     }
 
-    const db = getAdminDb(); 
-    const userRef = db.collection('users').doc(userId);
+    const db = getAdminDb();
     const restaurantRef = db.collection('restaurants').doc(userId);
+    const restaurantDoc = await restaurantRef.get();
 
-    const userDoc = await userRef.get();
-    let stripeCustomerId = userDoc.data()?.stripeCustomerId;
+    if (!restaurantDoc.exists) {
+      console.error('[Stripe Checkout API] Restaurant not found for userId:', userId);
+      return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
+    }
 
+    const restaurantData = restaurantDoc.data();
+    let stripeCustomerId = restaurantData?.stripeCustomerId || null;
+
+    // Si no existe un cliente de Stripe, creamos uno nuevo
     if (!stripeCustomerId) {
+      console.log('[Stripe Checkout API] No existing Stripe customer. Creating new customer for', userEmail);
       const customer = await stripe.customers.create({
         email: userEmail,
         name: userName,
-        metadata: {
-          firebaseUID: userId,
-        },
+        metadata: { firebaseUID: userId },
       });
       stripeCustomerId = customer.id;
-
-      await userRef.update({ stripeCustomerId: stripeCustomerId });
+      // Guardar el nuevo customerId en el documento del restaurante en Firestore
       await restaurantRef.update({ stripeCustomerId: stripeCustomerId });
+      console.log('[Stripe Checkout API] New Stripe customer created and saved:', stripeCustomerId);
+    } else {
+      console.log('[Stripe Checkout API] Existing Stripe customer found:', stripeCustomerId);
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    // Obtener la URL base para las redirecciones
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || req.headers.get('origin');
+    console.log('[Stripe Checkout API] Base URL for redirects:', baseUrl);
 
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
@@ -57,17 +62,22 @@ async function handler(req: NextRequest) {
       },
     });
 
-    if (session.id) {
-      return NextResponse.json({ sessionId: session.id });
+    // Corregido: Devolver la URL de la sesión de Checkout
+    if (session.url) {
+      console.log('[Stripe Checkout API] Checkout session created. URL:', session.url);
+      return NextResponse.json({ url: session.url });
     } else {
-      return NextResponse.json({ error: 'Failed to create Stripe session' }, { status: 500 });
+      console.error('[Stripe Checkout API] Failed to retrieve checkout session URL for session ID:', session.id);
+      return NextResponse.json({ error: 'Failed to retrieve Stripe checkout session URL' }, { status: 500 });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Error creating checkout session: ${errorMessage}`);
+    console.error(`[Stripe Checkout API] Error creating checkout session: ${errorMessage}`, error);
+    // Devuelve un error más detallado si es un error de Stripe
+    if (error.type === 'StripeCardError') {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     return NextResponse.json({ error: `Internal Server Error: ${errorMessage}` }, { status: 500 });
   }
 }
-
-export { handler as POST };

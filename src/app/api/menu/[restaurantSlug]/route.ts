@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { Restaurant, Category, MenuItem, Allergen } from '@/lib/types';
 
 export async function GET(
@@ -12,7 +12,7 @@ export async function GET(
     const slug = params.restaurantSlug;
 
     if (!slug) {
-      console.log('[API] Restaurant slug is missing.');
+      console.log('[API][Menu] Restaurant slug is missing.');
       return NextResponse.json({ message: 'Restaurant slug is required' }, { status: 400 });
     }
 
@@ -20,7 +20,7 @@ export async function GET(
     const restaurantQuery = await restaurantsRef.where('slug', '==', slug).limit(1).get();
 
     if (restaurantQuery.empty) {
-      console.log(`[API] Restaurant with slug "${slug}" not found.`);
+      console.log(`[API][Menu] Restaurant with slug "${slug}" not found.`);
       return NextResponse.json({ message: 'Restaurant not found' }, { status: 404 });
     }
 
@@ -28,6 +28,42 @@ export async function GET(
     const restaurantData = restaurantDoc.data() as Restaurant;
     const restaurantId = restaurantDoc.id;
     const restaurantDocRef = adminDb.collection('restaurants').doc(restaurantId);
+
+    // === Lógica para verificar el estado de la suscripción ===
+    const now = new Date();
+    const trialEndsAtDate = restaurantData.trialEndsAt instanceof Timestamp ? restaurantData.trialEndsAt.toDate() : null;
+    
+    // Diagnostic logs
+    console.log(`[API][Menu][TrialCheck] --- Diagnóstico de "${slug}" ---`);
+    console.log(`[API][Menu][TrialCheck] subscriptionStatus: ${restaurantData.subscriptionStatus}`);
+    console.log(`[API][Menu][TrialCheck] trialEndsAt (Firestore): ${restaurantData.trialEndsAt?.toDate().toISOString() || 'N/A'}`);
+    console.log(`[API][Menu][TrialCheck] trialEndsAtDate (parsed): ${trialEndsAtDate?.toISOString() || 'N/A'}`);
+    console.log(`[API][Menu][TrialCheck] Current server time (now): ${now.toISOString()}`);
+    console.log(`[API][Menu][TrialCheck] now > trialEndsAtDate: ${trialEndsAtDate ? now > trialEndsAtDate : 'N/A (trialEndsAtDate is null)'}`);
+
+    // La prueba expira si el estado es 'trial_expired' directamente,
+    // O si el estado es 'trialing' Y la fecha de prueba ha pasado.
+    const isTrialExpired = 
+      restaurantData.subscriptionStatus === 'trial_expired' ||
+      (restaurantData.subscriptionStatus === 'trialing' && trialEndsAtDate && now > trialEndsAtDate);
+
+    console.log(`[API][Menu][TrialCheck] isTrialExpired (final result): ${isTrialExpired}`);
+    console.log(`[API][Menu][TrialCheck] ----------------------------------`);
+
+    if (isTrialExpired) {
+      console.log(`[API] Restaurant "${slug}" trial has expired. Returning 403.`);
+      // Incluimos ownerId, email y ownerName en la respuesta 403
+      return NextResponse.json(
+        { 
+          message: 'La prueba gratuita ha expirado. Para que tu carta vuelva a estar visible, activa una suscripción.',
+          userId: restaurantData.ownerId || null, // Asumimos ownerId es el userId del propietario
+          userEmail: restaurantData.email || null,
+          userName: restaurantData.ownerName || null,
+        },
+        { status: 403 }
+      );
+    }
+    // =========================================================
 
     restaurantDocRef.update({ qrScans: FieldValue.increment(1) }).catch(err => {
       console.error('[API] Failed to increment QR scan count:', err);
@@ -58,9 +94,7 @@ export async function GET(
     });
 
     // === Lógica de filtrado por temporizador de categorías ===
-    const now = new Date();
     // Forcing to Spain timezone (Madrid) to match potential user expectations or dashboard settings
-    // This is crucial for consistency. Example: 'en-US', {timeZone: 'Europe/Madrid'}
     const options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/Madrid' };
     const formatter = new Intl.DateTimeFormat('es-ES', options);
     const [hourStr, minuteStr] = formatter.format(now).split(':');
@@ -68,7 +102,7 @@ export async function GET(
     const currentMinutes = parseInt(minuteStr, 10);
     const currentTimeInMinutes = currentHours * 60 + currentMinutes;
 
-    console.log(`[API] Current time in Madrid: ${currentHours}:${currentMinutes} (${currentTimeInMinutes} minutes past midnight)`);
+    // console.log(`[API] Current time in Madrid: ${currentHours}:${currentMinutes} (${currentTimeInMinutes} minutes past midnight)`);
 
     const visibleCategoryIds = new Set<string>();
 
@@ -84,8 +118,8 @@ export async function GET(
         const endTimeInMinutes = endH * 60 + endM;
         
         // Debug logs for each category's timer
-        console.log(`[API] Category "${category.name_i18n.es}" (ID: ${category.id}) timer: ${category.startTime} - ${category.endTime}`);
-        console.log(`[API]   -> Start: ${startTimeInMinutes}, End: ${endTimeInMinutes}`);
+        // console.log(`[API] Category "${category.name_i18n.es}" (ID: ${category.id}) timer: ${category.startTime} - ${category.endTime}`);
+        // console.log(`[API]   -> Start: ${startTimeInMinutes}, End: ${endTimeInMinutes}`);
 
         if (startTimeInMinutes <= endTimeInMinutes) {
           // Normal time range, e.g., 08:00 - 12:00
@@ -94,14 +128,14 @@ export async function GET(
           // Overnight time range, e.g., 22:00 - 02:00
           isVisibleByTime = currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes <= endTimeInMinutes;
         }
-        console.log(`[API]   -> Is visible by time: ${isVisibleByTime}`);
+        // console.log(`[API]   -> Is visible by time: ${isVisibleByTime}`);
       }
       
       if (isVisibleByTime) {
         visibleCategoryIds.add(category.id);
       }
 
-      console.log(`[API] Final visibility for category "${category.name_i18n.es}": ${isVisibleByTime}`);
+      // console.log(`[API] Final visibility for category "${category.name_i18n.es}": ${isVisibleByTime}`);
       return isVisibleByTime;
     });
     // ===========================================

@@ -17,24 +17,53 @@ Este documento es la única fuente de verdad sobre el diseño y la funcionalidad
 - La iniciativa para "mejorar" o "refactorizar" código no solicitado está estrictamente prohibida. Céntrate únicamente en la tarea asignada.
 
 ---
-**REGLA Nº 2: LA ESTÉTICA DE LA APP (EL DISEÑO ES ASÍ)**
+**REGLA Nº 2: LA ESTÉTICA DE LA APP (EL DISEÑO ES ASÍ) - DIRECTRICES DETALLADAS**
 ---
-El diseño de la aplicación es minimalista, limpio y se basa en los siguientes principios visuales, observables en `/dashboard` y `/restest`.
+El diseño de la aplicación es minimalista, limpio y se basa en los siguientes principios visuales, observables en `/dashboard` y `/restest`, con especificaciones precisas para mantener una coherencia absoluta.
 
 1.  **TIPOGRAFÍA (Fuente: Manrope):**
-    -   **Títulos Principales (H1):** Grandes (`text-5xl`), en negrita máxima (`font-extrabold`) y con las letras juntas (`tracking-tight`). Ejemplo: "¡Hola, Sab...", "Cuidamos tu salud...".
-    -   **Párrafos y Descripciones:** Texto normal (`font-regular`) en un color gris suave (`text-muted-foreground`).
-    -   **Texto de Botones:** En negrita (`font-bold`).
+    -   **Títulos Principales (H1):**
+        -   **Tamaño:** `text-5xl` (aproximadamente 3rem o 48px).
+        -   **Peso:** `font-extrabold` (900).
+        -   **Espaciado de Letras:** `tracking-tight` (reduce el espacio entre caracteres).
+        -   **Ejemplos:** Textos como "¡Hola, Sab..." o "Cuidamos tu salud...".
+    -   **Párrafos y Descripciones:**
+        -   **Peso:** `font-regular` (400).
+        -   **Color:** `text-muted-foreground` (un gris suave y discreto).
+    -   **Texto de Botones:**
+        -   **Peso:** `font-bold` (700).
+        -   **Tamaño:** `text-lg` (aproximadamente 1.125rem o 18px).
 
 2.  **COMPONENTES (Basados en Shadcn UI):**
-    -   **BOTONES (`Button`):** La seña de identidad visual. **SIEMPRE** deben ser 100% redondeados, con forma de píldora. Se consigue aplicando la clase `rounded-full`.
-        -   **Botón Primario (Oscuro):** Fondo oscuro (`bg-primary`), texto claro.
-        -   **Botón Secundario (Blanco):** Fondo blanco, texto oscuro y **SIEMPRE** con un borde de 1px del color primario. Se consigue usando `variant="outline"`.
-        -   **Botón Fantasma (Sin borde):** Transparente y sin borde. Se usa para acciones menos importantes (`variant="ghost"`).
-    -   **TARJETAS (`Card`):** Usadas en el dashboard. Tienen bordes muy redondeados (`rounded-2xl`). Son limpias, con una sombra muy sutil (`shadow-sm`) o sin ella. **NO LLEVAN ICONOS**, a menos que se pidan expresamente.
-    -   **AVATAR (Icono de Usuario):** Un círculo con un borde sutil y las iniciales del usuario.
-    -  LOS BOTONES ES MUY IMPORTANTE QUE TODOS SIGAN LA MISMA ESTéTICA: 
-El botón tiene un tamaño de lg (grande), una altura de h-14 (56px) y un tamaño de texto de text-lg (1.125rem). Salvo que estén dentro de otros contenedores que se pueden adaptar al tamaño de los cntenedores.
+    -   **BOTONES (`Button`):** Son la identidad visual clave. Todos deben ser uniformes.
+        -   **Forma:** **SIEMPRE** 100% redondeados, con forma de píldora. Se logra aplicando la clase CSS `rounded-full`.
+        -   **Tamaño General:**
+            -   **Dimensión:** `lg` (grande).
+            -   **Altura:** `h-14` (56px).
+            -   **Tamaño de Texto:** `text-lg` (aproximadamente 1.125rem o 18px).
+            -   *Excepción:* Pueden adaptar su tamaño si están contenidos dentro de otros elementos que dicten dimensiones específicas, siempre manteniendo la proporción y estética dentro de lo posible.
+        -   **Variantes (Estilos Específicos):**
+            -   **Botón Primario (Oscuro):**
+                -   **Fondo:** `bg-primary` (azul/negro muy oscuro).
+                -   **Texto:** Color claro (generalmente blanco o `foreground`).
+            -   **Botón Secundario (Blanco):**
+                -   **Fondo:** Blanco.
+                -   **Texto:** Color oscuro.
+                -   **Borde:** **SIEMPRE** un borde de 1px del color primario. Se consigue usando `variant="outline"`.
+            -   **Botón Fantasma (Sin Borde):**
+                -   **Fondo:** Transparente.
+                -   **Borde:** Sin borde.
+                -   **Uso:** Para acciones de menor importancia (`variant="ghost"`).
+    -   **TARJETAS (`Card`):** Utilizadas prominentemente en el dashboard.
+        -   **Bordes:** Muy redondeados (`rounded-2xl`).
+        -   **Estilo:** Limpias, minimalistas.
+        -   **Sombra:** Una sombra muy sutil (`shadow-sm`) o directamente sin sombra.
+        -   **Iconos:** **NO** deben llevar iconos por defecto, a menos que la petición del usuario sea explícita y directa para añadir uno.
+    -   **AVATAR (Icono de Usuario):**
+        -   **Forma:** Circular.
+        -   **Borde:** Sutil para delimitarlo.
+        -   **Contenido:** Generalmente las iniciales del usuario o una imagen de perfil si está disponible.
+
 3.  **LOGOTIPO:**
     -   **Panel de Control (`/dashboard`):** Se usa la versión compacta, solo el icono sin texto: `icon_alergenu.png`.
     -   **Páginas Públicas (`/restest`, login, etc.):** Se usa la versión completa con texto: `alergenu.png`.

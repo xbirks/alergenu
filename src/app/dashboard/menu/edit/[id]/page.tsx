@@ -7,13 +7,14 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useParams } from 'next/navigation';
+import { useParams } from 'next/navigation'; // 1. Importar el hook useParams
 
+// La interfaz ya no necesita recibir params
 interface EditDishPageProps {}
 
-export default function EditDishPage({}: EditDishPageProps) {
-  const params = useParams();
-  const id = params.id as string;
+export default function EditDishPage({}: EditDishPageProps) { // 2. Eliminar params de las props
+  const params = useParams(); // 3. Usar el hook para obtener los parámetros
+  const id = params.id as string; // Extraer el id
 
   const { user, loading: authLoading } = useAuth();
   const [menuItem, setMenuItem] = useState<MenuItem | null>(null);
@@ -22,43 +23,16 @@ export default function EditDishPage({}: EditDishPageProps) {
 
   useEffect(() => {
     const fetchMenuItem = async () => {
-      if (!user || !id) return;
+      if (!user || !id) return; // Asegurarse de que el id existe
       setLoading(true);
       try {
+        // 4. Usar la variable 'id' del hook
         const docRef = doc(db, 'restaurants', user.uid, 'menuItems', id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-
-          const processedExtras = (data.extras || []).map((extra: any) => {
-            if (extra.name && !extra.name_i18n) {
-              return {
-                price: extra.price,
-                name_i18n: { es: extra.name, en: '' }
-              };
-            }
-            return extra;
-          });
-
-          const menuItemData: MenuItem = {
-            id: docSnap.id,
-            name: data.name,
-            name_i18n: data.name_i18n || { es: data.name, en: '' },
-            category: data.category,
-            categoryId: data.categoryId,
-            category_i18n: data.category_i18n,
-            price: data.price,
-            description: data.description,
-            description_i18n: data.description_i18n || { es: data.description, en: '' },
-            allergens: data.allergens,
-            extras: processedExtras,
-            isAvailable: data.isAvailable !== false,
-            order: data.order,
-            createdAt: data.createdAt
-          };
-
-          setMenuItem(menuItemData);
+          setMenuItem({ id: docSnap.id, ...data } as MenuItem);
         } else {
           setError('No se ha encontrado el plato.');
         }
@@ -74,7 +48,7 @@ export default function EditDishPage({}: EditDishPageProps) {
         fetchMenuItem();
     }
 
-  }, [id, user, authLoading]);
+  }, [id, user, authLoading]); // 5. Actualizar la dependencia del useEffect
 
   const renderContent = () => {
     if (loading || authLoading) {

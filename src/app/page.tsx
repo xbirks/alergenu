@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { ImageGallery } from '@/components/layout/ImageGallery';
 import { Faq } from '@/components/layout/Faq';
 import { VideoModal } from "@/components/ui/video-modal";
+import { PricingSection } from '@/components/pricing-section';
 
 const benefits = [
   {
@@ -19,13 +20,13 @@ const benefits = [
   {
     id: 'filter',
     icon: '/icons/web_icons/filtro_alergeno.svg',
-    title: 'Filtro de alérgenos adaptado al comensal.',
+    title: 'Filtro de alérgenos adaptado al comensal y menú del día con IA.',
     description: null,
   },
   {
     id: 'cloud',
     icon: '/icons/web_icons/actualizacion_nube.svg',
-    title: 'Actualización del menú en tiempo real.',
+    title: 'Registro histórico de alérgenos en la nube.',
     description: null,
   },
 ];
@@ -33,11 +34,11 @@ const benefits = [
 const businessBenefits = [
     {
         icon: '/icons/web_icons/escudo_normativa.svg',
-        text: '<strong>Protege a tu negocio</strong> frente a reclamaciones y sanciones legales.'
+        text: '<strong>Reduce el riesgo de denuncias por alérgenos</strong> con un registro claro y descargable.'
     },
     {
         icon: '/icons/web_icons/aviso.svg',
-        text: 'Evita que los clientes pidan platos con alérgenos <strong>por error</strong>.'
+        text: '<strong>Evita sustos:</strong> los platos incompatibles ni siquiera aparecen al cliente.'
     },
     {
         icon: '/icons/web_icons/ahorrar_tiempo.svg',
@@ -49,63 +50,14 @@ const businessBenefits = [
     },
     {
         icon: '/icons/web_icons/varios_idiomas.svg',
-        text: 'Disponible en <strong>varios idiomas</strong> para tus clientes internacionales.'
+        text: 'Automáticamente en <strong>inglés</strong> para tus clientes internacionales.'
     },
-];
-
-const pricingPlans = [
-  {
-    id: 'gratuito',
-    name: 'Plan Gratuito',
-    badge: '3 meses gratis',
-    features: [
-      'Todas las funcionalidades incluidas.',
-      'Crea platos y bebidas de forma ilimitada.',
-      'Generador de QR para la carta.',
-      '<span class="text-blue-600">Filtro de alérgenos incluido.</span>',
-      'Atención al cliente por e-mail.',
-    ],
-    buttonText: 'Empieza 100% gratis',
-    isFeatured: false,
-  },
-  {
-    id: 'autonomia',
-    name: 'Plan Autonomía',
-    price: '12€',
-    priceDetails: 'Mensual, IVA inc.',
-    features: [
-      'Todas las funcionalidades incluidas.',
-      'Crea platos y bebidas de forma ilimitada.',
-      'Generador de QR para la carta.',
-      '<span class="text-blue-600">Filtro de alérgenos incluido.</span>',
-      'Gestión 100% autónoma del menú y los alérgenos.',
-      'Atención al cliente por e-mail.',
-      'Crea la carta en 2 idiomas diferentes.',
-    ],
-    buttonText: 'Suscribirse',
-    isFeatured: false,
-  },
-  {
-    id: 'premium',
-    name: 'Plan Premium',
-    price: '49€',
-    priceDetails: 'Mensual, IVA inc.',
-    features: [
-      'Todas las funcionalidades del <strong>plan autonomía</strong> incluidas.',
-      '<span class="text-blue-600">Delega la gestión de la carta y los alérgenos para que la trabaje nuestro equipo.</span>',
-      'Personalización avanzada de la carta.',
-      'Atención al cliente prioritaria, por teléfono y Whatsapp.',
-      'Idiomas ilimitados.',
-    ],
-    buttonText: 'Suscribirse',
-    isFeatured: true,
-  },
 ];
 
 const faqData = [
     {
         question: '¿Qué pasa después de los 3 meses gratis?',
-        answer: 'Tras el periodo de prueba puedes elegir entre el Plan Autonomía o el Plan Premium. Si no eliges ningún plan, tu carta dejará de estar visible hasta que actives una suscripción.'
+        answer: 'Tras el periodo de prueba puedes elegir entre el Plan Autonomía o el Plan Premium. Si no eliges ningún plan, tu carta dejará de estar visible hasta que activas una suscripción.'
     },
     {
         question: '¿Necesito conocimientos técnicos para usar ALERGENU?',
@@ -150,10 +102,10 @@ export default function HomePage() {
         
         <section className="text-center w-full max-w-2xl mx-auto container px-4 pt-10">
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tighter mb-4">
-            Cuidamos la <span style={{ color: '#2563EB' }}>salud</span> de todos tus comensales
+            Evita <span style={{ color: '#2563EB' }}>multas</span> por alérgenos y cumple la <span style={{ color: '#2563EB' }}>ley</span> sin complicarte
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground font-normal">
-            Somos la forma más fácil de <strong>proteger a tus clientes alérgicos</strong> e intolerantes. Crea, gestiona y comparte tu menú digital en minutos.
+            Alergenu es una carta digital con filtro de alérgenos automático mediante IA y registro legal automático. Pensada para bares, restaurantes y cafeterías.
           </p>
         </section>
 
@@ -180,14 +132,14 @@ export default function HomePage() {
         </section>
 
         <section className="w-full max-w-sm mx-auto mt-20 text-center container px-4">
-          <div className="space-y-4">
-            <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }}>
-              <Link href="/register">Empezar gratis hoy</Link>
-            </Button>
-            <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-semibold text-neutral-800 hover:bg-gray-200" style={{ backgroundColor: '#D9D9D9' }}>
-              <Link href="#precios">Explorar planes y precios</Link>
-            </Button>
-          </div>
+            <div className="space-y-4">
+              <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }}>
+                <Link href="/register">Empezar gratis hoy</Link>
+              </Button>
+              <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-semibold text-neutral-800 hover:bg-gray-200" style={{ backgroundColor: '#D9D9D9' }}>
+                <Link href="#precios">Explorar planes y precios</Link>
+              </Button>
+            </div>
         </section>
 
         {/* What is Alergenu Section */}
@@ -239,19 +191,35 @@ export default function HomePage() {
               </h3>
             </div>
 
-            {/* Card 4: Confianza y tranquilidad */}
+            {/* Card 4: Selecciona los alérgenos con IA */}
             <div className="py-6 pr-6 pl-4 rounded-2xl border">
               <div className="relative w-8 h-8 mb-4">
-                  <Image src="/icons/web_icons/tres_estrellas.svg" alt="Más confianza y tranquilidad" layout="fill" />
+                  <Image src="/icons/web_icons/tres_estrellas.svg" alt="Selecciona alérgenos con IA" layout="fill" />
               </div>
-              <h3 className="text-lg font-semibold tracking-tight leading-tight">Más confianza y tranquilidad para los comensales.</h3>
+              <h3 className="text-lg font-semibold tracking-tight leading-tight">Selecciona los alérgenos en tu menú del día con <span style={{ color: '#2563EB' }}><strong>IA</strong></span> para ahorrar tiempo.</h3>
+            </div>
+
+            {/* Card 5: Registro histórico de cambios */}
+            <div className="py-6 pr-6 pl-4 rounded-2xl border">
+              <div className="relative w-8 h-8 mb-4">
+                  <Image src="/icons/web_icons/PDF_ok.svg" alt="Registro histórico de cambios" layout="fill" />
+              </div>
+              <h3 className="text-lg font-semibold tracking-tight leading-tight">Registro histórico de cada cambio de tus platos en PDF.</h3>
+            </div>
+
+            {/* Card 6: Traducción automática */}
+            <div className="py-6 pr-6 pl-4 rounded-2xl border">
+              <div className="relative w-8 h-8 mb-4">
+                  <Image src="/icons/web_icons/varios_idiomas.svg" alt="Traducción automática" layout="fill" />
+              </div>
+              <h3 className="text-lg font-semibold tracking-tight leading-tight">Traducción automática al inglés de todos los platos de tu carta.</h3>
             </div>
           </div>
         </section>
 
         <section className="w-full max-w-2xl mx-auto mt-16 text-left container px-4">
             <p className="text-[18px] leading-[26px] text-muted-foreground">
-                A través de un simple código QR, cada cliente selecciona sus alérgenos y la carta se <strong>filtra al instante, mostrando únicamente los platos compatibles</strong>. Así evitamos confusiones y reducimos el riesgo de errores o intoxicaciones.
+                A través de un simple código QR, cada cliente selecciona sus alérgenos y la carta se filtra al instante, mostrando <span style={{ color: '#2563EB' }}><strong>únicamente los platos compatibles</strong></span>. Así evitamos confusiones y reducimos el riesgo de errores o intoxicaciones.
             </p>
         </section>
 
@@ -279,6 +247,91 @@ export default function HomePage() {
             <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }}>
               <Link href="/register">Pruébalo gratis aquí</Link>
             </Button>
+        </section>
+
+
+        <section className="w-full max-w-4xl mx-auto mt-24 px-4">
+  {/* Cabecera */}
+  <div className="text-left mb-10">
+    <h2 className="text-[28px] font-extrabold tracking-tight text-gray-900">
+      ¿Cómo funciona Alergenu?
+    </h2>
+    <p className="text-[17px] text-gray-600 max-w-3xl mt-3 leading-relaxed">
+      ALERGENU es una <strong>carta digital</strong> que transforma la experiencia de pedir en restaurantes, bares,
+      cafeterías y hoteles.
+    </p>
+  </div>
+
+  {/* Pasos */}
+  <div className="space-y-5">
+    {/* Paso 1 */}
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-7">
+      <div className="flex gap-5 items-start">
+        <div className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-none">
+          1.
+        </div>
+        <div>
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Sube tu carta
+          </h3>
+          <p className="mt-3 text-[17px] sm:text-[18px] text-gray-700 leading-relaxed">
+            Crea las categorías, añade tus platos, marca los alérgenos y guarda
+            (o deja que te ayudemos con el plan Premium).{" "}
+            <span className="font-semibold text-blue-600">¡Ya la tienes!</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* Paso 2 */}
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-7">
+      <div className="flex gap-5 items-start">
+        <div className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-none">
+          2.
+        </div>
+        <div>
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Gestiona el menú del día con IA
+          </h3>
+          <p className="mt-3 text-[17px] sm:text-[18px] text-gray-700 leading-relaxed">
+            Escribe el plato, haz clic en el botón “Detectar alérgenos” y guarda.{" "}
+            <span className="font-semibold text-blue-600">
+              Los alérgenos se marcan solos
+            </span>{" "}
+            y todo se actualiza al instante.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* Paso 3 */}
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-7">
+      <div className="flex gap-5 items-start">
+        <div className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-none">
+          3.
+        </div>
+        <div>
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Tus clientes filtran y tú
+            <span className="block">quedas protegido</span>
+          </h3>
+          <p className="mt-3 text-[17px] sm:text-[18px] text-gray-700 leading-relaxed">
+            Escanean el QR de la mesa, eligen sus alergias y solo ven lo que pueden comer.
+            Tú tienes un registro descargable de todo.{" "}
+            <span className="font-semibold text-blue-600">¡Todos tranquilos!</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+          <p className="text-center text-[17px] text-muted-foreground mt-12 mb-6">
+            Sencillo, ¿verdad?
+          </p>
+          <div className="w-full max-w-xs mx-auto">
+            <Button asChild size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }}>
+              <Link href="/register">Clic aquí para empezar</Link>
+            </Button>
+          </div>
         </section>
 
         {/* Business Benefits Section */}
@@ -325,44 +378,7 @@ export default function HomePage() {
                 </p>
             </div>
 
-            <div className="space-y-8">
-                {pricingPlans.map((plan, index) => (
-                    <div key={index} className={`rounded-2xl p-8 ${plan.isFeatured ? 'bg-primary text-primary-foreground' : 'bg-[#F2F2F2]'}`}>
-                        <div className="flex justify-between items-start">
-                            <h3 className="text-2xl font-bold tracking-tight">{plan.name}</h3>
-                            {plan.badge && <span className="bg-primary text-primary-foreground text-sm font-semibold px-3 py-1 rounded-full">{plan.badge}</span>}
-                            {plan.price && (
-                                <div className="text-right">
-                                    <p className={`text-3xl font-bold ${plan.isFeatured ? 'text-primary-foreground' : 'text-primary'}`}>{plan.price}</p>
-                                    <p className={`text-xs ${plan.isFeatured ? 'text-gray-300' : 'text-muted-foreground'}`}>{plan.priceDetails}</p>
-                                </div>
-                            )}
-                        </div>
-
-                        <ul className="mt-6 space-y-2">
-                            {plan.features.map((feature, i) => {
-                                if (i === 0) {
-                                    return (
-                                        <li key={i}>
-                                            <span className="underline" dangerouslySetInnerHTML={{ __html: feature }} />
-                                        </li>
-                                    );
-                                }
-                                return (
-                                    <li key={i} className="flex items-start gap-2">
-                                        <span>•</span>
-                                        <span dangerouslySetInnerHTML={{ __html: feature }} />
-                                    </li>
-                                );
-                            })}
-                        </ul>
-
-                        <Button asChild size="lg" className={`w-full rounded-full h-14 text-lg font-bold mt-8 ${plan.isFeatured ? 'bg-blue-600 hover:bg-blue-700' : 'bg-primary hover:bg-primary/90 text-white'}`}>
-                            <Link href={`/register?plan=${plan.id}`}>{plan.buttonText}</Link>
-                        </Button>
-                    </div>
-                ))}
-            </div>
+            <PricingSection />
 
             <p className="text-[16px] text-muted-foreground text-left mt-10 max-w-lg mx-auto">
                 Con ALERGENU no asumes riesgos: <strong>pruébalo gratis durante 3 meses</strong> y después decide si prefieres autogestionar tu carta o delegar la gestión en nuestro equipo.
