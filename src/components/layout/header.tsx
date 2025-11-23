@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User as UserIcon, Settings, LogIn, QrCode } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, LogIn } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase/firebase';
 import { signOut, User } from 'firebase/auth';
@@ -109,10 +109,6 @@ export function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/dashboard/qr-redirects')} className="text-base py-3 px-2 cursor-pointer">
-                <QrCode className="mr-3 h-5 w-5" />
-                <span>QR Redirects</span>
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/dashboard/preferences')} className="text-base py-3 px-2 cursor-pointer">
                 <Settings className="mr-3 h-5 w-5" />
                 <span>Preferencias</span>
