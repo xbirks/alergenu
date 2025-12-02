@@ -72,9 +72,9 @@ const pricingPlans = [
     {
       id: 'premium',
       name: 'Plan Premium',
-      price: '49€',
+      price: '79€',
       details: 'Mensual, IVA inc.',
-      priceId: null, // To be added later
+      priceId: 'price_1Sa1FNH4esVSm5sUs2oVES7q',
     },
 ];
 
