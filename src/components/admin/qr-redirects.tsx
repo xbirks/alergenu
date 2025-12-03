@@ -42,9 +42,10 @@ export function QrRedirects() {
       .then(res => res.json())
       .then(data => {
         form.reset(data);
+        // Usamos las nuevas URLs acortadas
         setRedirects({
-          qr1: `${origin}/api/qr/1`,
-          qr2: `${origin}/api/qr/2`
+          qr1: `${origin}/q/1`,
+          qr2: `${origin}/q/2`
         });
       });
   }, [form]);
