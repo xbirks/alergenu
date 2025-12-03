@@ -42,10 +42,11 @@ export function QrRedirects() {
       .then(res => res.json())
       .then(data => {
         form.reset(data);
-        // Usamos las nuevas URLs acortadas
+        // Usamos las URLs acortadas generadas por el sistema para el QR,
+        // pero la descripción muestra la URL real configurada.
         setRedirects({
-          qr1: `${origin}/q/1`,
-          qr2: `${origin}/q/2`
+          qr1: `${origin}/q/1`, // URL para el QR físico que redirige
+          qr2: `${origin}/q/2`  // URL para el QR físico que redirige
         });
       });
   }, [form]);
@@ -136,14 +137,14 @@ export function QrRedirects() {
             qrId="qr-1"
             url={redirects.qr1}
             title="Código QR 1"
-            description={`Apunta a: ${form.getValues('qr1') || 'No definida'}`}
+            description={`Redirige a: ${form.getValues('qr1') || 'No definida'}`}
             filename="qr-dinamico-1.png"
           />
           <DownloadableQrCode 
             qrId="qr-2"
             url={redirects.qr2}
             title="Código QR 2"
-            description={`Apunta a: ${form.getValues('qr2') || 'No definida'}`}
+            description={`Redirige a: ${form.getValues('qr2') || 'No definida'}`}
             filename="qr-dinamico-2.png"
           />
         </div>
