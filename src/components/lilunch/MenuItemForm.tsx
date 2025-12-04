@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ALLERGENS } from '@/lib/allergens';
-import { Loader2, PlusCircle, Trash2, ShieldQuestion } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, ShieldQuestion, Sparkles } from 'lucide-react';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { CategoryCombobox } from '@/components/lilunch/CategoryCombobox';
 import { useAuth } from '@/hooks/useAuth';
@@ -63,8 +63,8 @@ const formSchema = z.object({
     .refine(val =>
       !isNaN(parseFloat(val.replace(',', '.'))) &&
       parseFloat(val.replace(',', '.')) >= 0, {
-        message: 'Introduce un precio válido (ej: 12,50).'
-      }
+      message: 'Introduce un precio válido (ej: 12,50).'
+    }
     ),
   extras: z.array(
     z.object({
@@ -129,6 +129,29 @@ async function translateText(text: string): Promise<string> {
   }
 }
 
+async function detectAllergens(dishName: string): Promise<string[]> {
+  if (!dishName) return [];
+
+  try {
+    const response = await fetch('/api/detect-allergens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dishName }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Allergen detection API error');
+    }
+
+    const data = await response.json();
+    return data.allergens || [];
+
+  } catch (error) {
+    console.error('Failed to detect allergens:', error);
+    throw error; // Re-lanzar el error para que lo maneje handleDetectAllergens
+  }
+}
+
 export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -137,13 +160,15 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
   const router = useRouter();
   const submissionGuard = useRef(false);
   const isEditMode = !!existingMenuItem;
+  const [isAnalyzingAllergens, setIsAnalyzingAllergens] = useState(false);
+  const [allergensAnalyzed, setAllergensAnalyzed] = useState(false);
 
   const defaultAllergens = useMemo(() =>
     ALLERGENS.reduce((acc, allergen) => {
       acc[allergen.id] = 'no';
       return acc;
     }, {} as Record<string, 'no' | 'traces' | 'yes'>)
-  , []);
+    , []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -186,11 +211,11 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
 
       const existingExtras = existingMenuItem.extras
         ? existingMenuItem.extras.map(extra => ({
-            name_es: extra.name_i18n?.es || '',
-            name_en: extra.name_i18n?.en || '',
-            price: (extra.price / 100).toFixed(2).replace('.', ','),
-            allergens: { ...defaultAllergens, ...extra.allergens },
-          }))
+          name_es: extra.name_i18n?.es || '',
+          name_en: extra.name_i18n?.en || '',
+          price: (extra.price / 100).toFixed(2).replace('.', ','),
+          allergens: { ...defaultAllergens, ...extra.allergens },
+        }))
         : [];
 
       reset({
@@ -213,6 +238,16 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
     }
   }, [isEditMode, existingMenuItem, user, reset, defaultAllergens, form]);
 
+  // Resetear el estado de análisis cuando cambia el nombre del plato
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'name_es' && allergensAnalyzed) {
+        setAllergensAnalyzed(false);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, allergensAnalyzed]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (submissionGuard.current) {
       return;
@@ -221,7 +256,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
 
     if (!user) {
       toast({ title: 'Error de autenticación', variant: 'destructive' });
-      submissionGuard.current = false; 
+      submissionGuard.current = false;
       return;
     }
 
@@ -331,6 +366,68 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
     } finally {
       setIsSubmitting(false);
       submissionGuard.current = false;
+    }
+  }
+
+  const handleDetectAllergens = async () => {
+    const dishName = form.watch('name_es');
+    const dishDescription = form.watch('description_es');
+
+    if (!dishName) {
+      toast({
+        title: 'Nombre requerido',
+        description: 'Por favor, escribe el nombre del plato primero.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsAnalyzingAllergens(true);
+
+    try {
+      toast({
+        title: 'Analizando alérgenos...',
+        description: 'La IA está procesando el plato (nombre + ingredientes).'
+      });
+
+      // Combinar nombre y descripción para mejor análisis
+      const fullDishInfo = dishDescription
+        ? `${dishName}. Ingredientes: ${dishDescription}`
+        : dishName;
+
+      const detectedAllergenIds = await detectAllergens(fullDishInfo);
+
+      // Resetear todos los alérgenos a 'no'
+      const newAllergens = { ...defaultAllergens };
+
+      // Marcar los detectados como 'yes'
+      detectedAllergenIds.forEach((allergenId: string) => {
+        if (allergenId in newAllergens) {
+          newAllergens[allergenId] = 'yes';
+        }
+      });
+
+      // Actualizar el formulario
+      Object.keys(newAllergens).forEach((key) => {
+        form.setValue(`allergens.${key}` as any, newAllergens[key]);
+      });
+
+      setAllergensAnalyzed(true);
+
+      toast({
+        title: '¡Análisis completado!',
+        description: `Se detectaron ${detectedAllergenIds.length} alérgenos. Puedes revisar y ajustar el resultado.`
+      });
+
+    } catch (error) {
+      console.error('Error detecting allergens:', error);
+      toast({
+        title: 'Error en el análisis',
+        description: 'No se pudo analizar. Por favor, añádelos manualmente.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsAnalyzingAllergens(false);
     }
   }
 
@@ -535,7 +632,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
                           name={`extras.${index}.allergens.${allergen.id}`}
                           render={({ field }) => (
                             <FormItem className="flex items-center justify-between border-b py-2">
-                              <FormLabel>{allergen.name}</FormLabel>
+                              <FormLabel className="text-lg">{allergen.name}</FormLabel>
                               <FormControl>
                                 <AllergenSelector
                                   value={field.value || 'no'}
@@ -576,10 +673,53 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
           name="allergens"
           render={() => (
             <FormItem className="pt-4">
-              <div className="mb-4">
+              <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold">Alérgenos del Plato Principal</h2>
+
+                {/* Botón de IA */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDetectAllergens}
+                  disabled={isAnalyzingAllergens || !form.watch('name_es')}
+                  className={cn(
+                    'gap-2 transition-all duration-300',
+                    {
+                      'bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500': !allergensAnalyzed && !isAnalyzingAllergens,
+                      'bg-orange-500 text-white border-orange-500 cursor-wait': isAnalyzingAllergens,
+                      'bg-blue-800 hover:bg-blue-900 text-white border-blue-800': allergensAnalyzed && !isAnalyzingAllergens,
+                      'opacity-50 cursor-not-allowed': !form.watch('name_es'),
+                    }
+                  )}
+                >
+                  {isAnalyzingAllergens ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Analizando...
+                    </>
+                  ) : allergensAnalyzed ? (
+                    <>
+                      <ShieldQuestion className="h-4 w-4" />
+                      Re-analizar con IA
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Detectar con IA
+                    </>
+                  )}
+                </Button>
               </div>
 
+              {/* Mensaje de ayuda */}
+              {isAnalyzingAllergens && (
+                <p className="text-sm text-blue-600 animate-pulse mb-4">
+                  ⚡ La IA está analizando el plato "{form.watch('name_es')}"...
+                </p>
+              )}
+
+              {/* Lista de alérgenos */}
               {ALLERGENS.map((allergen) => (
                 <FormField
                   key={allergen.id}
@@ -587,7 +727,7 @@ export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
                   name={`allergens.${allergen.id}`}
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between border-b py-3">
-                      <FormLabel>{allergen.name}</FormLabel>
+                      <FormLabel className="text-lg">{allergen.name}</FormLabel>
                       <FormControl>
                         <AllergenSelector
                           value={field.value || 'no'}
