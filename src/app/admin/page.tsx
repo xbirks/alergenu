@@ -14,6 +14,7 @@ type Restaurant = {
     slug: string;
     email: string;
     ownerUid: string;
+    ownerName: string;
     plan: 'gratuito' | 'autonomia' | 'premium' | 'desconocido';
     status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'unknown' | 'trial_expired';
     endDate: Date | null;
@@ -21,6 +22,7 @@ type Restaurant = {
     categoryCount: number;
     allergensHelpedCount: number;
     visitsCount: number;
+    createdAt: Date | null;
 };
 
 const StatCard = ({ title, value, icon: Icon, href }: { title: string, value: string | number, icon: React.ElementType, href?: string }) => {
@@ -62,7 +64,7 @@ export default async function AdminPage() {
 
             const categoriesPromise = adminDb.collection('restaurants').doc(doc.id).collection('categories').count().get();
             const dishesPromise = adminDb.collection('restaurants').doc(doc.id).collection('menuItems').count().get();
-            
+
             const [categoriesSnapshot, dishesSnapshot] = await Promise.all([categoriesPromise, dishesPromise]);
 
             const status = data.subscriptionStatus || (data.trialEndsAt ? 'trialing' : 'unknown');
@@ -82,19 +84,26 @@ export default async function AdminPage() {
                 endDate = data.trialEndsAt.toDate();
             }
 
+            let createdAtDate: Date | null = null;
+            if (data.createdAt && data.createdAt instanceof Timestamp) {
+                createdAtDate = data.createdAt.toDate();
+            }
+
             return {
                 id: doc.id,
                 name: data.restaurantName || 'Nombre no definido',
                 slug: data.slug || 'slug-no-definido',
                 email: data.email || 'Email no registrado',
                 ownerUid: data.ownerId || data.uid || '',
+                ownerName: data.ownerName || 'No especificado',
                 plan: data.selectedPlan || 'desconocido',
-                status: finalStatus, 
+                status: finalStatus,
                 endDate,
                 categoryCount: categoriesSnapshot.data().count,
                 dishCount: dishesSnapshot.data().count,
                 allergensHelpedCount: data.allergicSaves || 0,
                 visitsCount: data.qrScans || 0,
+                createdAt: createdAtDate,
             };
         });
 
@@ -114,7 +123,7 @@ export default async function AdminPage() {
                     Bienvenido de vuelta, Andrés. Gestiona tus restaurantes clientes.
                 </p>
             </header>
-            
+
             <main className="w-full">
                 <div className="grid gap-4 md:grid-cols-4 mb-8">
                     <StatCard title="Total Restaurantes" value={restaurants.length} icon={Users} />
@@ -122,7 +131,7 @@ export default async function AdminPage() {
                     <StatCard title="Usuarios en Prueba" value={trialingUsers} icon={Clock} />
                     <StatCard title="QR Redirects" value="Gestionar" icon={QrCode} href="/admin/qr-redirects" />
                 </div>
-                
+
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Restaurantes Registrados</h2>
                 <RestaurantListClient restaurants={restaurants} />
             </main>

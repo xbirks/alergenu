@@ -3,10 +3,11 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import { LegalFooter } from '@/components/layout/Footer';
+import { CookieBanner } from '@/components/CookieBanner';
 import Script from 'next/script';
 
-const manrope = Manrope({ 
-  subsets: ["latin"], 
+const manrope = Manrope({
+  subsets: ["latin"],
   variable: "--font-sans",
   weight: ['400', '500', '700', '800']
 });
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://alergenu.com/seo/alergenu_meta-1200x630.jpg', 
+        url: 'https://alergenu.com/seo/alergenu_meta-1200x630.jpg',
         width: 1200,
         height: 630,
         alt: 'Panel de control de Alergenu para gestionar una carta digital de restaurante.',
@@ -72,7 +73,7 @@ export const metadata: Metadata = {
     creator: '@alergenu', // LÍNEA 76
     title: 'Alergenu | Crea tu Carta Digital con Alérgenos para Restaurantes',
     description: 'Software para hostelería. Gestiona tu carta digital y alérgenos de forma fácil y rápida.',
-    images: ['https://alergenu.com/seo/alergenu_twitter-1200x600.jpg'], 
+    images: ['https://alergenu.com/seo/alergenu_twitter-1200x600.jpg'],
   },
 
   // --- APPLE & FAVICONS ---
@@ -90,6 +91,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const gaMeasurementId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID; // Use environment variable
+
+  // Check if analytics cookies are accepted (client-side only)
+  const shouldLoadAnalytics = typeof window !== 'undefined' && (() => {
+    try {
+      const consent = localStorage.getItem('alergenu_cookie_consent');
+      const preferences = localStorage.getItem('alergenu_cookie_preferences');
+      if (consent === 'true' && preferences) {
+        const parsed = JSON.parse(preferences);
+        return parsed.analytics === true;
+      }
+    } catch (e) {
+      return false;
+    }
+    return false;
+  })();
 
   return (
     <html lang="es" suppressHydrationWarning>
@@ -123,8 +139,8 @@ export default function RootLayout({
           }}
         />
 
-        {/* Google Analytics (opcional, si usas GA4) */}
-        {gaMeasurementId && (
+        {/* Google Analytics - Solo carga si se aceptan cookies analíticas */}
+        {gaMeasurementId && shouldLoadAnalytics && (
           <>
             <Script
               id="gtag-src"
@@ -150,6 +166,7 @@ export default function RootLayout({
       <body className={`flex flex-col min-h-screen bg-white ${manrope.className}`}>
         <div className="flex-grow">{children}</div>
         <LegalFooter />
+        <CookieBanner />
       </body>
     </html>
   );
