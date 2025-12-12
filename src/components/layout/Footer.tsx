@@ -27,21 +27,23 @@ export function LegalFooter() {
 
           {/* Column 2: SEO Links */}
           <div>
-            <h3 className="font-semibold text-sm mb-4 text-foreground">Recursos</h3>
-            <ul className="space-y-2.5">
+            <Link href="/recursos" className="font-semibold text-sm mb-4 text-foreground hover:text-primary transition-colors inline-block">
+              Recursos
+            </Link>
+            <ul className="space-y-2.5 mt-4">
               <li>
-                <Link href="/alergenos-alimentarios" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Alérgenos Alimentarios
+                <Link href="/recursos/carta-qr-gratis" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Carta QR gratis
                 </Link>
               </li>
               <li>
-                <Link href="/normativa-alergenos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/recursos/normativa-europea-alergenos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Normativa Europea
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Preguntas Frecuentes
+                <Link href="/recursos/como-hacer-carta-alergenos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Cómo hacer carta de alérgenos
                 </Link>
               </li>
             </ul>
