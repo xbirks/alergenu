@@ -2,13 +2,15 @@
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-50%);
   }
 }
 
 .scroller {
-  overflow: hidden; /* DEGRADADO ELIMINADO. */
+  overflow: hidden;
+  /* DEGRADADO ELIMINADO. */
 }
 
 /* .scroller:hover .scroller__inner {
@@ -23,7 +25,8 @@
 
 .imageWrapper {
   flex-shrink: 0;
-  margin-right: 20px; /* Espacio entre imágenes */
+  margin-right: 20px;
+  /* Espacio entre imágenes */
   width: 280px;
   height: 160px;
   border-radius: 24px;
