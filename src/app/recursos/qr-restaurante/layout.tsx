@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: '📱 QR restaurante | Generador dinámico que NO caduca',
+    title: '📱 QR restaurante gratis con IA | Generador dinámico que NO caduca',
     description: '¿Harto de cambiar el QR cada vez que subes precios? Crea tu QR restaurante dinámico con Alergenu. Edita la carta en tiempo real, filtra alérgenos y cumple la ley. Empieza GRATIS.',
     keywords: [
         'qr restaurante',

@@ -23,7 +23,8 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 47.4% 11.2%;
-    --radius: 1.25rem; /* <-- Radio de borde global para tarjetas y componentes */
+    --radius: 1.25rem;
+    /* <-- Radio de borde global para tarjetas y componentes */
   }
 
   .dark {
@@ -53,22 +54,49 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
-    font-weight: 500; /* Medium weight */
+    font-weight: 500;
+    /* Medium weight */
   }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-weight: 800; /* Extrabold para títulos principales */
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 800;
+    /* Extrabold para títulos principales */
     letter-spacing: -0.05em;
   }
 
   p {
     @apply text-muted-foreground;
-    font-weight: 400; /* Regular weight */
+    font-weight: 400;
+    /* Regular weight */
   }
 
-  strong, b {
-    font-weight: 700; /* Bold */
+  strong,
+  b {
+    font-weight: 700;
+    /* Bold */
+  }
+}
+
+@layer utilities {
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 }

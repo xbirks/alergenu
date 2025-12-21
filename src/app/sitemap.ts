@@ -19,6 +19,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
         '/recursos/como-hacer-carta-alergenos',
     ];
 
+    // Landing pages SEO (nuevas)
+    const seoLandingPages = [
+        '/recursos/carta-digital-restaurante',
+        '/recursos/qr-carta-restaurante',
+        '/recursos/cartas-digitales-para-restaurantes',
+        '/recursos/qr-carta',
+        '/recursos/qr-restaurante',
+    ];
+
     // Páginas legales
     const legalPages = [
         '/legal/terms-of-service',
@@ -40,6 +49,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority: 0.9,
     }));
 
+    const seoLandingRoutes = seoLandingPages.map((route) => ({
+        url: `${baseUrl}${route}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.9,
+    }));
+
     const legalRoutes = legalPages.map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
@@ -47,5 +63,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority: 0.3,
     }));
 
-    return [...staticRoutes, ...articleRoutes, ...legalRoutes];
+    return [...staticRoutes, ...articleRoutes, ...seoLandingRoutes, ...legalRoutes];
 }

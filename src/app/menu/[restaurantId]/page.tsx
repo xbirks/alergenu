@@ -77,18 +77,18 @@ export default function SelectionPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#0D1117] text-white">
-         <header className="absolute top-0 left-0 right-0 z-40 bg-transparent">
-            <div className="flex h-20 max-w-5xl mx-auto items-center justify-between px-4 sm:px-6 lg:px-8">
-                <Link href={`/`}>
-                    <Image src="/icon_alergenu.png" alt="Alergenu Logo" width={36} height={36} />
-                </Link>
-                 <LanguageSwitcher lang={lang} onLangChange={setLang} theme="dark" />
-            </div>
+        <header className="absolute top-0 left-0 right-0 z-40 bg-transparent">
+          <div className="flex h-20 max-w-5xl mx-auto items-center justify-between px-4 sm:px-6 lg:px-8">
+            <Link href={`/`}>
+              <Image src="/icon_alergenu.png" alt="Alergenu Logo" width={36} height={36} priority />
+            </Link>
+            <LanguageSwitcher lang={lang} onLangChange={setLang} theme="dark" />
+          </div>
         </header>
         <div className="text-center p-8 max-w-md">
           <h2 className="text-xl font-bold text-red-500">{staticTexts.errorTitle[lang]}</h2>
           <p className="text-[#ABABAB] mt-2">{error}</p>
-           <Link href={`/`} passHref className="w-full">
+          <Link href={`/`} passHref className="w-full">
             <Button size="lg" className="w-full text-lg h-14 rounded-full bg-blue-600 hover:bg-blue-700 mt-8">
               {staticTexts.backToHome[lang]}
             </Button>
@@ -100,18 +100,18 @@ export default function SelectionPage() {
 
   return (
     <div className="bg-[#0D1117] min-h-screen font-sans flex flex-col items-center text-white px-4">
-        <header className="absolute top-0 left-0 right-0 z-40 bg-transparent">
-            <div className="flex h-20 max-w-5xl mx-auto items-center justify-between px-4 sm:px-6 lg:px-8">
-                <Link href={`/`}>
-                    <Image src="/icon_alergenu.png" alt="Alergenu Logo" width={36} height={36} />
-                </Link>
-                <LanguageSwitcher lang={lang} onLangChange={setLang} theme="dark" /> 
-            </div>
-        </header>
+      <header className="absolute top-0 left-0 right-0 z-40 bg-transparent">
+        <div className="flex h-20 max-w-5xl mx-auto items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link href={`/`}>
+            <Image src="/icon_alergenu.png" alt="Alergenu Logo" width={36} height={36} priority />
+          </Link>
+          <LanguageSwitcher lang={lang} onLangChange={setLang} theme="dark" />
+        </div>
+      </header>
 
       <main className="flex flex-col items-center text-center w-full max-w-md pt-32">
-        
-        <p className="text-[12pt]" style={{color: '#F5F5F5'}}>
+
+        <p className="text-[12pt]" style={{ color: '#F5F5F5' }}>
           {staticTexts.welcomeTo[lang]}
         </p>
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight mt-1 mb-10">
@@ -137,7 +137,7 @@ export default function SelectionPage() {
           </Link>
         </div>
 
-        <p className="text-sm mt-12 max-w-xs" style={{color: '#ABABAB'}}>
+        <p className="text-sm mt-12 max-w-xs" style={{ color: '#ABABAB' }}>
           {staticTexts.privacyNotice[lang]}
         </p>
       </main>

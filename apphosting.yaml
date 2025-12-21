@@ -100,3 +100,9 @@ env:
     value: production
     availability:
       - BUILD
+  
+  - variable: DISCORD_WEBHOOK_URL
+    value: https://discord.com/api/webhooks/1452399533823889498/oBALhRlokuWlT1SqQFcEATCAW9HgbRx342Xw9Pm2WswsWVEG187VRcUeTe5ytxMeQ2gX
+    availability:
+      - BUILD
+      - RUNTIME

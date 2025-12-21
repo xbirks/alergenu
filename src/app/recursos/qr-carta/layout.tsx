@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: 'QR carta restaurante [GRATIS] | ⛔ No uses PDF',
+    title: 'QR carta restaurante GRATIS | No más PDF',
     description: 'Generador de QR carta que NO deja de funcionar. Código dinámico, estadísticas de visitas y calidad de imprenta. Crea tu menú digital gratis hoy.',
     keywords: [
         'qr carta',
