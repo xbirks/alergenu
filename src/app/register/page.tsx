@@ -13,6 +13,8 @@ import { auth, db } from '@/lib/firebase/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, collection, writeBatch, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { PublicHeader } from '@/components/layout/PublicHeader';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+import { GoogleRegistrationModal } from '@/components/auth/GoogleRegistrationModal';
 // La importación de loadStripe y stripePromise ya no es necesaria aquí
 // import { loadStripe } from '@stripe/stripe-js';
 // const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
@@ -97,6 +99,10 @@ function RegisterForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submissionAttempted, setSubmissionAttempted] = useState(false);
+
+  // Google Sign-In states
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleUser, setGoogleUser] = useState<any>(null);
 
   useEffect(() => {
     fetch('/api/get-ip').then(res => res.json()).then(data => setUserIp(data.ip || 'IP not found'));
@@ -237,6 +243,134 @@ function RegisterForm() {
     // Note: setLoading(false) is not called on successful paid plan redirection because the page unloads.
   };
 
+  const handleGoogleSignIn = async (user: any) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      // Check if user already exists in Firestore
+      const restaurantRef = doc(db, 'restaurants', user.uid);
+      const restaurantDoc = await getDocs(query(collection(db, 'restaurants'), where('__name__', '==', user.uid)));
+
+      if (!restaurantDoc.empty) {
+        // User already exists, redirect to dashboard
+        router.push('/dashboard');
+        return;
+      }
+
+
+      // New user - show modal to collect restaurant name
+      setGoogleUser(user);
+      setShowGoogleModal(true);
+      setLoading(false);
+
+    } catch (error: any) {
+      console.error('Google Sign-In Error:', error);
+      setError('Error al iniciar sesión con Google. Por favor, inténtalo de nuevo.');
+      setLoading(false);
+    }
+  };
+
+  const completeGoogleRegistration = async (restaurantName: string, termsAccepted: boolean) => {
+    if (!googleUser) return;
+
+    const user = googleUser;
+    const baseSlug = slugify(restaurantName);
+    const uniqueSlug = await findUniqueSlug(db, baseSlug);
+
+    const batch = writeBatch(db);
+    const restaurantRef = doc(db, 'restaurants', user.uid);
+    const userRef = doc(db, 'users', user.uid);
+    const legalRef = doc(db, 'legalAcceptances', user.uid);
+
+    const initialStatus = selectedPlan === 'gratuito' ? 'trialing' : 'incomplete';
+    const trialEndDate = selectedPlan === 'gratuito' ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) : null;
+
+    // 1. Restaurant Document
+    batch.set(restaurantRef, {
+      uid: user.uid,
+      restaurantName,
+      slug: uniqueSlug,
+      ownerName: user.displayName || '',
+      email: user.email,
+      selectedPlan,
+      subscriptionStatus: initialStatus,
+      trialEndsAt: trialEndDate,
+      createdAt: serverTimestamp(),
+      termsAcceptedAt: serverTimestamp(),
+      hasSeenWelcomeVideo: false,
+    });
+
+    // 2. User Document
+    batch.set(userRef, {
+      email: user.email,
+      displayName: user.displayName || '',
+      createdAt: serverTimestamp(),
+    });
+
+    // 3. Legal Acceptance Document
+    batch.set(legalRef, {
+      userId: user.uid, version: '1.0.0', acceptedAt: serverTimestamp(), ipAddress: userIp,
+    });
+
+    // 4. Default Categories
+    const categoriesCollectionRef = collection(db, 'restaurants', user.uid, 'categories');
+    const defaultCategories = [
+      { name_i18n: { es: 'Entrantes', en: 'Starters' }, order: 1 },
+      { name_i18n: { es: 'Platos Principales', en: 'Main Courses' }, order: 2 },
+      { name_i18n: { es: 'Postres', en: 'Desserts' }, order: 3 },
+      { name_i18n: { es: 'Bebidas', en: 'Drinks' }, order: 4 },
+    ];
+    defaultCategories.forEach(cat => batch.set(doc(categoriesCollectionRef), cat));
+
+    await batch.commit();
+
+    // Send Discord notification
+    try {
+      await fetch('/api/discord-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'registration',
+          metadata: {
+            email: user.email,
+            displayName: user.displayName || '',
+            source: 'register-google'
+          }
+        })
+      });
+    } catch (discordError) {
+      console.error('Failed to send Discord notification:', discordError);
+    }
+
+    // --- Plan-specific redirection ---
+    const planDetails = pricingPlans.find(p => p.id === selectedPlan);
+
+    if (planDetails && planDetails.priceId) {
+      // Paid plan: Redirect to Stripe Checkout
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.uid,
+          userEmail: user.email,
+          userName: user.displayName || '',
+          priceId: planDetails.priceId
+        }),
+      });
+
+      const { url, error: apiError } = await res.json();
+
+      if (apiError) throw new Error(apiError);
+      if (!url) throw new Error('Could not retrieve a checkout session URL.');
+
+      window.location.href = url;
+    } else {
+      // Free plan: Redirect to dashboard
+      router.push('/dashboard');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <PublicHeader />
@@ -279,6 +413,24 @@ function RegisterForm() {
                   <p className="text-sm text-gray-600">Pagos seguros gestionados por</p>
                   <Image src="/icons/web_icons/stripe.svg" alt="Stripe Logo" width={48} height={20} />
                 </div>
+              </div>
+
+              {/* Google Sign-In - Primera opción */}
+              <div className="mt-8">
+                <GoogleSignInButton
+                  onSuccess={handleGoogleSignIn}
+                  onError={(error) => {
+                    setError(error.message);
+                  }}
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Separator */}
+              <div className="flex items-center gap-4 my-8">
+                <div className="flex-1 border-t border-gray-300"></div>
+                <span className="text-sm text-muted-foreground">o regístrate con tu email</span>
+                <div className="flex-1 border-t border-gray-300"></div>
               </div>
 
               <hr className="!my-10 border-gray-200" />
@@ -359,6 +511,14 @@ function RegisterForm() {
           </div>
         </div>
       </main>
+
+      {/* Google Registration Modal */}
+      <GoogleRegistrationModal
+        isOpen={showGoogleModal}
+        onClose={() => setShowGoogleModal(false)}
+        onComplete={completeGoogleRegistration}
+        userDisplayName={googleUser?.displayName}
+      />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { signInWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase/firebase';
 import { PublicHeader } from '@/components/layout/PublicHeader';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 function LoginForm() {
   const router = useRouter();
@@ -34,7 +35,7 @@ function LoginForm() {
         setError('Tu cuenta no está verificada. Te hemos reenviado un correo, revisa tu bandeja de entrada (y spam).');
         await auth.signOut();
         setLoading(false);
-        return; 
+        return;
       }
 
       router.push('/dashboard');
@@ -50,7 +51,7 @@ function LoginForm() {
       }
       setError(errorMessage);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -61,14 +62,35 @@ function LoginForm() {
         <div className="w-full max-w-md mx-auto">
           <div className="bg-white">
             <div className="text-center">
-                <Image src='/alergenu.png' alt='Alergenu Logo' width={180} height={48} className="mx-auto mt-16 mb-10" />
-                <h1 className="text-2xl font-bold tracking-tight mb-1">Accede a tu cuenta</h1>
-                <p className="text-muted-foreground text-sm">
-                    Introduce tu correo y contraseña para entrar en tu panel.
-                </p>
+              <Image src='/alergenu.png' alt='Alergenu Logo' width={180} height={48} className="mx-auto mt-16 mb-10" />
+              <h1 className="text-2xl font-bold tracking-tight mb-1">Accede a tu cuenta</h1>
+              <p className="text-muted-foreground text-sm">
+                Introduce tu correo y contraseña para entrar en tu panel.
+              </p>
             </div>
-            
-            <form onSubmit={handleSubmit} className="space-y-6 mt-10">
+
+            {/* Google Sign-In - Primera opción */}
+            <div className="mt-10">
+              <GoogleSignInButton
+                onSuccess={async (user) => {
+                  // Google accounts are automatically verified
+                  router.push('/dashboard');
+                }}
+                onError={(error) => {
+                  setError(error.message);
+                }}
+                disabled={loading}
+              />
+            </div>
+
+            {/* Separator */}
+            <div className="flex items-center gap-4 my-8">
+              <div className="flex-1 border-t border-gray-300"></div>
+              <span className="text-sm text-muted-foreground">o continúa con tu email</span>
+              <div className="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <Label htmlFor='email' className="text-base font-bold text-gray-800 pb-2 inline-block pl-4">Correo electrónico</Label>
                 <Input
@@ -84,25 +106,25 @@ function LoginForm() {
               </div>
               <div>
                 <div className="flex justify-between items-center pb-2 pl-4">
-                    <Label htmlFor='password' className="text-base font-bold text-gray-800">Contraseña</Label>
-                    <Link href="/auth/forgot-password" className="text-sm font-semibold text-blue-600 hover:underline">
-                        ¿Has olvidado tu contraseña?
-                    </Link>
+                  <Label htmlFor='password' className="text-base font-bold text-gray-800">Contraseña</Label>
+                  <Link href="/auth/forgot-password" className="text-sm font-semibold text-blue-600 hover:underline">
+                    ¿Has olvidado tu contraseña?
+                  </Link>
                 </div>
                 <div className="relative flex items-center">
-                    <Input
-                        id='password'
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder='Escribe tu contraseña'
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="h-12 px-5 text-base rounded-full pr-12 text-blue-600"
-                        disabled={loading}
-                    />
-                    <button type='button' onClick={() => setShowPassword(p => !p)} className="absolute right-1 h-10 w-10 flex items-center justify-center text-muted-foreground bg-white rounded-full">
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
+                  <Input
+                    id='password'
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder='Escribe tu contraseña'
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-12 px-5 text-base rounded-full pr-12 text-blue-600"
+                    disabled={loading}
+                  />
+                  <button type='button' onClick={() => setShowPassword(p => !p)} className="absolute right-1 h-10 w-10 flex items-center justify-center text-muted-foreground bg-white rounded-full">
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
               </div>
 
@@ -111,13 +133,13 @@ function LoginForm() {
               )}
 
               <div className="pt-4">
-                  <Button type='submit' size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }} disabled={loading}>
-                      {loading ? (
-                          <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Iniciando sesión...</>
-                      ) : (
-                          'Iniciar sesión'
-                      )}
-                  </Button>
+                <Button type='submit' size="lg" className="w-full rounded-full h-14 text-lg font-bold" style={{ backgroundColor: '#2563EB' }} disabled={loading}>
+                  {loading ? (
+                    <><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Iniciando sesión...</>
+                  ) : (
+                    'Iniciar sesión'
+                  )}
+                </Button>
               </div>
 
               <div className="text-center mt-6">
@@ -137,9 +159,9 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-    return (
-        <Suspense fallback={<div>Cargando...</div>}>
-            <LoginForm />
-        </Suspense>
-    );
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
 }

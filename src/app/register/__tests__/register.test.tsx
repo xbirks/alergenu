@@ -21,27 +21,34 @@ jest.mock('next/navigation', () => ({
 const mockCreateUser = jest.fn();
 const mockSendEmail = jest.fn();
 const mockWriteBatch = {
-    set: jest.fn(),
-    commit: jest.fn().mockResolvedValue(undefined),
+  set: jest.fn(),
+  commit: jest.fn().mockResolvedValue(undefined),
 };
 const mockGetDocs = jest.fn(() => Promise.resolve({ empty: true })); // Simula que el slug es único
 
 jest.mock('@/lib/firebase/firebase', () => ({
   auth: {},
   db: {},
+  googleProvider: {}, // Mock del provider de Google
 }));
+
+// Mock del componente GoogleSignInButton
+jest.mock('@/components/auth/GoogleSignInButton', () => ({
+  GoogleSignInButton: () => <div data-testid="google-signin-button">Google Sign In</div>,
+}));
+
 jest.mock('firebase/auth', () => ({
   createUserWithEmailAndPassword: (auth: any, email: string, password: string) => mockCreateUser(auth, email, password), // <-- CORREGIDO
   sendEmailVerification: (user: any) => mockSendEmail(user),
 }));
 jest.mock('firebase/firestore', () => ({
-    writeBatch: () => mockWriteBatch,
-    doc: jest.fn((db, collection, id) => `mock/doc/${id}`),
-    collection: jest.fn((db, ...path) => `mock/collection/${path.join('/')}`),
-    serverTimestamp: () => 'mock_timestamp',
-    query: jest.fn(),
-    where: jest.fn(),
-    getDocs: (query: any) => mockGetDocs(query),
+  writeBatch: () => mockWriteBatch,
+  doc: jest.fn((db, collection, id) => `mock/doc/${id}`),
+  collection: jest.fn((db, ...path) => `mock/collection/${path.join('/')}`),
+  serverTimestamp: () => 'mock_timestamp',
+  query: jest.fn(),
+  where: jest.fn(),
+  getDocs: (query: any) => mockGetDocs(query),
 }));
 
 // 3. Mock de Fetch API
@@ -90,22 +97,22 @@ describe('Flujo de Registro en RegisterPage', () => {
     });
 
     await waitFor(() => {
-        // Se envió el correo de verificación
-        expect(mockSendEmail).toHaveBeenCalledWith(mockUser.user);
+      // Se envió el correo de verificación
+      expect(mockSendEmail).toHaveBeenCalledWith(mockUser.user);
     });
 
     await waitFor(() => {
-        // Se confirmó la escritura en la base de datos
-        expect(mockWriteBatch.commit).toHaveBeenCalled();
+      // Se confirmó la escritura en la base de datos
+      expect(mockWriteBatch.commit).toHaveBeenCalled();
     });
-    
+
     await waitFor(() => {
-        // Se redirigió a la página de verificación
-        expect(mockPush).toHaveBeenCalledWith('/auth/verify-email');
+      // Se redirigió a la página de verificación
+      expect(mockPush).toHaveBeenCalledWith('/auth/verify-email');
     });
 
     // Nos aseguramos de que no se muestre ningún error
     expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
   });
-  
+
 });

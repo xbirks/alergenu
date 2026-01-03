@@ -1,10 +1,11 @@
 
 // src/lib/firebase/firebase.ts
 import { initializeApp } from "firebase/app";
-import { 
-    getAuth, 
-    onIdTokenChanged, 
-    IdTokenResult 
+import {
+    getAuth,
+    onIdTokenChanged,
+    IdTokenResult,
+    GoogleAuthProvider
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics"; // Import getAnalytics
@@ -27,7 +28,7 @@ const db = getFirestore(app);
 // Initialize Analytics only in the browser environment
 let analytics: any; // Use 'any' type to allow conditional assignment
 if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID) {
-  analytics = getAnalytics(app);
+    analytics = getAnalytics(app);
 }
 
 /**
@@ -35,14 +36,14 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID
  * It listens for changes in the user's sign-in state (sign-in, sign-out, token refresh)
  * and synchronizes the ID token with a server-side session cookie.
  */
-onIdTokenChanged(auth, async (user)  => {
+onIdTokenChanged(auth, async (user) => {
     if (user) {
         // User is signed in or token has been refreshed.
         console.log('[Auth State] User is signed in. Refreshing token and setting session cookie...');
 
         // Force a token refresh to get the latest custom claims (like 'admin').
         // This is crucial for the admin role to be recognized immediately after it's granted.
-        const tokenResult: IdTokenResult = await user.getIdTokenResult(true); 
+        const tokenResult: IdTokenResult = await user.getIdTokenResult(true);
 
         // Send the fresh token to the server to be stored in a session cookie.
         // The server will verify this token and create a secure, httpOnly cookie.
@@ -71,4 +72,10 @@ onIdTokenChanged(auth, async (user)  => {
     }
 });
 
-export { app, auth, db, analytics }; // Export analytics
+// Initialize Google Auth Provider
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+    prompt: 'select_account' // Always show account selection
+});
+
+export { app, auth, db, analytics, googleProvider }; // Export analytics and googleProvider

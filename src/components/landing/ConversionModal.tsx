@@ -19,7 +19,8 @@ import { auth, db } from '@/lib/firebase/firebase';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, collection, writeBatch, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
-import Image from 'next/image';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+import { GoogleRegistrationModal } from '@/components/auth/GoogleRegistrationModal';
 
 import { DetectedMenuItem } from '@/ai/menuPhotoAnalysis';
 
@@ -78,6 +79,10 @@ export function ConversionModal({ isOpen, onClose, itemCount, analyzedItems, ana
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [submissionAttempted, setSubmissionAttempted] = useState(false);
+
+    // Google Sign-In states
+    const [showGoogleModal, setShowGoogleModal] = useState(false);
+    const [googleUser, setGoogleUser] = useState<any>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -258,6 +263,177 @@ export function ConversionModal({ isOpen, onClose, itemCount, analyzedItems, ana
         }
     };
 
+    const handleGoogleSignIn = async (user: any) => {
+        setLoading(true);
+        setError('');
+
+        try {
+            // Check if user already exists in Firestore
+            const restaurantDoc = await getDocs(query(collection(db, 'restaurants'), where('__name__', '==', user.uid)));
+
+            if (!restaurantDoc.empty) {
+                // User already exists, redirect to dashboard
+                router.push('/dashboard');
+                return;
+            }
+
+            // New user - show modal to collect restaurant name
+            setGoogleUser(user);
+            setShowGoogleModal(true);
+            setLoading(false);
+
+        } catch (error: any) {
+            console.error('Google Sign-In Error:', error);
+            setError('Error al iniciar sesión con Google. Por favor, inténtalo de nuevo.');
+            setLoading(false);
+        }
+    };
+
+    const completeGoogleRegistration = async (restaurantName: string, termsAccepted: boolean) => {
+        if (!googleUser) return;
+
+        setLoading(true);
+
+        try {
+            const user = googleUser;
+
+            const baseSlug = slugify(restaurantName);
+            const uniqueSlug = await findUniqueSlug(db, baseSlug);
+
+            const batch = writeBatch(db);
+            const restaurantRef = doc(db, 'restaurants', user.uid);
+            const userRef = doc(db, 'users', user.uid);
+            const legalRef = doc(db, 'legalAcceptances', user.uid);
+
+            const trialEndDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+
+            // 1. Restaurant Document
+            batch.set(restaurantRef, {
+                uid: user.uid,
+                restaurantName,
+                slug: uniqueSlug,
+                ownerName: user.displayName || '',
+                email: user.email,
+                selectedPlan: 'gratuito',
+                subscriptionStatus: 'trialing',
+                trialEndsAt: trialEndDate,
+                createdAt: serverTimestamp(),
+                termsAcceptedAt: serverTimestamp(),
+                hasSeenWelcomeVideo: false,
+            });
+
+            // 2. User Document
+            batch.set(userRef, {
+                email: user.email,
+                displayName: user.displayName || '',
+                createdAt: serverTimestamp(),
+            });
+
+            // 3. Legal Acceptance Document
+            batch.set(legalRef, {
+                userId: user.uid,
+                version: '1.0.0',
+                acceptedAt: serverTimestamp(),
+                ipAddress: 'landing-conversion-google',
+            });
+
+            // 4. Categories & Menu Items
+            const categoriesCollectionRef = collection(db, 'restaurants', user.uid, 'categories');
+            const menuItemsCollectionRef = collection(db, 'restaurants', user.uid, 'menuItems');
+
+            const categoryMap: Record<string, string> = {};
+
+            const categoriesToCreate = analyzedCategories.length > 0
+                ? analyzedCategories.map((name, idx) => ({
+                    name_i18n: { es: name, en: '' },
+                    order: idx + 1
+                }))
+                : [
+                    { name_i18n: { es: 'Entrantes', en: 'Starters' }, order: 1 },
+                    { name_i18n: { es: 'Platos Principales', en: 'Main Courses' }, order: 2 },
+                    { name_i18n: { es: 'Postres', en: 'Desserts' }, order: 3 },
+                    { name_i18n: { es: 'Bebidas', en: 'Drinks' }, order: 4 },
+                ];
+
+            for (const cat of categoriesToCreate) {
+                const catDocRef = doc(categoriesCollectionRef);
+                batch.set(catDocRef, cat);
+                if (cat.name_i18n.es) {
+                    categoryMap[cat.name_i18n.es] = catDocRef.id;
+                }
+            }
+
+            // 5. Save Analyzed Menu Items
+            if (analyzedItems.length > 0) {
+                analyzedItems.forEach((item, index) => {
+                    const itemRef = doc(menuItemsCollectionRef);
+                    const categoryId = categoryMap[item.category] || '';
+                    const needsReview = item.price === 0 || !item.allergens || item.allergens.length === 0;
+
+                    const safeNameEs = item.name_i18n?.es || 'Sin nombre';
+                    const safeNameEn = item.name_i18n?.en || '';
+                    const safeDescEs = item.description_i18n?.es || '';
+                    const safeDescEn = item.description_i18n?.en || '';
+                    const safeCategory = item.category || 'Sin categoría';
+
+                    const itemData = {
+                        name_i18n: {
+                            es: safeNameEs,
+                            en: safeNameEn
+                        },
+                        description_i18n: {
+                            es: safeDescEs,
+                            en: safeDescEn
+                        },
+                        price: Math.round((item.price || 0) * 100),
+                        categoryId: categoryId || '',
+                        category: safeCategory,
+                        category_i18n: {
+                            es: safeCategory,
+                            en: ''
+                        },
+                        allergens: (Array.isArray(item.allergens) ? item.allergens : []).reduce((acc, all) => ({ ...acc, [all]: 'yes' }), {}),
+                        isAvailable: true,
+                        reviewStatus: 'pending',
+                        confidence: needsReview ? 'low' : 'high',
+                        order: (typeof index === 'number') ? index : 0,
+                        createdAt: serverTimestamp(),
+                    };
+
+                    batch.set(itemRef, itemData);
+                });
+            }
+
+            await batch.commit();
+
+            // Send Discord notification
+            try {
+                await fetch('/api/discord-notify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'registration',
+                        metadata: {
+                            email: user.email,
+                            displayName: user.displayName,
+                            source: 'foto-a-carta-google',
+                            itemsCount: analyzedItems.length
+                        }
+                    })
+                });
+            } catch (discordError) {
+                console.error('Failed to send Discord notification:', discordError);
+            }
+
+            router.push('/dashboard/menu/review');
+
+        } catch (error: any) {
+            console.error('Google Registration Completion Error:', error);
+            setError('Error al completar el registro. Por favor, inténtalo de nuevo.');
+            setLoading(false);
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
@@ -301,6 +477,24 @@ export function ConversionModal({ isOpen, onClose, itemCount, analyzedItems, ana
                                 Sin compromiso ni tarjeta de crédito
                             </p>
                         </div>
+                    </div>
+
+                    {/* Google Sign-In - Primera opción */}
+                    <div className="mt-6">
+                        <GoogleSignInButton
+                            onSuccess={handleGoogleSignIn}
+                            onError={(error) => {
+                                setError(error.message);
+                            }}
+                            disabled={loading}
+                        />
+                    </div>
+
+                    {/* Separator */}
+                    <div className="flex items-center gap-4 my-6">
+                        <div className="flex-1 border-t border-gray-300"></div>
+                        <span className="text-sm text-muted-foreground">o regístrate con tu email</span>
+                        <div className="flex-1 border-t border-gray-300"></div>
                     </div>
 
                     <hr className="!my-8 border-gray-200" />
@@ -428,6 +622,14 @@ export function ConversionModal({ isOpen, onClose, itemCount, analyzedItems, ana
                         </Button>
                     </div>
                 </form>
+
+                {/* Google Registration Modal */}
+                <GoogleRegistrationModal
+                    isOpen={showGoogleModal}
+                    onClose={() => setShowGoogleModal(false)}
+                    onComplete={completeGoogleRegistration}
+                    userDisplayName={googleUser?.displayName}
+                />
             </DialogContent>
         </Dialog>
     );

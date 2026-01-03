@@ -23,6 +23,12 @@ jest.mock('@/lib/firebase/firebase', () => ({
   auth: {
     signOut: jest.fn(() => Promise.resolve()),
   },
+  googleProvider: {},
+}));
+
+// 4. Mockear el componente GoogleSignInButton
+jest.mock('@/components/auth/GoogleSignInButton', () => ({
+  GoogleSignInButton: () => <div data-testid="google-signin-button">Google Sign In</div>,
 }));
 
 // Hacemos un type casting de los mocks para poder usarlos cómodamente en los tests
