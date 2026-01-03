@@ -37,7 +37,7 @@ interface Category {
 
 export default function MenuPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth(false);
   const { toast } = useToast();
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -93,13 +93,13 @@ export default function MenuPage() {
       const items = snapshot.docs.map(doc => {
         const data = doc.data();
         const processedExtras = (data.extras || []).map((extra: any) => {
-            if (extra.name && !extra.name_i18n) {
-              return {
-                price: extra.price,
-                name_i18n: { es: extra.name, en: '' }
-              };
-            }
-            return extra;
+          if (extra.name && !extra.name_i18n) {
+            return {
+              price: extra.price,
+              name_i18n: { es: extra.name, en: '' }
+            };
+          }
+          return extra;
         });
 
         return {
@@ -137,7 +137,7 @@ export default function MenuPage() {
     const migrateOrders = async () => {
       console.log(`Initializing order for ${itemsToMigrate.length} existing items...`);
       const batch = writeBatch(db);
-      
+
       itemsToMigrate.forEach(item => {
         const docRef = doc(db, 'restaurants', user.uid, 'menuItems', item.id);
         const orderValue = item.createdAt?.toMillis ? item.createdAt.toMillis() : Date.now();
@@ -261,29 +261,29 @@ export default function MenuPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start space-x-4">
                             <div className="flex-1 min-w-0">
-                               <h3 className="font-bold text-lg">{name_i18n.es}</h3>
-                               {description_i18n.es && <p className="text-muted-foreground text-sm mt-1">{description_i18n.es}</p>}
-                               
-                               {item.extras && item.extras.length > 0 && (
-                                <div className="mt-3 pl-4 border-l-2 border-gray-200">
-                                    <h4 className="text-sm font-semibold text-gray-600">Suplementos:</h4>
-                                    <ul className="list-disc list-inside mt-1 space-y-1">
-                                        {item.extras.map((extra, extraIndex) => (
-                                            <li key={extraIndex} className="text-sm text-gray-500 flex justify-between">
-                                                <span>
-                                                    {extra.name_i18n?.es || ''}
-                                                    {extra.name_i18n?.en && <span className="text-gray-400"> / {extra.name_i18n.en}</span>}
-                                                </span>
-                                                <span className="font-medium">
-                                                    +{(extra.price / 100).toFixed(2).replace('.', ',')}€
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                )}
+                              <h3 className="font-bold text-lg">{name_i18n.es}</h3>
+                              {description_i18n.es && <p className="text-muted-foreground text-sm mt-1">{description_i18n.es}</p>}
 
-                               {itemAllergens.length > 0 && (
+                              {item.extras && item.extras.length > 0 && (
+                                <div className="mt-3 pl-4 border-l-2 border-gray-200">
+                                  <h4 className="text-sm font-semibold text-gray-600">Suplementos:</h4>
+                                  <ul className="list-disc list-inside mt-1 space-y-1">
+                                    {item.extras.map((extra, extraIndex) => (
+                                      <li key={extraIndex} className="text-sm text-gray-500 flex justify-between">
+                                        <span>
+                                          {extra.name_i18n?.es || ''}
+                                          {extra.name_i18n?.en && <span className="text-gray-400"> / {extra.name_i18n.en}</span>}
+                                        </span>
+                                        <span className="font-medium">
+                                          +{(extra.price / 100).toFixed(2).replace('.', ',')}€
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {itemAllergens.length > 0 && (
                                 <div className="flex flex-wrap items-center gap-2 mt-3">
                                   {itemAllergens.map(allergen => (
                                     <TooltipProvider key={allergen.id}><Tooltip><TooltipTrigger>
@@ -295,7 +295,7 @@ export default function MenuPage() {
                                 </div>
                               )}
                             </div>
-                            
+
                             <div className='flex flex-col items-end flex-shrink-0'>
                               <span className="font-bold text-lg">{(item.price / 100).toFixed(2).replace('.', ',')}€</span>
                               <div className='flex items-center'>
@@ -312,24 +312,24 @@ export default function MenuPage() {
                                   </Tooltip>
                                 </TooltipProvider>
                                 <DropdownMenu>
-                                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-10 w-10"><MoreHorizontal className="h-6 w-6"/></Button></DropdownMenuTrigger>
+                                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-10 w-10"><MoreHorizontal className="h-6 w-6" /></Button></DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => router.push(`/dashboard/menu/edit/${item.id}`)}><FilePenLine className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4"/>Eliminar</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => router.push(`/dashboard/menu/edit/${item.id}`)}><FilePenLine className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setItemToDelete(item)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Eliminar</DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="mt-4 flex items-center justify-between">
                             <div className="flex items-center">
-                                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(items, index, 'up')} disabled={index === 0}><ArrowUp className="h-6 w-6 text-muted-foreground" /></Button>
-                                <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(items, index, 'down')} disabled={index === items.length - 1}><ArrowDown className="h-6 w-6 text-muted-foreground" /></Button>
+                              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(items, index, 'up')} disabled={index === 0}><ArrowUp className="h-6 w-6 text-muted-foreground" /></Button>
+                              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(items, index, 'down')} disabled={index === items.length - 1}><ArrowDown className="h-6 w-6 text-muted-foreground" /></Button>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <Label htmlFor={`available-${item.id}`} className="text-sm font-medium">{item.isAvailable ? 'Disponible' : 'Agotado'}</Label>
-                                <Switch id={`available-${item.id}`} checked={item.isAvailable} onCheckedChange={(c) => handleAvailabilityToggle(item, c)} />
+                              <Label htmlFor={`available-${item.id}`} className="text-sm font-medium">{item.isAvailable ? 'Disponible' : 'Agotado'}</Label>
+                              <Switch id={`available-${item.id}`} checked={item.isAvailable} onCheckedChange={(c) => handleAvailabilityToggle(item, c)} />
                             </div>
                           </div>
                         </div>
@@ -353,9 +353,9 @@ export default function MenuPage() {
           <p className="text-muted-foreground">Gestiona los platos y categorías de tu restaurante.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-auto">
-            <Button id="tour-add-dish-button" size="lg" className="w-full font-bold rounded-full h-14 text-lg" onClick={() => router.push('/dashboard/menu/new')}><PlusCircle className="mr-2 h-4 w-4" />Añadir plato</Button>
-            <Button id="tour-manage-categories-button" size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg" onClick={() => router.push('/dashboard/menu/categories')}><LayoutGrid className="mr-2 h-4 w-4" />Categorías</Button>
-            <Button id="tour-view-public-menu-button" size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg" onClick={handleViewPublicMenu} disabled={!restaurantSlug}><Eye className="mr-2 h-4 w-4" />Ver carta</Button>
+          <Button id="tour-add-dish-button" size="lg" className="w-full font-bold rounded-full h-14 text-lg" onClick={() => router.push('/dashboard/menu/new')}><PlusCircle className="mr-2 h-4 w-4" />Añadir plato</Button>
+          <Button id="tour-manage-categories-button" size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg" onClick={() => router.push('/dashboard/menu/categories')}><LayoutGrid className="mr-2 h-4 w-4" />Categorías</Button>
+          <Button id="tour-view-public-menu-button" size="lg" variant="outline" className="w-full font-bold rounded-full h-14 text-lg" onClick={handleViewPublicMenu} disabled={!restaurantSlug}><Eye className="mr-2 h-4 w-4" />Ver carta</Button>
         </div>
       </header>
       <main>{renderContent()}</main>

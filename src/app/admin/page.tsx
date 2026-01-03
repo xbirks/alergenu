@@ -45,6 +45,11 @@ const StatCard = ({ title, value, icon: Icon, href }: { title: string, value: st
     return cardContent;
 };
 
+export const metadata = {
+    title: 'ADMIN - Alergenu',
+    description: 'Gestión de usuarios, cuentas y pagos',
+};
+
 export default async function AdminPage() {
     const { currentUser, token } = await getAuthenticatedAppForUser();
     if (!currentUser || !token?.admin) {

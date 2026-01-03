@@ -11,9 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { I18nString } from '@/types/i18n';
 
 const getUserEmail = async (uid: string) => {
-    // This is a placeholder. In a real scenario, you might need a backend service
-    // or a `users` collection to map UIDs to emails for privacy reasons.
-    return `User (${uid.substring(0, 5)}...)`;
+  // This is a placeholder. In a real scenario, you might need a backend service
+  // or a `users` collection to map UIDs to emails for privacy reasons.
+  return `User (${uid.substring(0, 5)}...)`;
 };
 
 interface CategoryHistory {
@@ -25,7 +25,7 @@ interface CategoryHistory {
 }
 
 export default function CategoryHistoryPage() {
-  const { user } = useAuth();
+  const { user } = useAuth(false);
   const params = useParams();
   const { id: categoryId } = params;
 
@@ -62,7 +62,7 @@ export default function CategoryHistoryPage() {
         }
       }
       setUserEmails(prev => ({ ...prev, ...emailMap }));
-      
+
       setLoading(false);
     });
 
@@ -90,33 +90,33 @@ export default function CategoryHistoryPage() {
         <div className="space-y-6">
           {history.map((entry, index) => (
             <Card key={entry.id}>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg">Cambio #{history.length - index}</CardTitle>
-                    <div className="text-sm text-muted-foreground flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{new Date(entry.updatedAt.seconds * 1000).toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <User className="h-4 w-4" />
-                            <span>{userEmails[entry.lastUpdatedBy] || 'Cargando...'}</span>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                        <div className="font-mono text-sm"><dt className="font-semibold">Nombre (ES):</dt><dd>{entry.name_i18n?.es}</dd></div>
-                        <div className="font-mono text-sm"><dt className="font-semibold">Nombre (EN):</dt><dd>{entry.name_i18n?.en || '-'}</dd></div>
-                        <div className="font-mono text-sm"><dt className="font-semibold">Orden:</dt><dd>{entry.order}</dd></div>
-                    </dl>
-                </CardContent>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Cambio #{history.length - index}</CardTitle>
+                <div className="text-sm text-muted-foreground flex items-center gap-4">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{new Date(entry.updatedAt.seconds * 1000).toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <User className="h-4 w-4" />
+                    <span>{userEmails[entry.lastUpdatedBy] || 'Cargando...'}</span>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                  <div className="font-mono text-sm"><dt className="font-semibold">Nombre (ES):</dt><dd>{entry.name_i18n?.es}</dd></div>
+                  <div className="font-mono text-sm"><dt className="font-semibold">Nombre (EN):</dt><dd>{entry.name_i18n?.en || '-'}</dd></div>
+                  <div className="font-mono text-sm"><dt className="font-semibold">Orden:</dt><dd>{entry.order}</dd></div>
+                </dl>
+              </CardContent>
             </Card>
           ))}
         </div>
       ) : (
         <div className="text-center py-16 border-dashed border-2 rounded-lg">
-            <h3 className="text-xl font-semibold">No hay historial</h3>
-            <p className="text-muted-foreground">Aún no se han registrado cambios para esta categoría.</p>
+          <h3 className="text-xl font-semibold">No hay historial</h3>
+          <p className="text-muted-foreground">Aún no se han registrado cambios para esta categoría.</p>
         </div>
       )}
     </div>

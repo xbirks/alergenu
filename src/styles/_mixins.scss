@@ -1,0 +1,61 @@
+@import './variables';
+
+// Media queries
+@mixin respond-to($breakpoint) {
+    @if $breakpoint ==sm {
+        @media (min-width: $breakpoint-sm) {
+            @content;
+        }
+    }
+
+    @if $breakpoint ==md {
+        @media (min-width: $breakpoint-md) {
+            @content;
+        }
+    }
+
+    @if $breakpoint ==lg {
+        @media (min-width: $breakpoint-lg) {
+            @content;
+        }
+    }
+
+    @if $breakpoint ==xl {
+        @media (min-width: $breakpoint-xl) {
+            @content;
+        }
+    }
+}
+
+// Gradientes
+@mixin gradient-blue {
+    background: linear-gradient(to bottom right, $color-blue-50, $color-blue-100);
+}
+
+// Flexbox centrado
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+// Aspect ratio
+@mixin aspect-ratio($width, $height) {
+    aspect-ratio: $width / $height;
+}
+
+// Container
+@mixin container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: $spacing-4;
+    padding-right: $spacing-4;
+}
+
+// Truncate text
+@mixin truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

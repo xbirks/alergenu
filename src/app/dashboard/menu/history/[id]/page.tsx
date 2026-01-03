@@ -24,7 +24,7 @@ interface MenuItemHistory {
 }
 
 export default function MenuItemHistoryPage() {
-  const { user } = useAuth();
+  const { user } = useAuth(false);
   const params = useParams();
   const { id: menuItemId } = params;
 
@@ -52,7 +52,7 @@ export default function MenuItemHistoryPage() {
 
       const userIds = [...new Set(historyData.map(h => h.lastUpdatedBy))].filter(Boolean);
       const displayDataMap: Record<string, string> = {};
-      
+
       for (const uid of userIds) {
         if (!userDisplayData[uid]) {
           if (uid === 'SYSTEM') {
@@ -70,7 +70,7 @@ export default function MenuItemHistoryPage() {
         }
       }
       setUserDisplayData(prev => ({ ...prev, ...displayDataMap }));
-      
+
       setLoading(false);
     }, (error) => {
       console.error("Error fetching history: ", error);
@@ -81,9 +81,9 @@ export default function MenuItemHistoryPage() {
   }, [user, menuItemId]);
 
   const AllergenDisplay = ({ allergens }: { allergens?: { [key: string]: 'no' | 'traces' | 'yes' } }) => {
-      const declaredAllergens = ALLERGENS.map(allergen => ({ ...allergen, status: allergens?.[allergen.id] || 'no' })).filter(a => a.status !== 'no');
-      if (declaredAllergens.length === 0) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><CheckCircle className="h-4 w-4 text-green-500" /><span>Sin alérgenos declarados.</span></div>;
-      return <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-2 pt-2">{declaredAllergens.map(allergen => <div key={allergen.id} className="flex items-center gap-2 text-sm">{allergen.status === 'yes' ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <VenetianMask className="h-4 w-4 text-orange-500" />}<span className="font-semibold">{allergen.name}</span><span className="text-muted-foreground">({allergen.status === 'yes' ? 'Sí' : 'Trazas'})</span></div>)}</div>;
+    const declaredAllergens = ALLERGENS.map(allergen => ({ ...allergen, status: allergens?.[allergen.id] || 'no' })).filter(a => a.status !== 'no');
+    if (declaredAllergens.length === 0) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><CheckCircle className="h-4 w-4 text-green-500" /><span>Sin alérgenos declarados.</span></div>;
+    return <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-2 pt-2">{declaredAllergens.map(allergen => <div key={allergen.id} className="flex items-center gap-2 text-sm">{allergen.status === 'yes' ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <VenetianMask className="h-4 w-4 text-orange-500" />}<span className="font-semibold">{allergen.name}</span><span className="text-muted-foreground">({allergen.status === 'yes' ? 'Sí' : 'Trazas'})</span></div>)}</div>;
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -101,29 +101,29 @@ export default function MenuItemHistoryPage() {
         <div className="space-y-8">
           {history.map((entry, index) => (
             <div key={entry.id} className="border rounded-xl p-6 bg-card shadow-sm">
-                <div className="flex items-center gap-4 mb-4">
-                    <Clock className="h-5 w-5 text-gray-500" />
-                    <h3 className="text-lg font-semibold">Cambio #{history.length - index}: {new Date(entry.updatedAt.seconds * 1000).toLocaleString('es-ES')}</h3>
+              <div className="flex items-center gap-4 mb-4">
+                <Clock className="h-5 w-5 text-gray-500" />
+                <h3 className="text-lg font-semibold">Cambio #{history.length - index}: {new Date(entry.updatedAt.seconds * 1000).toLocaleString('es-ES')}</h3>
+              </div>
+              <div className="space-y-4 pl-9">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground"><User className="h-4 w-4" /><span>{userDisplayData[entry.lastUpdatedBy] || 'Cargando...'}</span></div>
+                  <Badge variant={entry.isAvailable ? 'default' : 'destructive'}>{entry.isAvailable ? 'Disponible' : 'No Disponible'}</Badge>
                 </div>
-                <div className="space-y-4 pl-9">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground"><User className="h-4 w-4" /><span>{userDisplayData[entry.lastUpdatedBy] || 'Cargando...'}</span></div>
-                        <Badge variant={entry.isAvailable ? 'default' : 'destructive'}>{entry.isAvailable ? 'Disponible' : 'No Disponible'}</Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                        <div><span className="font-bold">Nombre:</span> {entry.name_i18n?.es || '-'}</div>
-                        <div><span className="font-bold">Precio:</span> {(entry.price / 100).toFixed(2)}€</div>
-                        <div className="col-span-2"><span className="font-bold">Descripción:</span> {entry.description_i18n?.es || '-'}</div>
-                    </div>
-                    <div>
-                        <h4 className="font-bold mb-2">Alérgenos Declarados:</h4>
-                        <AllergenDisplay allergens={entry.allergens} />
-                    </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div><span className="font-bold">Nombre:</span> {entry.name_i18n?.es || '-'}</div>
+                  <div><span className="font-bold">Precio:</span> {(entry.price / 100).toFixed(2)}€</div>
+                  <div className="col-span-2"><span className="font-bold">Descripción:</span> {entry.description_i18n?.es || '-'}</div>
                 </div>
+                <div>
+                  <h4 className="font-bold mb-2">Alérgenos Declarados:</h4>
+                  <AllergenDisplay allergens={entry.allergens} />
+                </div>
+              </div>
             </div>
           ))}
         </div>
-       ) : (
+      ) : (
         <div className="text-center py-24 border-dashed border-2 rounded-lg bg-gray-50">
           <h3 className="text-2xl font-bold">Historial Vacío</h3>
           <p className="text-muted-foreground mt-2">No se han registrado cambios para este plato todavía.</p>

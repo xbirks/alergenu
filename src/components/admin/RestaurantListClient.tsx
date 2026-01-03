@@ -1,14 +1,23 @@
-
 'use client';
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { List, UtensilsCrossed, Mail, MoreVertical, Award, Eye, HeartHandshake, Hourglass, User, ArrowUpDown } from 'lucide-react';
+import { List, UtensilsCrossed, Mail, MoreVertical, Award, Eye, HeartHandshake, Hourglass, User, ArrowUpDown, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { assignSubscriptionPlan, startFreeTrial } from '@/app/admin/actions';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { assignSubscriptionPlan, startFreeTrial, deleteUserAction } from '@/app/admin/actions';
 import ImpersonationButton from '@/app/admin/ImpersonationButton';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -74,6 +83,8 @@ const StatusBadge = ({ status }: { status: Restaurant['status'] }) => {
 const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
     const { toast } = useToast();
     const [assigning, setAssigning] = useState<boolean>(false);
+    const [deleting, setDeleting] = useState<boolean>(false); // New state for delete loading
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false); // New state for dialog visibility
     const router = useRouter();
 
     const endDateText = restaurant.status === 'trialing' ? 'Prueba termina el' : 'Renueva el';
@@ -82,7 +93,7 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
         setAssigning(true);
         const { success, message } = await assignSubscriptionPlan(restaurant.id, plan);
         if (success) {
-            toast({ title: "Plan Asignado", description: message, variant: "success" });
+            toast({ title: "Plan Asignado", description: message, variant: "default" });
         } else {
             toast({ title: "Error al asignar plan", description: message, variant: "destructive" });
         }
@@ -94,12 +105,30 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
         setAssigning(true);
         const { success, message } = await startFreeTrial(restaurant.id);
         if (success) {
-            toast({ title: "Prueba Gratuita Iniciada", description: message, variant: "success" });
+            toast({ title: "Prueba Gratuita Iniciada", description: message, variant: "default" });
         } else {
             toast({ title: "Error al iniciar prueba", description: message, variant: "destructive" });
         }
         setAssigning(false);
         window.location.reload(); // Force a refresh to show updated data
+    };
+
+    const handleDeleteUser = async () => {
+        setDeleting(true);
+        try {
+            const { success, message } = await deleteUserAction(restaurant.ownerUid);
+            if (success) {
+                toast({ title: "Usuario Eliminado", description: message, variant: "default" });
+                window.location.reload();
+            } else {
+                toast({ title: "Error al eliminar", description: message, variant: "destructive" });
+            }
+        } catch (error) {
+            toast({ title: "Error crítico", description: "Fallo inesperado al eliminar usuario", variant: "destructive" });
+        } finally {
+            setDeleting(false);
+            setShowDeleteConfirm(false);
+        }
     };
 
     const handleViewPublicMenu = () => {
@@ -111,109 +140,145 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
     };
 
     return (
-        <Card className="flex flex-col h-full rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="pb-4">
-                <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-xl font-bold text-gray-900">{restaurant.name}</CardTitle>
-                    <StatusBadge status={restaurant.status} />
-                </div>
-                <p className="text-sm text-muted-foreground font-mono truncate">slug: {restaurant.slug}</p>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
-                    <Mail className="h-4 w-4 flex-shrink-0" />
-                    <span className="font-mono truncate" title={restaurant.email}>{restaurant.email}</span>
-                </div>
-            </CardHeader>
-            <CardContent className="flex-grow space-y-4">
-                <div className="text-sm space-y-2">
-                    <div className="flex justify-between">
-                        <span className="font-semibold text-gray-600">Plan:</span>
-                        <span className="font-bold">{formatPlanName(restaurant.plan)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="font-semibold text-gray-600">Propietario:</span>
-                        <div className="flex items-center gap-1.5">
-                            <User className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="font-medium text-gray-800">{restaurant.ownerName}</span>
-                        </div>
-                    </div>
-                    {restaurant.endDate && (
-                        <div className="flex justify-between">
-                            <span className="font-semibold text-gray-600">{endDateText}:</span>
-                            <span>{formatDate(restaurant.endDate)}</span>
-                        </div>
-                    )}
-                </div>
-                <div className="border-t border-gray-100 pt-4 space-y-2">
-                    <div className="flex items-center justify-between text-sm text-gray-700">
-                        <div className="flex items-center gap-2">
-                            <List className="h-4 w-4 text-muted-foreground" />
-                            <span>Categorías</span>
-                        </div>
-                        <span className="font-bold">{restaurant.categoryCount}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-700">
-                        <div className="flex items-center gap-2">
-                            <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
-                            <span>Platos</span>
-                        </div>
-                        <span className="font-bold">{restaurant.dishCount}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-700">
-                        <div className="flex items-center gap-2">
-                            <HeartHandshake className="h-4 w-4 text-muted-foreground" />
-                            <span>Alérgicos Ayudados</span>
-                        </div>
-                        <span className="font-bold">{restaurant.allergensHelpedCount}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-700">
-                        <div className="flex items-center gap-2">
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                            <span>Visitas</span>
-                        </div>
-                        <span className="font-bold">{restaurant.visitsCount}</span>
-                    </div>
-                </div>
-            </CardContent>
-            <CardContent className="pt-0 flex flex-col gap-3">
-                {restaurant.ownerUid && <ImpersonationButton uid={restaurant.ownerUid} />}
-                <Button
-                    onClick={handleViewPublicMenu}
-                    disabled={!restaurant.slug}
-                    size="lg"
-                    variant="outline"
-                    className={cn("w-full font-bold rounded-full h-14 text-lg", !restaurant.slug && "opacity-50 cursor-not-allowed")}
-                >
-                    <Eye className="mr-2 h-4 w-4" />Ver Carta Pública
-                </Button>
+        <>
+            <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción no se puede deshacer. Esto eliminará permanentemente la cuenta de usuario de
+                            <span className="font-bold text-gray-900"> {restaurant.name} </span>
+                            (ID: {restaurant.id}), sus restaurantes y todos los platos asociados.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault(); // Prevent auto-closing needed for async
+                                handleDeleteUser();
+                            }}
+                            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                            disabled={deleting}
+                        >
+                            {deleting ? 'Eliminando...' : 'Sí, eliminar usuario'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="lg" className="w-full font-bold rounded-full h-14 text-lg" disabled={assigning}>
-                            <MoreVertical className="mr-2 h-4 w-4" />Otras Acciones
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-60">
-                        <DropdownMenuLabel className="px-4 py-2 font-semibold">Gestionar Plan</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleStartTrial} disabled={assigning || restaurant.status === 'trialing'} className="flex items-center gap-2">
-                            <Hourglass className="h-4 w-4 text-orange-500" /> Iniciar Prueba Gratuita (3 meses)
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleAssignPlan('autonomia')} disabled={assigning} className="flex items-center gap-2">
-                            <Award className="h-4 w-4 text-blue-500" /> Asignar Plan Autonomía (Manual)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleAssignPlan('premium')} disabled={assigning} className="flex items-center gap-2">
-                            <Award className="h-4 w-4 text-purple-500" /> Asignar Plan Premium (Manual)
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </CardContent>
-        </Card>
+            <Card className="flex flex-col h-full rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200">
+                <CardHeader className="pb-4">
+                    <div className="flex justify-between items-start mb-2">
+                        <CardTitle className="text-xl font-bold text-gray-900">{restaurant.name}</CardTitle>
+                        <StatusBadge status={restaurant.status} />
+                    </div>
+                    <p className="text-sm text-muted-foreground font-mono truncate">slug: {restaurant.slug}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
+                        <Mail className="h-4 w-4 flex-shrink-0" />
+                        <span className="font-mono truncate" title={restaurant.email}>{restaurant.email}</span>
+                    </div>
+                </CardHeader>
+                <CardContent className="flex-grow space-y-4">
+                    <div className="text-sm space-y-2">
+                        <div className="flex justify-between">
+                            <span className="font-semibold text-gray-600">Plan:</span>
+                            <span className="font-bold">{formatPlanName(restaurant.plan)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-600">Propietario:</span>
+                            <div className="flex items-center gap-1.5">
+                                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="font-medium text-gray-800">{restaurant.ownerName}</span>
+                            </div>
+                        </div>
+                        {restaurant.endDate && (
+                            <div className="flex justify-between">
+                                <span className="font-semibold text-gray-600">{endDateText}:</span>
+                                <span>{formatDate(restaurant.endDate)}</span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="border-t border-gray-100 pt-4 space-y-2">
+                        <div className="flex items-center justify-between text-sm text-gray-700">
+                            <div className="flex items-center gap-2">
+                                <List className="h-4 w-4 text-muted-foreground" />
+                                <span>Categorías</span>
+                            </div>
+                            <span className="font-bold">{restaurant.categoryCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-700">
+                            <div className="flex items-center gap-2">
+                                <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
+                                <span>Platos</span>
+                            </div>
+                            <span className="font-bold">{restaurant.dishCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-700">
+                            <div className="flex items-center gap-2">
+                                <HeartHandshake className="h-4 w-4 text-muted-foreground" />
+                                <span>Alérgicos Ayudados</span>
+                            </div>
+                            <span className="font-bold">{restaurant.allergensHelpedCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-gray-700">
+                            <div className="flex items-center gap-2">
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                <span>Visitas</span>
+                            </div>
+                            <span className="font-bold">{restaurant.visitsCount}</span>
+                        </div>
+                    </div>
+                </CardContent>
+                <CardContent className="pt-0 flex flex-col gap-3">
+                    {restaurant.ownerUid && <ImpersonationButton uid={restaurant.ownerUid} />}
+                    <Button
+                        onClick={handleViewPublicMenu}
+                        disabled={!restaurant.slug}
+                        size="lg"
+                        variant="outline"
+                        className={cn("w-full font-bold rounded-full h-14 text-lg", !restaurant.slug && "opacity-50 cursor-not-allowed")}
+                    >
+                        <Eye className="mr-2 h-4 w-4" />Ver Carta Pública
+                    </Button>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="lg" className="w-full font-bold rounded-full h-14 text-lg" disabled={assigning}>
+                                <MoreVertical className="mr-2 h-4 w-4" />Otras Acciones
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-60">
+                            <DropdownMenuLabel className="px-4 py-2 font-semibold">Gestionar Plan</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleStartTrial} disabled={assigning || restaurant.status === 'trialing'} className="flex items-center gap-2">
+                                <Hourglass className="h-4 w-4 text-orange-500" /> Iniciar Prueba Gratuita (3 meses)
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleAssignPlan('autonomia')} disabled={assigning} className="flex items-center gap-2">
+                                <Award className="h-4 w-4 text-blue-500" /> Asignar Plan Autonomía (Manual)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleAssignPlan('premium')} disabled={assigning} className="flex items-center gap-2">
+                                <Award className="h-4 w-4 text-purple-500" /> Asignar Plan Premium (Manual)
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={() => setShowDeleteConfirm(true)}
+                                disabled={assigning}
+                                className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
+                            >
+                                <Trash2 className="h-4 w-4" /> Eliminar Usuario
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </CardContent>
+            </Card>
+        </>
     );
 };
 
 export function RestaurantListClient({ restaurants }: { restaurants: Restaurant[] }) {
-    const [sortBy, setSortBy] = useState<string>('name-asc');
+    const [sortBy, setSortBy] = useState<string>('newest');
 
     // Sorting logic
     const sortedRestaurants = [...restaurants].sort((a, b) => {

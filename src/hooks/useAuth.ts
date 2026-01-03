@@ -9,24 +9,26 @@ interface AuthState {
   loading: boolean;
 }
 
-export function useAuth(): AuthState {
+export function useAuth(requireVerification: boolean = true): AuthState {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      // Si hay un usuario y su email ha sido verificado, lo establecemos.
-      if (currentUser && currentUser.emailVerified) {
-        setUser(currentUser);
+      if (currentUser) {
+        if (requireVerification && !currentUser.emailVerified) {
+          setUser(null);
+        } else {
+          setUser(currentUser);
+        }
       } else {
-        // En cualquier otro caso (no hay usuario, o email no verificado), el usuario es null.
         setUser(null);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [requireVerification]);
 
   return { user, loading };
 }

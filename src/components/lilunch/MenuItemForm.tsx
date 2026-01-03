@@ -155,7 +155,7 @@ async function detectAllergens(dishName: string): Promise<string[]> {
 export function MenuItemForm({ existingMenuItem }: MenuItemFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const { user } = useAuth();
+  const { user } = useAuth(false);
   const { toast } = useToast();
   const router = useRouter();
   const submissionGuard = useRef(false);

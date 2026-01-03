@@ -30,7 +30,7 @@ export function LegalFooter() {
             <Link href="/recursos" className="font-semibold text-sm mb-4 text-foreground hover:text-primary transition-colors inline-block">
               Recursos
             </Link>
-            <ul className="space-y-2.5 mt-4">
+            <ul className="space-y-2.5">
               <li>
                 <Link href="/recursos/carta-qr-gratis" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Carta QR gratis

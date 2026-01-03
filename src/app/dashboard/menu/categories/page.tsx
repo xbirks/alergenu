@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase/firebase';
-import { 
-  collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy, 
+import {
+  collection, onSnapshot, addDoc, deleteDoc, doc, query, orderBy,
   serverTimestamp, writeBatch, getDocs, where
 } from 'firebase/firestore';
 import { I18nString } from '@/types/i18n';
@@ -56,7 +56,7 @@ async function translateText(text: string, targetLang: string = 'en'): Promise<s
 
 export default function CategoriesPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useAuth(false);
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -74,7 +74,7 @@ export default function CategoriesPage() {
     const categoriesCollection = collection(db, 'restaurants', user.uid, 'categories');
     const q = query(categoriesCollection, orderBy('order', 'asc'));
 
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribe = onSnapshot(q,
       (snapshot) => {
         const fetchedCategories = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -119,7 +119,7 @@ export default function CategoriesPage() {
         lastUpdatedBy: user.uid,
       });
 
-      toast({ title: 'Categoría añadida', description: translatedName ? `Traducida a: "${translatedName}"`: 'La traducción falló.' });
+      toast({ title: 'Categoría añadida', description: translatedName ? `Traducida a: "${translatedName}"` : 'La traducción falló.' });
       setNewCategoryName('');
     } catch (error) {
       console.error("Error adding category: ", error);
@@ -142,8 +142,8 @@ export default function CategoriesPage() {
 
   const handleUpdateCategory = async () => {
     if (!user || !categoryToEdit || !categoryToEdit.name_es.trim()) {
-        toast({ title: 'Error de validación', description: 'El nombre no puede estar vacío.', variant: 'destructive' });
-        return;
+      toast({ title: 'Error de validación', description: 'El nombre no puede estar vacío.', variant: 'destructive' });
+      return;
     }
 
     setIsSubmitting(true);
@@ -151,14 +151,14 @@ export default function CategoriesPage() {
     const categoryDocRef = doc(db, 'restaurants', user.uid, 'categories', categoryToEdit.id);
 
     const newNameI18n: I18nString = {
-        es: categoryToEdit.name_es.trim(),
-        en: categoryToEdit.name_en.trim(),
+      es: categoryToEdit.name_es.trim(),
+      en: categoryToEdit.name_en.trim(),
     };
-    
+
     const categoryUpdateData: any = {
-        name_i18n: newNameI18n,
-        updatedAt: serverTimestamp(),
-        lastUpdatedBy: user.uid,
+      name_i18n: newNameI18n,
+      updatedAt: serverTimestamp(),
+      lastUpdatedBy: user.uid,
     };
 
     if (categoryToEdit.hasTimer) {
@@ -170,27 +170,27 @@ export default function CategoriesPage() {
     }
 
     try {
-        batch.update(categoryDocRef, categoryUpdateData);
+      batch.update(categoryDocRef, categoryUpdateData);
 
-        const menuItemsQuery = query(
-            collection(db, 'restaurants', user.uid, 'menuItems'), 
-            where("categoryId", "==", categoryToEdit.id)
-        );
-        const menuItemsSnapshot = await getDocs(menuItemsQuery);
+      const menuItemsQuery = query(
+        collection(db, 'restaurants', user.uid, 'menuItems'),
+        where("categoryId", "==", categoryToEdit.id)
+      );
+      const menuItemsSnapshot = await getDocs(menuItemsQuery);
 
-        menuItemsSnapshot.forEach(menuItemDoc => {
-            const menuItemRef = doc(db, 'restaurants', user.uid, 'menuItems', menuItemDoc.id);
-            batch.update(menuItemRef, { category_i18n: newNameI18n });
-        });
+      menuItemsSnapshot.forEach(menuItemDoc => {
+        const menuItemRef = doc(db, 'restaurants', user.uid, 'menuItems', menuItemDoc.id);
+        batch.update(menuItemRef, { category_i18n: newNameI18n });
+      });
 
-        await batch.commit();
-        toast({ title: 'Categoría actualizada' });
+      await batch.commit();
+      toast({ title: 'Categoría actualizada' });
     } catch (error) {
-        console.error("Error updating category: ", error);
-        toast({ title: 'Error', description: 'No se pudo guardar la categoría.', variant: 'destructive' });
+      console.error("Error updating category: ", error);
+      toast({ title: 'Error', description: 'No se pudo guardar la categoría.', variant: 'destructive' });
     } finally {
-        setIsSubmitting(false);
-        setCategoryToEdit(null);
+      setIsSubmitting(false);
+      setCategoryToEdit(null);
     }
   };
 
@@ -198,20 +198,20 @@ export default function CategoriesPage() {
     if (!user) return;
 
     const menuItemsQuery = query(
-        collection(db, 'restaurants', user.uid, 'menuItems'), 
-        where("categoryId", "==", category.id)
+      collection(db, 'restaurants', user.uid, 'menuItems'),
+      where("categoryId", "==", category.id)
     );
     const menuItemsSnapshot = await getDocs(menuItemsQuery);
 
     if (!menuItemsSnapshot.empty) {
-        toast({ 
-            title: 'Borrado denegado',
-            description: `La categoría "${category.name_i18n.es}" está siendo usada por ${menuItemsSnapshot.size} plato(s).`,
-            variant: 'destructive',
-            duration: 7000,
-        });
+      toast({
+        title: 'Borrado denegado',
+        description: `La categoría "${category.name_i18n.es}" está siendo usada por ${menuItemsSnapshot.size} plato(s).`,
+        variant: 'destructive',
+        duration: 7000,
+      });
     } else {
-        setDeleteConfirmation(category);
+      setDeleteConfirmation(category);
     }
   };
 
@@ -228,7 +228,7 @@ export default function CategoriesPage() {
       setIsSubmitting(false);
       setDeleteConfirmation(null);
     }
-  };  
+  };
 
   const handleReorder = async (currentIndex: number, direction: 'up' | 'down') => {
     if (!user) return;
@@ -260,9 +260,9 @@ export default function CategoriesPage() {
 
   return (
     <>
-      <div className="mb-8"><Link href="/dashboard/menu" className="inline-flex items-center gap-x-2 text-gray-600 font-semibold rounded-full bg-gray-100 hover:bg-gray-200 px-4 py-2 transition-colors"><ArrowLeft className="h-4 w-4" />Volver a mi carta</Link></div>
+      <div className="mb-8"><Link href="/dashboard/menu" className="inline-flex items-center gap-x-2 text-gray-600 font-semibold rounded-full bg-gray-100 hover:bg-gray-200 px-4 py-2 transition-colors"><ArrowLeft className="h-4 w-4" />Volver</Link></div>
       <div className="mb-8"><h1 className="text-3xl font-bold mb-2">Gestionar Categorías</h1><p className="text-muted-foreground">Añade, elimina, edita y ordena las categorías de tu carta.</p></div>
-      
+
       <form onSubmit={handleAddCategory} className="flex items-center gap-3 mb-8">
         <Input
           type="text"
@@ -276,7 +276,7 @@ export default function CategoriesPage() {
           <span className='ml-2 hidden sm:inline'>Añadir</span>
         </Button>
       </form>
-      
+
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Categorías existentes ({categories.length})</h2>
         {categories.length > 0 ? (
@@ -301,35 +301,35 @@ export default function CategoriesPage() {
                           </Tooltip>
                         </TooltipProvider>
                         {cat.startTime && cat.endTime && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="ml-2 flex-shrink-0">
-                                            <Clock className="h-5 w-5 text-amber-500" />
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Visible de {cat.startTime} a {cat.endTime}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="ml-2 flex-shrink-0">
+                                  <Clock className="h-5 w-5 text-amber-500" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Visible de {cat.startTime} a {cat.endTime}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className='flex items-center space-x-2 flex-shrink-0'>
-                        <Button variant="ghost" size="icon" onClick={() => handleStartEdit(cat)} className='h-10 w-10 rounded-full'><FilePenLine className="h-6 w-6" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => confirmDeleteCategory(cat)} className='h-10 w-10 text-destructive rounded-full'><Trash2 className="h-6 w-6" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleStartEdit(cat)} className='h-10 w-10 rounded-full'><FilePenLine className="h-6 w-6" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => confirmDeleteCategory(cat)} className='h-10 w-10 text-destructive rounded-full'><Trash2 className="h-6 w-6" /></Button>
                     </div>
                   </div>
-                  
+
                   <div className="mt-4 flex items-center">
-                      <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(index, 'up')} disabled={index === 0}>
-                          <ArrowUp className="h-6 w-6" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(index, 'down')} disabled={index === categories.length - 1}>
-                          <ArrowDown className="h-6 w-6" />
-                      </Button>
+                    <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(index, 'up')} disabled={index === 0}>
+                      <ArrowUp className="h-6 w-6" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => handleReorder(index, 'down')} disabled={index === categories.length - 1}>
+                      <ArrowDown className="h-6 w-6" />
+                    </Button>
                   </div>
                 </div>
               </li>
@@ -343,49 +343,49 @@ export default function CategoriesPage() {
       {/* Edit Dialog */}
       <Dialog open={categoryToEdit !== null} onOpenChange={() => setCategoryToEdit(null)}>
         <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Categoría</DialogTitle>
-              <DialogDescription>Modifica los nombres y, si quieres, establece un horario de visibilidad.</DialogDescription>
-            </DialogHeader>
-            {categoryToEdit && (
-              <div className="py-4 space-y-6">
-                <div className='space-y-4'>
-                  <div>
-                    <Label htmlFor="name_es">Nombre en Español</Label>
-                    <Input id="name_es" value={categoryToEdit.name_es} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, name_es: e.target.value} : null)} />
-                  </div>
-                  <div>
-                    <Label htmlFor="name_en">Nombre en Inglés</Label>
-                    <Input id="name_en" value={categoryToEdit.name_en} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, name_en: e.target.value} : null)} placeholder='(Opcional)' />
-                  </div>
+          <DialogHeader>
+            <DialogTitle>Editar Categoría</DialogTitle>
+            <DialogDescription>Modifica los nombres y, si quieres, establece un horario de visibilidad.</DialogDescription>
+          </DialogHeader>
+          {categoryToEdit && (
+            <div className="py-4 space-y-6">
+              <div className='space-y-4'>
+                <div>
+                  <Label htmlFor="name_es">Nombre en Español</Label>
+                  <Input id="name_es" value={categoryToEdit.name_es} onChange={(e) => setCategoryToEdit(prev => prev ? { ...prev, name_es: e.target.value } : null)} />
                 </div>
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                            <Label htmlFor="timer-switch" className="text-lg font-semibold">Activar horario</Label>
-                            <p className="text-sm text-muted-foreground">Define una franja horaria para esta categoría.</p>
-                        </div>
-                        <Switch id="timer-switch" checked={categoryToEdit.hasTimer} onCheckedChange={(checked) => setCategoryToEdit(prev => prev ? {...prev, hasTimer: checked} : null)} />
-                    </div>
-                    <div className={`space-y-4 transition-opacity ${!categoryToEdit.hasTimer ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                        <div className="flex items-center justify-between gap-4">
-                            <Label htmlFor="start-time" className="text-lg font-semibold">Desde:</Label>
-                            <Input id="start-time" type="time" value={categoryToEdit.startTime} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, startTime: e.target.value} : null)} className="w-[150px]" disabled={!categoryToEdit.hasTimer}/>
-                        </div>
-                        <div className="flex items-center justify-between gap-4">
-                            <Label htmlFor="end-time" className="text-lg font-semibold">Hasta:</Label>
-                            <Input id="end-time" type="time" value={categoryToEdit.endTime} onChange={(e) => setCategoryToEdit(prev => prev ? {...prev, endTime: e.target.value} : null)} className="w-[150px]" disabled={!categoryToEdit.hasTimer}/>
-                        </div>
-                    </div>
+                <div>
+                  <Label htmlFor="name_en">Nombre en Inglés</Label>
+                  <Input id="name_en" value={categoryToEdit.name_en} onChange={(e) => setCategoryToEdit(prev => prev ? { ...prev, name_en: e.target.value } : null)} placeholder='(Opcional)' />
                 </div>
               </div>
-            )}
-            <DialogFooter className="gap-2">
-              <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
-              <Button onClick={handleUpdateCategory} disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Guardar
-              </Button>
-            </DialogFooter>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div>
+                    <Label htmlFor="timer-switch" className="text-lg font-semibold">Activar horario</Label>
+                    <p className="text-sm text-muted-foreground">Define una franja horaria para esta categoría.</p>
+                  </div>
+                  <Switch id="timer-switch" checked={categoryToEdit.hasTimer} onCheckedChange={(checked) => setCategoryToEdit(prev => prev ? { ...prev, hasTimer: checked } : null)} />
+                </div>
+                <div className={`space-y-4 transition-opacity ${!categoryToEdit.hasTimer ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="start-time" className="text-lg font-semibold">Desde:</Label>
+                    <Input id="start-time" type="time" value={categoryToEdit.startTime} onChange={(e) => setCategoryToEdit(prev => prev ? { ...prev, startTime: e.target.value } : null)} className="w-[150px]" disabled={!categoryToEdit.hasTimer} />
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="end-time" className="text-lg font-semibold">Hasta:</Label>
+                    <Input id="end-time" type="time" value={categoryToEdit.endTime} onChange={(e) => setCategoryToEdit(prev => prev ? { ...prev, endTime: e.target.value } : null)} className="w-[150px]" disabled={!categoryToEdit.hasTimer} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+            <Button onClick={handleUpdateCategory} disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Guardar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -393,7 +393,7 @@ export default function CategoriesPage() {
       <Dialog open={deleteConfirmation !== null} onOpenChange={setDeleteConfirmation}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center"><AlertTriangle className="h-6 w-6 text-destructive mr-2"/>Confirmar eliminación</DialogTitle>
+            <DialogTitle className="flex items-center"><AlertTriangle className="h-6 w-6 text-destructive mr-2" />Confirmar eliminación</DialogTitle>
             <DialogDescription>
               ¿Estás seguro de que quieres eliminar "<strong>{deleteConfirmation?.name_i18n.es}</strong>"? Esta acción no se puede deshacer.
             </DialogDescription>

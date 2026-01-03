@@ -128,7 +128,7 @@ function CourseSection({
 // --- Componente Principal de la Página --- //
 export default function DailyMenuPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useAuth(false);
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
