@@ -40,8 +40,6 @@ export function GoogleSignInButton({
 
     // Manejar el resultado del redirect cuando el usuario vuelve
     useEffect(() => {
-        if (!useRedirect) return;
-
         const handleRedirectResult = async () => {
             try {
                 setLoading(true);
@@ -60,8 +58,13 @@ export function GoogleSignInButton({
             }
         };
 
-        handleRedirectResult();
-    }, [useRedirect, onSuccess]);
+        // Solo ejecutar si estamos en un navegador que usa redirect
+        if (useRedirect) {
+            handleRedirectResult();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Solo ejecutar una vez al montar
+
 
     const handleAuthError = (error: any) => {
         let errorMessage = 'Error al iniciar sesión con Google.';
