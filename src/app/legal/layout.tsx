@@ -1,4 +1,16 @@
 import { PublicHeader } from '@/components/layout/PublicHeader';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: {
+    template: '%s | ALERGENU',
+    default: 'Información Legal | ALERGENU',
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (

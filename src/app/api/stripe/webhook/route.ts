@@ -34,12 +34,10 @@ async function handler(req: NextRequest) {
   try {
     // Handle the event
     switch (event.type) {
-      // --- SUBSCRIPTION COMPLETED ---
-      // Occurs when the first payment is made for a new subscription
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const firebaseUID = session.metadata?.firebaseUID;
-        
+
         if (!firebaseUID) {
           console.error('❌ Metadata (firebaseUID) missing in checkout session');
           break;
@@ -47,16 +45,23 @@ async function handler(req: NextRequest) {
 
         const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
 
+        // Derive plan from priceId
+        const priceId = subscription.items.data[0]?.price.id;
+        let selectedPlan = 'autonomia'; // default
+        if (priceId === 'price_1Sa1FNH4esVSm5sUs2oVES7q') {
+          selectedPlan = 'premium';
+        }
+
         const restaurantRef = db.collection('restaurants').doc(firebaseUID);
         await restaurantRef.update({
           stripeCustomerId: session.customer,
           stripeSubscriptionId: session.subscription,
           subscriptionStatus: 'active',
-          plan: 'autonomia', // Or derive this from the price ID if needed
+          selectedPlan: selectedPlan, // ✅ CORREGIDO: usar selectedPlan en lugar de plan
           currentPeriodEnd: new Date(subscription.current_period_end * 1000),
         });
-        
-        console.log(`✅ Firestore updated for user ${firebaseUID}: Subscription ACTIVATED.`);
+
+        console.log(`✅ Firestore updated for user ${firebaseUID}: Subscription ACTIVATED with plan ${selectedPlan}.`);
         break;
       }
 
@@ -69,10 +74,10 @@ async function handler(req: NextRequest) {
         // Find the user in Firestore by their Stripe Customer ID
         const query = db.collection('restaurants').where('stripeCustomerId', '==', stripeCustomerId);
         const snapshot = await query.get();
-        
+
         if (snapshot.empty) {
-            console.error(`❌ No restaurant found with Stripe Customer ID: ${stripeCustomerId}`);
-            break;
+          console.error(`❌ No restaurant found with Stripe Customer ID: ${stripeCustomerId}`);
+          break;
         }
 
         const doc = snapshot.docs[0];
@@ -84,13 +89,69 @@ async function handler(req: NextRequest) {
         break;
       }
 
+      // --- SUBSCRIPTION UPDATED ---
+      // Occurs when a subscription is modified (plan change, etc.)
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as Stripe.Subscription;
+        const stripeCustomerId = subscription.customer as string;
+
+        const query = db.collection('restaurants').where('stripeCustomerId', '==', stripeCustomerId);
+        const snapshot = await query.get();
+
+        if (snapshot.empty) {
+          console.error(`❌ No restaurant found with Stripe Customer ID: ${stripeCustomerId}`);
+          break;
+        }
+
+        const doc = snapshot.docs[0];
+
+        // Derive plan from priceId
+        const priceId = subscription.items.data[0]?.price.id;
+        let selectedPlan = 'autonomia';
+        if (priceId === 'price_1Sa1FNH4esVSm5sUs2oVES7q') {
+          selectedPlan = 'premium';
+        }
+
+        await doc.ref.update({
+          subscriptionStatus: subscription.status,
+          selectedPlan: selectedPlan,
+          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        });
+
+        console.log(`✅ Firestore updated for user ${doc.id}: Subscription UPDATED to ${subscription.status}, plan: ${selectedPlan}.`);
+        break;
+      }
+
+      // --- PAYMENT FAILED ---
+      // Occurs when a payment fails (card declined, insufficient funds, etc.)
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const stripeCustomerId = invoice.customer as string;
+
+        const query = db.collection('restaurants').where('stripeCustomerId', '==', stripeCustomerId);
+        const snapshot = await query.get();
+
+        if (snapshot.empty) {
+          console.error(`❌ No restaurant found with Stripe Customer ID: ${stripeCustomerId}`);
+          break;
+        }
+
+        const doc = snapshot.docs[0];
+        await doc.ref.update({
+          subscriptionStatus: 'past_due',
+        });
+
+        console.log(`✅ Firestore updated for user ${doc.id}: Payment FAILED, status set to past_due.`);
+        break;
+      }
+
       // You can add more event handlers here in the future
-      // case 'invoice.payment_failed':
-      //   // ... handle failed renewal payments
+      // case 'invoice.payment_succeeded':
+      //   // ... handle successful renewal payments
       //   break;
 
       default:
-        // console.log(`🤷‍♀️ Unhandled event type ${event.type}`);
+      // console.log(`🤷‍♀️ Unhandled event type ${event.type}`);
     }
   } catch (error) {
     console.error("Error processing webhook:", error);

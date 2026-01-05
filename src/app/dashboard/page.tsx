@@ -58,13 +58,43 @@ function DashboardComponent() {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const data = docSnap.data() as RestaurantData;
+        const data = docSnap.data() as RestaurantData & {
+          subscriptionStatus?: string;
+          currentPeriodEnd?: { seconds: number }
+        };
         setRestaurantData(data);
 
         // **LÓGICA DE REDIRECCIÓN CORREGIDA**
-        // Solo redirigir si la prueba ha expirado explícitamente
+
+        // 1. Trial expirado explícitamente
         if (subscriptionStatus === 'trial_expired' && !subscriptionLoading && data.slug) {
           router.push(`/trial-expired/${data.slug}`);
+          return;
+        }
+
+        // 2. Usuario cancelado pero aún en período pagado
+        if (subscriptionStatus === 'canceled' && data.currentPeriodEnd) {
+          const periodEnd = new Date(data.currentPeriodEnd.seconds * 1000);
+          const now = new Date();
+
+          if (now < periodEnd) {
+            // ✅ Permitir acceso hasta el fin del período
+            console.log('Canceled user still has access until:', periodEnd);
+          } else {
+            // ❌ Período expirado, redirigir
+            router.push(`/trial-expired/${data.slug}`);
+            return;
+          }
+        }
+
+        // 3. Otros estados sin acceso (past_due, incomplete, etc.)
+        if (
+          subscriptionStatus !== 'active' &&
+          subscriptionStatus !== 'trialing' &&
+          subscriptionStatus !== 'canceled' && // Canceled ya se maneja arriba
+          !subscriptionLoading
+        ) {
+          router.push('/login');
           return;
         }
 

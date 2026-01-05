@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, User as UserIcon, Settings, LogIn } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, LogIn, Crown, CreditCard, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase/firebase';
 import { signOut, User } from 'firebase/auth';
@@ -26,16 +26,21 @@ export function Header() {
   const [loading, setLoading] = useState(true);
   const [initials, setInitials] = useState('');
   const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<'gratuito' | 'autonomia' | 'premium' | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        setUserEmail(currentUser.email || '');
         const docRef = doc(db, 'restaurants', currentUser.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          const ownerName = docSnap.data().ownerName || ''; // Asegura que ownerName es una cadena
+          const data = docSnap.data();
+          const ownerName = data.ownerName || ''; // Asegura que ownerName es una cadena
           setUserName(ownerName);
+          setSelectedPlan(data.selectedPlan || 'gratuito');
           const trimmedName = ownerName.trim(); // Eliminar espacios al inicio/final
           const nameParts = trimmedName.split(/\s+/).filter(Boolean); // Dividir por uno o más espacios y eliminar vacíos
 
@@ -53,10 +58,13 @@ export function Header() {
         } else {
           setUserName(currentUser.email || 'Usuario');
           setInitials('AU'); // Cambiado de '?' a 'AU' como valor por defecto
+          setSelectedPlan('gratuito');
         }
       } else {
         setInitials('');
         setUserName('');
+        setUserEmail('');
+        setSelectedPlan(null);
       }
       setLoading(false);
     });
@@ -81,16 +89,16 @@ export function Header() {
       <div className="container flex h-20 items-center justify-between">
         <Link id="tour-back-to-dashboard" href={user ? "/dashboard" : "/home"} className="flex items-center gap-2">
           <Image
-            src="/icon_alergenu.png" 
+            src="/icon_alergenu.png"
             alt="Alergenu Logo"
-            width={40}      
-            height={40}     
+            width={40}
+            height={40}
             priority
           />
         </Link>
-        
+
         {loading ? (
-           <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+          <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
         ) : user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -106,14 +114,54 @@ export function Header() {
               <DropdownMenuLabel className="font-normal py-2 px-2">
                 <div className="flex flex-col space-y-1">
                   <p className="text-base font-bold leading-none text-gray-800">{userName}</p>
+                  <p className="text-sm text-gray-500 leading-none mt-1">{userEmail}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/dashboard/preferences')} className="text-base py-3 px-2 cursor-pointer">
-                <Settings className="mr-3 h-5 w-5" />
-                <span>Preferencias</span>
+
+              {/* Mostrar botón de upgrade solo para usuarios con plan gratuito */}
+              {selectedPlan === 'gratuito' && (
+                <>
+                  <div className="p-2">
+                    <Button
+                      onClick={() => router.push('/dashboard/billing')}
+                      className="w-full bg-gradient-to-br from-blue-300 via-blue-500 to-blue-700 hover:from-blue-400 hover:via-blue-600 hover:to-blue-800 text-white font-semibold py-3 rounded-lg shadow-md transition-all"
+                    >
+                      <Crown className="mr-2 h-5 w-5" />
+                      <span>Mejorar Plan</span>
+                    </Button>
+                  </div>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+
+              {/* Suscripción - Para todos los usuarios */}
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/billing" className="flex items-center cursor-pointer text-base py-3 px-2">
+                  <CreditCard className="mr-3 h-5 w-5" />
+                  <span>Suscripción</span>
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout} className="text-base py-3 px-2 cursor-pointer">
+
+              {/* Historial PDF - Para todos los usuarios */}
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/pdf-history" className="flex items-center cursor-pointer text-base py-3 px-2">
+                  <FileText className="mr-3 h-5 w-5" />
+                  <span>Historial PDF</span>
+                </Link>
+              </DropdownMenuItem>
+
+              {/* Preferencias */}
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/preferences" className="flex items-center cursor-pointer text-base py-3 px-2">
+                  <Settings className="mr-3 h-5 w-5" />
+                  <span>Preferencias</span>
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem onClick={handleLogout} className="text-base py-3 px-2 cursor-pointer text-red-600 focus:text-red-600">
                 <LogOut className="mr-3 h-5 w-5" />
                 <span>Cerrar sesión</span>
               </DropdownMenuItem>

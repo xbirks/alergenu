@@ -9,7 +9,18 @@ import { headers } from 'next/headers';
 
 jest.mock('stripe', () => {
   const constructEvent = jest.fn();
-  const retrieve = jest.fn().mockResolvedValue({ current_period_end: 1735689600 });
+  const retrieve = jest.fn().mockResolvedValue({
+    current_period_end: 1735689600,
+    items: {
+      data: [
+        {
+          price: {
+            id: 'price_autonomia_default'
+          }
+        }
+      ]
+    }
+  });
 
   // Mock de la clase Stripe
   const StripeMock = jest.fn().mockImplementation(() => ({
@@ -135,7 +146,18 @@ describe('Stripe Webhook Endpoint', () => {
   describe('Business Logic', () => {
     it('debe activar la suscripción cuando se recibe checkout.session.completed', async () => {
       mockConstructEvent.mockReturnValue(checkoutCompletedEvent);
-      mockSubscriptionsRetrieve.mockResolvedValue({ current_period_end: 1672531199 }); // 2022-12-31
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        current_period_end: 1672531199,
+        items: {
+          data: [
+            {
+              price: {
+                id: 'price_autonomia_default'
+              }
+            }
+          ]
+        }
+      }); // 2022-12-31
 
       const req = createMockRequest(JSON.stringify(checkoutCompletedEvent), 'valid-signature');
       const response = await POST(req);
@@ -147,7 +169,7 @@ describe('Stripe Webhook Endpoint', () => {
         stripeCustomerId: 'cus_123456789',
         stripeSubscriptionId: 'sub_123456789',
         subscriptionStatus: 'active',
-        plan: 'autonomia',
+        selectedPlan: 'autonomia',
         currentPeriodEnd: new Date(1672531199 * 1000),
       });
     });
@@ -172,12 +194,12 @@ describe('Stripe Webhook Endpoint', () => {
       // Verifica que se buscó al usuario por su customerId
       expect(mockCollection).toHaveBeenCalledWith('restaurants');
       expect(mockWhere).toHaveBeenCalledWith('stripeCustomerId', '==', 'cus_123456789');
-      
+
       // Verifica que se llamó a la función de actualización en el documento encontrado
       expect(mockUpdate).toHaveBeenCalledWith({
         subscriptionStatus: 'canceled',
       });
-       // Nos aseguramos de que mockDoc no se llama en este flujo
+      // Nos aseguramos de que mockDoc no se llama en este flujo
       expect(mockDoc).not.toHaveBeenCalled();
     });
   });

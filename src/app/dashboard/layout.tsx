@@ -1,4 +1,17 @@
 import { Header } from "@/components/layout/header";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: {
+    template: '%s | ALERGENU',
+    default: 'Panel de Control | ALERGENU',
+  },
+  description: 'Gestiona tu carta digital, actualiza platos, precios y alérgenos desde tu panel de control de ALERGENU.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

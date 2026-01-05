@@ -1,68 +1,51 @@
 import type { Metadata } from 'next';
-import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase';
+import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 
-interface Restaurant {
-  restaurantName: string;
-  slug: string;
+interface Props {
+  params: { restaurantId: string };
 }
 
-export async function generateMetadata({ params }: { params: { restaurantId: string } }): Promise<Metadata> {
-  const restaurantSlug = params.restaurantId as string;
-
-  if (!restaurantSlug) {
-    return {
-      title: 'Menú Digital | Alergenu',
-      description: 'Descubre cartas digitales interactivas con información de alérgenos.',
-    };
-  }
-
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const restaurantsRef = collection(db, 'restaurants');
-    const q = query(restaurantsRef, where("slug", "==", restaurantSlug), limit(1));
+    const q = query(restaurantsRef, where("slug", "==", params.restaurantId), limit(1));
     const querySnapshot = await getDocs(q);
 
-    if (querySnapshot.empty) {
+    if (!querySnapshot.empty) {
+      const restaurant = querySnapshot.docs[0].data();
+      const restaurantName = restaurant.restaurantName || 'Restaurante';
+
       return {
-        title: 'Restaurante no encontrado | Alergenu',
-        description: 'El restaurante que buscas no existe o la URL es incorrecta.',
+        title: `${restaurantName} - Carta Digital | ALERGENU`,
+        description: `Consulta la carta digital de ${restaurantName} con información detallada de alérgenos y filtros personalizados.`,
+        openGraph: {
+          title: `${restaurantName} - Carta Digital`,
+          description: `Consulta la carta de ${restaurantName} con filtro de alérgenos`,
+          type: 'website',
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title: `${restaurantName} - Carta Digital`,
+          description: `Consulta la carta de ${restaurantName} con filtro de alérgenos`,
+        },
+        robots: {
+          index: true,
+          follow: true,
+        },
       };
     }
-
-    const restaurant = querySnapshot.docs[0].data() as Restaurant;
-    const restaurantName = restaurant.restaurantName || 'Restaurante';
-
-    return {
-      title: `${restaurantName} - Menú Digital | Alergenu`,
-      description: `Descubre la carta digital de ${restaurantName} en Alergenu. Consulta platos, precios e información sobre alérgenos de forma fácil y segura.`,
-      openGraph: {
-        title: `${restaurantName} - Menú Digital | Alergenu`,
-        description: `Descubre la carta digital de ${restaurantName} en Alergenu. Consulta platos, precios e información sobre alérgenos de forma fácil y segura.`,
-        images: [
-          {
-            url: '/seo/alergenu_meta-1200x630.jpg',
-            width: 1200,
-            height: 630,
-            alt: `Menú de ${restaurantName}`,
-          },
-        ],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: `${restaurantName} - Menú Digital | Alergenu`,
-        description: `Descubre la carta digital de ${restaurantName} en Alergenu. Consulta platos, precios e información sobre alérgenos de forma fácil y segura.`,
-        images: ['/seo/alergenu_twiiter-1200x630.jpg'],
-      },
-    };
   } catch (error) {
-    console.error("Error fetching restaurant for metadata: ", error);
-    return {
-      title: 'Error al cargar el menú | Alergenu',
-      description: 'Hubo un error al cargar la información del restaurante.',
-    };
+    console.error('Error generating metadata:', error);
   }
+
+  // Fallback metadata
+  return {
+    title: 'Carta Digital | ALERGENU',
+    description: 'Consulta nuestra carta digital con información de alérgenos.',
+  };
 }
 
-export default function RestaurantLayout({ children }: { children: React.ReactNode }) {
+export default function MenuRestaurantLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

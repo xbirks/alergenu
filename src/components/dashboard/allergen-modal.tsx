@@ -30,32 +30,32 @@ export default function AllergenModal({ isOpen, onClose, dishName, initialAllerg
         onSave(allergens);
         onClose();
     };
-    
+
     const handleAllergenChange = (allergenId: string, value: AllergenStatus) => {
         setAllergens(prev => ({ ...prev, [allergenId]: value }));
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className='text-2xl'>Alérgenos en "{dishName}"</DialogTitle>
                     <DialogDescription>Indica la presencia de alérgenos en el plato seleccionando una de las tres opciones para cada uno.</DialogDescription>
                 </DialogHeader>
-                
-                <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+
+                <div className="py-4 space-y-2 max-h-[50vh] overflow-y-auto pr-2 flex-1">
                     {ALLERGENS.map((allergen) => (
                         <div key={allergen.id} className="flex flex-row items-center justify-between border-b py-3">
                             <label className="font-semibold text-lg flex-1">{allergen.name}</label>
-                            <AllergenSelector 
-                                value={allergens[allergen.id] || 'no'} 
-                                onChange={(value) => handleAllergenChange(allergen.id, value)} 
+                            <AllergenSelector
+                                value={allergens[allergen.id] || 'no'}
+                                onChange={(value) => handleAllergenChange(allergen.id, value)}
                             />
                         </div>
                     ))}
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="pb-safe">
                     <Button onClick={handleSave} className="w-full h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-lg font-bold">Guardar</Button>
                 </DialogFooter>
             </DialogContent>
