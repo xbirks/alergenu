@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase/firebase';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -24,6 +24,10 @@ export function GoogleSignInButton({
     const handleGoogleSignIn = async () => {
         setLoading(true);
         try {
+            // Forzar persistencia local antes del popup
+            // Esto ayuda a que Opera no pierda la sesión durante el proceso
+            await setPersistence(auth, browserLocalPersistence);
+
             const result = await signInWithPopup(auth, googleProvider);
             const user = result.user;
 
