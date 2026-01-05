@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
+import { useState } from 'react';
+import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase/firebase';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -13,22 +13,6 @@ interface GoogleSignInButtonProps {
     text?: string;
 }
 
-
-// Detectar si estamos en un navegador que tiene problemas con popups
-export function shouldUseRedirect(): boolean {
-    if (typeof window === 'undefined') return false;
-
-    const userAgent = window.navigator.userAgent.toLowerCase();
-
-    // Opera, Safari en iOS, o navegadores en modo standalone (PWA)
-    const isOpera = userAgent.includes('opr/') || userAgent.includes('opera');
-    const isIOS = /iphone|ipad|ipod/.test(userAgent);
-    const isStandalone = (window.navigator as any).standalone === true;
-
-    return isOpera || isIOS || isStandalone;
-}
-
-
 export function GoogleSignInButton({
     onSuccess,
     onError,
@@ -36,74 +20,35 @@ export function GoogleSignInButton({
     text = 'Continuar con Google'
 }: GoogleSignInButtonProps) {
     const [loading, setLoading] = useState(false);
-    const useRedirect = shouldUseRedirect();
-
-    // Manejar el resultado del redirect cuando el usuario vuelve
-    useEffect(() => {
-        const handleRedirectResult = async () => {
-            try {
-                setLoading(true);
-                const result = await getRedirectResult(auth);
-
-                if (result && result.user) {
-                    if (onSuccess) {
-                        await onSuccess(result.user);
-                    }
-                }
-            } catch (error: any) {
-                console.error('Google Sign-In Redirect Error:', error);
-                handleAuthError(error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        // Solo ejecutar si estamos en un navegador que usa redirect
-        if (useRedirect) {
-            handleRedirectResult();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Solo ejecutar una vez al montar
-
-
-    const handleAuthError = (error: any) => {
-        let errorMessage = 'Error al iniciar sesión con Google.';
-
-        if (error.code === 'auth/popup-closed-by-user') {
-            errorMessage = 'Has cerrado la ventana de inicio de sesión.';
-        } else if (error.code === 'auth/cancelled-popup-request') {
-            errorMessage = 'Solicitud de inicio de sesión cancelada.';
-        } else if (error.code === 'auth/popup-blocked') {
-            errorMessage = 'El navegador ha bloqueado la ventana emergente. Por favor, permite las ventanas emergentes para este sitio.';
-        } else if (error.code === 'auth/account-exists-with-different-credential') {
-            errorMessage = 'Ya tienes una cuenta con este email usando contraseña. Por favor, inicia sesión con tu contraseña o usa la opción "¿Olvidaste tu contraseña?".';
-        }
-
-        if (onError) {
-            onError({ message: errorMessage, code: error.code });
-        }
-    };
 
     const handleGoogleSignIn = async () => {
         setLoading(true);
         try {
-            if (useRedirect) {
-                // Para navegadores problemáticos, usar redirect
-                await signInWithRedirect(auth, googleProvider);
-                // El loading se mantendrá hasta que vuelva de la redirección
-            } else {
-                // Para navegadores normales, usar popup
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
 
-                if (onSuccess) {
-                    await onSuccess(user);
-                }
-                setLoading(false);
+            if (onSuccess) {
+                await onSuccess(user);
             }
         } catch (error: any) {
             console.error('Google Sign-In Error:', error);
-            handleAuthError(error);
+
+            let errorMessage = 'Error al iniciar sesión con Google.';
+
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = 'Has cerrado la ventana de inicio de sesión.';
+            } else if (error.code === 'auth/cancelled-popup-request') {
+                errorMessage = 'Solicitud de inicio de sesión cancelada.';
+            } else if (error.code === 'auth/popup-blocked') {
+                errorMessage = 'El navegador ha bloqueado la ventana emergente. Por favor, permite las ventanas emergentes para este sitio.';
+            } else if (error.code === 'auth/account-exists-with-different-credential') {
+                errorMessage = 'Ya tienes una cuenta con este email usando contraseña. Por favor, inicia sesión con tu contraseña o usa la opción "¿Olvidaste tu contraseña?".';
+            }
+
+            if (onError) {
+                onError({ message: errorMessage, code: error.code });
+            }
+        } finally {
             setLoading(false);
         }
     };
